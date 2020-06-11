@@ -25,192 +25,289 @@ using Object = UnityEngine.Object;
 
 namespace ZebugProject {
 
-public static class Zebug {
-
-    [Conditional("ZEBUG")]
-    public static void Log(string thisIsALog) {
-        Debug.Log(thisIsALog);
+    public static class ColorConverterExtensions {
+        // Modified to write alpha too
+        // https://stackoverflow.com/questions/2395438/convert-system-drawing-color-to-rgb-and-hex-value
+        public static string ToHexString(this Color c) {
+            return $"#{(int)(c.r*255):X2}{(int)(c.g*255):X2}{(int)(c.b*255):X2}{(int)(c.a*255):X2}";
+        }
     }
 
-[Conditional("ZEBUG")]
-	public static void DrawLine(Vector3 start, Vector3 end, Color color, float duration) {
-		Debug.DrawLine(start, end, color, duration);
-	}
+    public interface IChannel {
+        bool GizmosEnabled();
+        bool LogEnabled();
+    }
 
-	[Conditional("ZEBUG")]
-	public static void DrawLine(Vector3 start, Vector3 end, Color color) {
-		Debug.DrawLine(start, end, color);
-	}
+    public class Channel<T> : IChannel where T : Channel<T>, new()  {
 
-	[Conditional("ZEBUG")]
-	public static void DrawLine(Vector3 start, Vector3 end) {
-		Debug.DrawLine(start, end);
-	}
+        //  --- TODO(dan): Set by default to user preference
+        public bool m_GizmosEnabled = true;
+        public bool m_LogEnabled = true;
 
-	[Conditional("ZEBUG")]
-	public static void DrawLine() {
-		Debug.DrawLine();
-	}
+        private static Channel<T> s_Instance;
+        private Color m_ChannelColor;
+        private string m_ColorString;
+        private string m_ChannelName;
+        private IChannel m_Parent;
 
-	[Conditional("ZEBUG")]
-	public static void DrawRay(Vector3 start, Vector3 dir, Color color, float duration) {
-		Debug.DrawRay(start, dir, color, duration);
-	}
+        public static Channel<T> Instance {
+            get {
+                if (s_Instance == null) {
+                    s_Instance = new T();
+                }
+                return s_Instance;
+            }
+        }
 
-	[Conditional("ZEBUG")]
-	public static void DrawRay(Vector3 start, Vector3 dir, Color color) {
-		Debug.DrawRay(start, dir, color);
-	}
 
-	[Conditional("ZEBUG")]
-	public static void DrawRay(Vector3 start, Vector3 dir) {
-		Debug.DrawRay(start, dir);
-	}
+        public bool GizmosEnabled() {
+            bool enabled = m_GizmosEnabled;
+            if (m_Parent != null) {
+                enabled &= m_Parent.GizmosEnabled();
+            }
+            return enabled;
+        }
 
-	[Conditional("ZEBUG")]
-	public static void DrawRay() {
-		Debug.DrawRay();
-	}
+        public void SetGizmosEnabled(bool enabled) {
+            m_GizmosEnabled = enabled;
+        }
 
-	[Conditional("ZEBUG")]
-	public static void Break() {
-		Debug.Break();
-	}
+        public bool LogEnabled() {
+            bool enabled = m_LogEnabled;
+            if (m_Parent != null) {
+                enabled &= m_Parent.LogEnabled();
+            }
+            return enabled;
+        }
 
-	[Conditional("ZEBUG")]
-	public static void DebugBreak() {
-		Debug.DebugBreak();
-	}
+        public void SetLogEnabled(bool enabled) {
+            m_LogEnabled = enabled;
+        }
 
-	[Conditional("ZEBUG")]
-	public static void Log(object message) {
-		Debug.Log(message);
-	}
+        protected Channel(string channelName, Color channelColor, IChannel parent = null) {
+            m_ChannelName = channelName;
+            m_ChannelColor = channelColor;
+            m_ColorString = $"<color={channelColor.ToHexString()}>{channelName}: </color>";
 
-	[Conditional("ZEBUG")]
-	public static void Log(object message, Object context) {
-		Debug.Log(message, context);
-	}
+            if (parent != null) {
+                m_Parent = parent;
+            }
+        }
 
-	[Conditional("ZEBUG")]
-	public static void LogFormat(string format, params object[] args) {
-		Debug.LogFormat(format, args);
-	}
+        public static void Log(object message) {
+            if (!Instance.LogEnabled()) { return; }
+            Debug.unityLogger.Log(LogType.Log, Instance.m_ColorString + message);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void LogFormat(Object context, string format, params object[] args) {
-		Debug.LogFormat(context, format, args);
-	}
+        public static void DrawLine(Vector3 start, Vector3 end, Color color, float duration) {
+            bool depthTest = true;
+            Debug.DrawLine(start, end, color, duration, depthTest);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void LogFormat() {
-		Debug.LogFormat();
-	}
+        public static void DrawLine(Vector3 start, Vector3 end, Color color) {
+            bool depthTest = true;
+            float duration = 0.0f;
+            Debug.DrawLine(start, end, color, duration, depthTest);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void LogError(object message) {
-		Debug.LogError(message);
-	}
+        public static void DrawLine(Vector3 start, Vector3 end) {
+            bool depthTest = true;
+            float duration = 0.0f;
+            Color white = Color.white;
+            Debug.DrawLine(start, end, white, duration, depthTest);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void LogError(object message, Object context) {
-		Debug.LogError(message, context);
-	}
+        public static void DrawLine(Vector3 start, Vector3 end, Color color, float duration, bool depthTest) {
+            Debug.DrawLine(start, end, color, duration, depthTest);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void LogErrorFormat(string format, params object[] args) {
-		Debug.LogErrorFormat(format, args);
-	}
+        public static void DrawRay(Vector3 start, Vector3 dir, Color color, float duration) {
+            bool depthTest = true;
+            Debug.DrawRay(start, dir, color, duration, depthTest);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void LogErrorFormat(Object context, string format, params object[] args) {
-		Debug.LogErrorFormat(context, format, args);
-	}
+        public static void DrawRay(Vector3 start, Vector3 dir, Color color) {
+            bool depthTest = true;
+            float duration = 0.0f;
+            Debug.DrawRay(start, dir, color, duration, depthTest);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void ClearDeveloperConsole() {
-		Debug.ClearDeveloperConsole();
-	}
+        public static void DrawRay(Vector3 start, Vector3 dir) {
+            bool depthTest = true;
+            float duration = 0.0f;
+            Color white = Color.white;
+            Debug.DrawRay(start, dir, white, duration, depthTest);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void LogException(Exception exception) {
-		Debug.LogException(exception);
-	}
+        public static void DrawRay(
+            Vector3 start,
+            Vector3 dir,
+            Color color,
+            float duration,
+            bool depthTest) {
+            Debug.DrawLine(start, start + dir, color, duration, depthTest);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void LogException(Exception exception, Object context) {
-		Debug.LogException(exception, context);
-	}
+        public static void Log(object message, Object context) {
+            Debug.unityLogger.Log(LogType.Log, message, context);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void LogWarning(object message) {
-		Debug.LogWarning(message);
-	}
+        public static void LogFormat(string format, params object[] args) {
+            Debug.unityLogger.LogFormat(LogType.Log, format, args);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void LogWarning(object message, Object context) {
-		Debug.LogWarning(message, context);
-	}
+        public static void LogFormat(Object context, string format, params object[] args) {
+            Debug.unityLogger.LogFormat(LogType.Log, context, format, args);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void LogWarningFormat(string format, params object[] args) {
-		Debug.LogWarningFormat(format, args);
-	}
+        public static void LogFormat(
+            LogType logType,
+            LogOption logOptions,
+            Object context,
+            string format,
+            params object[] args) {
+            Debug.LogFormat(logType, logOptions, context, format, args);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void LogWarningFormat(Object context, string format, params object[] args) {
-		Debug.LogWarningFormat(context, format, args);
-	}
+        public static void LogError(object message) {
+            Debug.unityLogger.Log(LogType.Error, message);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void Assert(bool condition) {
-		Debug.Assert(condition);
-	}
+        public static void LogError(object message, Object context) {
+            Debug.unityLogger.Log(LogType.Error, message, context);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void Assert(bool condition, Object context) {
-		Debug.Assert(condition, context);
-	}
+        public static void LogErrorFormat(string format, params object[] args) {
+            Debug.unityLogger.LogFormat(LogType.Error, format, args);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void Assert(bool condition, object message) {
-		Debug.Assert(condition, message);
-	}
+        public static void LogErrorFormat(Object context, string format, params object[] args) {
+            Debug.unityLogger.LogFormat(LogType.Error, context, format, args);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void Assert(bool condition, string message) {
-		Debug.Assert(condition, message);
-	}
+        public static void LogException(Exception exception) {
+            Debug.unityLogger.LogException(exception, null);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void Assert(bool condition, object message, Object context) {
-		Debug.Assert(condition, message, context);
-	}
+        public static void LogException(Exception exception, Object context) {
+            Debug.unityLogger.LogException(exception, context);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void AssertFormat(bool condition, string format, params object[] args) {
-		Debug.AssertFormat(condition, format, args);
-	}
+        public static void LogWarning(object message) {
+            Debug.unityLogger.Log(LogType.Warning, message);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void LogAssertion(object message) {
-		Debug.LogAssertion(message);
-	}
+        public static void LogWarning(object message, Object context) {
+            Debug.unityLogger.Log(LogType.Warning, message, context);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void LogAssertion(object message, Object context) {
-		Debug.LogAssertion(message, context);
-	}
+        public static void LogWarningFormat(string format, params object[] args) {
+            Debug.unityLogger.LogFormat(LogType.Warning, format, args);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void LogAssertionFormat(string format, params object[] args) {
-		Debug.LogAssertionFormat(format, args);
-	}
+        public static void LogWarningFormat(Object context, string format, params object[] args) {
+            Debug.unityLogger.LogFormat(LogType.Warning, context, format, args);
+        }
 
-	[Conditional("ZEBUG")]
-	public static void LogAssertionFormat(Object context, string format, params object[] args) {
-		Debug.LogAssertionFormat(context, format, args);
-	}
+        [Conditional("UNITY_ASSERTIONS")]
+        public static void Assert(bool condition) {
+            if (condition) {
+                return;
+            }
 
-}
+            Debug.unityLogger.Log(LogType.Assert, "Assertion failed");
+        }
+
+        [Conditional("UNITY_ASSERTIONS")]
+        public static void Assert(bool condition, Object context) {
+            if (condition) {
+                return;
+            }
+
+            Debug.unityLogger.Log(LogType.Assert, (object) "Assertion failed", context);
+        }
+
+        [Conditional("UNITY_ASSERTIONS")]
+        public static void Assert(bool condition, object message) {
+            if (condition) {
+                return;
+            }
+
+            Debug.unityLogger.Log(LogType.Assert, message);
+        }
+
+        [Conditional("UNITY_ASSERTIONS")]
+        public static void Assert(bool condition, string message) {
+            if (condition) {
+                return;
+            }
+
+            Debug.unityLogger.Log(LogType.Assert, message);
+        }
+
+        [Conditional("UNITY_ASSERTIONS")]
+        public static void Assert(bool condition, object message, Object context) {
+            if (condition) {
+                return;
+            }
+
+            Debug.unityLogger.Log(LogType.Assert, message, context);
+        }
+
+        [Conditional("UNITY_ASSERTIONS")]
+        public static void Assert(bool condition, string message, Object context) {
+            if (condition) {
+                return;
+            }
+
+            Debug.unityLogger.Log(LogType.Assert, (object) message, context);
+        }
+
+        [Conditional("UNITY_ASSERTIONS")]
+        public static void AssertFormat(bool condition, string format, params object[] args) {
+            if (condition) {
+                return;
+            }
+
+            Debug.unityLogger.LogFormat(LogType.Assert, format, args);
+        }
+
+        [Conditional("UNITY_ASSERTIONS")]
+        public static void AssertFormat(
+            bool condition,
+            Object context,
+            string format,
+            params object[] args) {
+            if (condition) {
+                return;
+            }
+
+            Debug.unityLogger.LogFormat(LogType.Assert, context, format, args);
+        }
+
+        [Conditional("UNITY_ASSERTIONS")]
+        public static void LogAssertion(object message) {
+            Debug.unityLogger.Log(LogType.Assert, message);
+        }
+
+        [Conditional("UNITY_ASSERTIONS")]
+        public static void LogAssertion(object message, Object context) {
+            Debug.unityLogger.Log(LogType.Assert, message, context);
+        }
+
+        [Conditional("UNITY_ASSERTIONS")]
+        public static void LogAssertionFormat(string format, params object[] args) {
+            Debug.unityLogger.LogFormat(LogType.Assert, format, args);
+        }
+
+        [Conditional("UNITY_ASSERTIONS")]
+        public static void LogAssertionFormat(Object context, string format, params object[] args) {
+            Debug.unityLogger.LogFormat(LogType.Assert, context, format, args);
+        }
+
+    }
+
+    public class Zebug : Channel<Zebug> {
+        public Zebug() : base("ZebugBase", Color.white) {}
+    }
 }
