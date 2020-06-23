@@ -1,24 +1,23 @@
 ﻿
-using System.Collections;
-using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.TestTools;
+
+using ZebugProject;
 
 namespace Tests {
 
     public class EditorTests {
 
-         public class BlueZebug : global::ZebugProject.Channel<BlueZebug> {
+         public class BlueZebug : Channel<BlueZebug> {
              public BlueZebug() : base("Tests", Color.blue) { }
          }
 
-         public class RedZebug : global::ZebugProject.Channel<RedZebug> {
+         public class RedZebug : Channel<RedZebug> {
              public RedZebug() : base("Tests", Color.red) { }
          }
 
-         public class ChildOfRedZebug : global::ZebugProject.Channel<ChildOfRedZebug> {
-             public ChildOfRedZebug() : base("Tests", Color.red, RedZebug.Instance) { }
+         public class ChildOfRedZebug : Channel<ChildOfRedZebug> {
+             public ChildOfRedZebug() : base("Tests", Color.magenta, RedZebug.Instance) { }
          }
 
          [SetUp]
@@ -52,16 +51,5 @@ namespace Tests {
              BlueZebug.Log("Error if seen");
              RedZebug.Log("Rouge, seulement");
          }
-
-
-
-    //     // A UnityTest behaves like a coroutine in Play Mode. In Edit Mode you can use
-    //     // `yield return null;` to skip a frame.
-    //     [UnityTest]
-    //     public IEnumerator EditorTestsWithEnumeratorPasses() {
-    //         // Use the Assert class to test conditions.
-    //         // Use yield to skip a frame.
-    //         yield return null;
-    //     }
     }
 }
