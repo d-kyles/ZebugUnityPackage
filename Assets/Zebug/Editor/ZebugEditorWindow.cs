@@ -79,8 +79,11 @@ public class ZebugEditorWindow : EditorWindow
         // the element with the matching data item (specified as an index in the list)
         Action<VisualElement, int> bindItem = (e, i) => {
             if (e is ZebugToggleElement t) {
-                t.text = items[i].Name();
-                t.style.color = items[i].GetColor();
+                IChannel zChannel = items[i];
+                t.text = zChannel.Name();
+                t.style.color = zChannel.GetColor();
+                t.Channel = zChannel;
+                t.value = zChannel.LogEnabled();
             }
         };
 
@@ -110,6 +113,15 @@ public class ZebugEditorWindow : EditorWindow
 
     public class ZebugToggleElement : Toggle {
         public IChannel Channel;
-    }
 
+        public ZebugToggleElement() {
+            RegisterCallback<ChangeEvent<bool>>(OnValueChanged);
+        }
+
+        private void OnValueChanged(ChangeEvent<bool> evt) {
+            if (Channel.LocalLogEnabled() != evt.newValue) {
+                Channel.SetLogEnabled(evt.newValue);
+            }
+        }
+    }
 }
