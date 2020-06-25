@@ -37,7 +37,10 @@ namespace ZebugProject {
     public interface IChannel {
         bool GizmosEnabled();
         bool LogEnabled();
+        bool LocalLogEnabled();
+        void SetLogEnabled(bool enabled);
         string Name();
+        string FullName();
         Color GetColor();
     }
 
@@ -45,7 +48,6 @@ namespace ZebugProject {
 
     public class Channel<T> : IChannel where T : Channel<T>, new()  {
 
-        //  --- TODO(dan): Set by default to user preference
         public bool m_GizmosEnabled = true;
         public bool m_LogEnabled = true;
 
@@ -54,7 +56,6 @@ namespace ZebugProject {
         private string m_ColorString;
         private string m_ChannelName;
         private IChannel m_Parent;
-
 
 
         public static Channel<T> Instance {
@@ -79,6 +80,8 @@ namespace ZebugProject {
 
         public void SetGizmosEnabled(bool enabled) {
             m_GizmosEnabled = enabled;
+            string gizmoKey = kGizmoKeyPrefix + FullName();
+            PlayerPrefs.SetInt(gizmoKey, enabled ? 1 : 0);
         }
 
         public bool LogEnabled() {
@@ -89,9 +92,18 @@ namespace ZebugProject {
             return enabled;
         }
 
+        public bool LocalLogEnabled() {
+            return m_LogEnabled;
+        }
+
         public void SetLogEnabled(bool enabled) {
             m_LogEnabled = enabled;
+            string logKey = kLogKeyPrefix + FullName();
+            PlayerPrefs.SetInt(logKey, enabled ? 1 : 0);
         }
+
+        private const string kLogKeyPrefix = "ZebugLogsEnabled--";
+        private const string kGizmoKeyPrefix = "ZebugGizmosEnabled--";
 
         protected Channel(string channelName, Color channelColor, IChannel parent = null) {
             m_ChannelName = channelName;
@@ -104,9 +116,29 @@ namespace ZebugProject {
                 m_Parent = Zebug.Instance;
             }
 
+            string fullName = FullName();
+            string logKey = kLogKeyPrefix + fullName;
+            if (!PlayerPrefs.HasKey(logKey)) {
+                PlayerPrefs.SetInt(logKey, 1);
+            }
+            m_LogEnabled = PlayerPrefs.GetInt(logKey) == 1;
+
+            string gizmoKey = kGizmoKeyPrefix + fullName;
+            if (!PlayerPrefs.HasKey(gizmoKey)) {
+                PlayerPrefs.SetInt(gizmoKey, 1);
+            }
+            m_GizmosEnabled = PlayerPrefs.GetInt(gizmoKey) == 1;
+
             Zebug.s_Channels.Add(this);
         }
 
+        public string FullName() {
+            if (m_Parent == null) {
+                return Name();
+            } else {
+                return m_Parent.FullName() + Name();
+            }
+        }
 
 
         public static void Log(object message) {
