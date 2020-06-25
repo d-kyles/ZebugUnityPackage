@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
+using ZebugProject;
 
 
 public class ZebugEditorWindow : EditorWindow
@@ -41,29 +42,35 @@ public class ZebugEditorWindow : EditorWindow
         var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Zebug/Editor/ZebugEditorWindow.uss");
         //labelWithStyle.styleSheets.Add(styleSheet);
 
-        // Create a new field, disable it, and give it a style class.
-        var csharpField = new Toggle("C# Field");
-        csharpField.value = false;
-        //csharpField.AddToClassList("toggle");
-        root.Add(csharpField);
 
-        // Mirror value of uxml field into the C# field.
-        csharpField.RegisterCallback<ChangeEvent<bool>>((evt) => {
-            csharpField.value = evt.newValue;
-        });
+        // // Mirror value of uxml field into the C# field.
+        // csharpField.RegisterCallback<ChangeEvent<bool>>((evt) => {
+        //     csharpField.value = evt.newValue;
+        // });
 
+        // Create some list of data, here simply nubers in interval [1, 1000]
+        // const int itemCount = 1000;
+        // var items = new List<string>(itemCount);
+        // for (int i = 1; i <= itemCount; i++) {
+        //     items.Add(i.ToString());
+        // }
 
-        // Create some list of data, here simply numbers in interval [1, 1000]
-        const int itemCount = 1000;
-        var items = new List<string>(itemCount);
-        for (int i = 1; i <= itemCount; i++) {
-            items.Add(i.ToString());
-        }
+        var refreshButton = new Button(() => {
+            rootVisualElement.Clear();
+            this.OnEnable();
+        }) {
+          text = "Refresh Window"
+        };
+        root.Add(refreshButton);
+
+        var zebugBase = Zebug.Instance;
+        var items = Zebug.s_Channels;
+
 
         // The "makeItem" function will be called as needed
         // when the ListView needs more items to render
         Func<VisualElement> makeItem = () => {
-            return new Label();
+            return new ZebugToggleElement();
         };
 
         // As the user scrolls through the list, the ListView object
@@ -71,8 +78,9 @@ public class ZebugEditorWindow : EditorWindow
         // and invoke the "bindItem" callback to associate
         // the element with the matching data item (specified as an index in the list)
         Action<VisualElement, int> bindItem = (e, i) => {
-            if (e is Label l) {
-                l.text = items[i];
+            if (e is ZebugToggleElement t) {
+                t.text = items[i].Name();
+                t.style.color = items[i].GetColor();
             }
         };
 
@@ -99,4 +107,9 @@ public class ZebugEditorWindow : EditorWindow
         //root.Add(listView);
 
     }
+
+    public class ZebugToggleElement : Toggle {
+        public IChannel Channel;
+    }
+
 }

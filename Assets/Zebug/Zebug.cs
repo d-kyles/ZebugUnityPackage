@@ -18,6 +18,7 @@
 //  -------------------------------------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
@@ -36,7 +37,11 @@ namespace ZebugProject {
     public interface IChannel {
         bool GizmosEnabled();
         bool LogEnabled();
+        string Name();
+        Color GetColor();
     }
+
+
 
     public class Channel<T> : IChannel where T : Channel<T>, new()  {
 
@@ -50,6 +55,8 @@ namespace ZebugProject {
         private string m_ChannelName;
         private IChannel m_Parent;
 
+
+
         public static Channel<T> Instance {
             get {
                 if (s_Instance == null) {
@@ -59,6 +66,8 @@ namespace ZebugProject {
             }
         }
 
+        public string Name() { return m_ChannelName; }
+        public Color GetColor() { return m_ChannelColor; }
 
         public bool GizmosEnabled() {
             bool enabled = m_GizmosEnabled;
@@ -91,8 +100,14 @@ namespace ZebugProject {
 
             if (parent != null) {
                 m_Parent = parent;
+            } else if (channelName != "ZebugBase") { // todo this isn't great
+                m_Parent = Zebug.Instance;
             }
+
+            Zebug.s_Channels.Add(this);
         }
+
+
 
         public static void Log(object message) {
             if (!Instance.LogEnabled()) { return; }
@@ -308,6 +323,9 @@ namespace ZebugProject {
     }
 
     public class Zebug : Channel<Zebug> {
+
+        public static List<IChannel> s_Channels = new List<IChannel>();
+
         public Zebug() : base("ZebugBase", Color.white) {}
     }
 }

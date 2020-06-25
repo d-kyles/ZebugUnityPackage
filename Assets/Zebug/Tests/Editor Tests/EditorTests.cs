@@ -9,21 +9,22 @@ namespace Tests {
     public class EditorTests {
 
          public class BlueZebug : Channel<BlueZebug> {
-             public BlueZebug() : base("Tests", Color.blue) { }
+             public BlueZebug() : base("BlueZebug", Color.blue) { }
          }
 
          public class RedZebug : Channel<RedZebug> {
-             public RedZebug() : base("Tests", Color.red) { }
+             public RedZebug() : base("RedZebug", Color.red) { }
          }
 
          public class ChildOfRedZebug : Channel<ChildOfRedZebug> {
-             public ChildOfRedZebug() : base("Tests", Color.magenta, RedZebug.Instance) { }
+             public ChildOfRedZebug() : base("ChildOfRedZebug", Color.magenta, RedZebug.Instance) { }
          }
 
          [SetUp]
          public void Setup() {
              BlueZebug.Instance.SetLogEnabled(true);
              RedZebug.Instance.SetLogEnabled(true);
+             ChildOfRedZebug.Instance.SetLogEnabled(true);
          }
          
          [Test]
@@ -51,5 +52,13 @@ namespace Tests {
              BlueZebug.Log("Error if seen");
              RedZebug.Log("Rouge, seulement");
          }
+
+         [Test]
+         public void ChildOfRedDisabledWhenRedIs() {
+             RedZebug.Instance.SetLogEnabled(true);
+
+             ChildOfRedZebug.Log("Error if seen.");
+         }
+
     }
 }
