@@ -6,7 +6,6 @@
     xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
 >
     <engine:Label text="Hello World! From UXML" />
-    <engine:Toggle label="Zebug Channel Toggle" name="zebug-channel-toggle" />
     <engine:ListView class="the-uxml-listview" />
 
 </engine:UXML>
