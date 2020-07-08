@@ -55,7 +55,7 @@ namespace Tests {
 
          [Test]
          public void ChildOfRedDisabledWhenRedIs() {
-             RedZebug.Instance.SetLogEnabled(true);
+             RedZebug.Instance.SetLogEnabled(false);
 
              ChildOfRedZebug.Log("Error if seen.");
          }
