@@ -33,7 +33,6 @@ namespace ZebugProject {
      | Author: Dan Kyles
      */
 
-
     public static class ColorConverterExtensions {
         // Modified to write alpha too
         // https://stackoverflow.com/questions/2395438/convert-system-drawing-color-to-rgb-and-hex-value

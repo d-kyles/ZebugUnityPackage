@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
@@ -48,12 +49,25 @@ public class ZebugEditorWindow : EditorWindow
         //     csharpField.value = evt.newValue;
         // });
 
-        // Create some list of data, here simply nubers in interval [1, 1000]
+        // Create some list of data, here simply numbers in interval [1, 1000]
         // const int itemCount = 1000;
         // var items = new List<string>(itemCount);
         // for (int i = 1; i <= itemCount; i++) {
         //     items.Add(i.ToString());
         // }
+
+
+        var imTreeViewContainer = new IMGUIContainer();
+
+        imTreeViewContainer.onGUIHandler += () => {
+
+            //TreeView.
+
+
+        };
+
+        root.Add(imTreeViewContainer);
+
 
         var refreshButton = new Button(() => {
             rootVisualElement.Clear();
@@ -107,15 +121,6 @@ public class ZebugEditorWindow : EditorWindow
             Debug.Log(objects);
         };
 
-        var imTreeViewContainer = new IMGUIContainer();
-        
-        imTreeViewContainer.onGUIHandler += () => {
-
-
-
-        };
-        
-        root.Add(imTreeViewContainer);
 
         //root.Add(listView);
 
