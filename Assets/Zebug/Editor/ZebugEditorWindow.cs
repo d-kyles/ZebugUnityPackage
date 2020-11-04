@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
@@ -76,6 +77,25 @@ public class ZebugEditorWindow : EditorWindow
           text = "Refresh Window"
         };
         root.Add(refreshButton);
+
+        if (Zebug.s_Channels == null || Zebug.s_Channels.Count == 0) {
+            Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+            HashSet<Type> types = new HashSet<Type>();
+            for (int i = 0; i < loadedAssemblies.Length; i++) {
+                Assembly a = loadedAssemblies[i];
+                foreach (Type type in a.GetTypes()) {
+                    types.Add(type);
+                }
+            }
+            foreach (Type type in types) {
+                if (typeof(IChannel).IsAssignableFrom(type)
+                    && !typeof(Channel<>).IsAssignableFrom(type)
+                    && !type.IsInterface) {
+                    //  --- Pre-populate the channels list
+                    Activator.CreateInstance(type);
+                }
+            }
+        }
 
         var zebugBase = Zebug.Instance;
         var items = Zebug.s_Channels;

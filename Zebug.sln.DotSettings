@@ -63,24 +63,24 @@
 	<s:String x:Key="/Default/CodeStyle/CSharpVarKeywordUsage/ForBuiltInTypes/@EntryValue">UseExplicitType</s:String>
 	<s:String x:Key="/Default/CodeStyle/CSharpVarKeywordUsage/ForOtherTypes/@EntryValue">UseExplicitType</s:String>
 	<s:String x:Key="/Default/CodeStyle/CSharpVarKeywordUsage/ForSimpleTypes/@EntryValue">UseExplicitType</s:String>
-	<s:String x:Key="/Default/CodeStyle/FileHeader/FileHeaderText/@EntryValue"> --- Zebug --------------------------------------------------------------------------------------&#xD;
+	<s:String x:Key="/Default/CodeStyle/FileHeader/FileHeaderText/@EntryValue"> --- Zebug v0.2 ---------------------------------------------------------------------------------&#xD;
  Copyright (c) 2020 Dan Kyles&#xD;
- &#xD;
- Permission is hereby granted, free of charge, to any person obtaining a copy of this software and&#xD;
- associated documentation files (the "Software"), to deal in the Software without restriction,&#xD;
- including without limitation the rights to use, copy, modify, merge, publish, distribute,&#xD;
- sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is&#xD;
- furnished to do so, subject to the following conditions:&#xD;
- &#xD;
+&#xD;
+ Permission is hereby granted, free of charge, to any person obtaining a copy of this software&#xD;
+ and associated documentation files (the "Software"), to deal in the Software without&#xD;
+ restriction, including without limitation the rights to use, copy, modify, merge, publish,&#xD;
+ distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the&#xD;
+ Software is furnished to do so, subject to the following conditions:&#xD;
+&#xD;
  The above copyright notice and this permission notice shall be included in all copies or&#xD;
  substantial portions of the Software.&#xD;
- &#xD;
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT&#xD;
- NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND&#xD;
+&#xD;
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING&#xD;
+ BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND&#xD;
  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,&#xD;
  DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,&#xD;
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.&#xD;
- -------------------------------------------------------------------------------------------------&#xD;</s:String>
+ ------------------------------------------------------------------------------------------------&#xD;</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=AB/@EntryIndexedValue">AB</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=AI/@EntryIndexedValue">AI</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=BB/@EntryIndexedValue">BB</s:String>
