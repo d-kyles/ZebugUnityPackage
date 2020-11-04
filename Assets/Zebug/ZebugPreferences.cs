@@ -25,6 +25,10 @@ namespace ZebugProject {
      |      The settings for which channel is enabled will need to persist into builds, so
      |      PlayerPrefs won't do the trick.
      |
+     |      Currently this file isn't used, and channels with important production diagnostic info
+     |      can default to being on in builds by calling the follwing in their constructor:
+     |          `if (!Application.isEditor) { SetEnabled(true) }`
+     |
      |      Ideally you want to make sure your version control system ignores this file, as your
      |      preferred debug channels will likely be different than theirs.
      |
