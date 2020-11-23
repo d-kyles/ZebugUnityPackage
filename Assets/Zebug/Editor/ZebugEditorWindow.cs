@@ -159,4 +159,53 @@ public class ZebugEditorWindow : EditorWindow
             }
         }
     }
+
+    //   --- Might be easier to do something like this:
+    //       `includeGizmoBox` would go nicely as a PlayerPref, saved if the channel
+    //       has seen a gizmo be called in the channel, so it doesn't show for channels
+    //       that don't have any.
+    // void ZebugIMGUIChannelToggle(IChannel instance, bool includeGizmoBox = false) {
+    //     bool instanceEnabled = instance.LocalLogEnabled();
+    //     bool prevInstanceEnabled = instanceEnabled;
+    //
+    //     bool gizmosEnabled = instance.LocalGizmosEnabled();
+    //     bool prevGizmosEnabled = gizmosEnabled;
+    //
+    //     bool notEnabledAtAll = !instance.LogEnabled();
+    //
+    //     var prevColor = EditorStyles.label.normal.textColor;
+    //     var prevIndent = EditorGUI.indentLevel;
+    //     if (notEnabledAtAll) {
+    //         //  --- Kind of like Gui.enabled = false, except you can still toggle
+    //         EditorStyles.label.normal.textColor = new Color(0.5f, 0.5f, 0.5f);
+    //     } else {
+    //         EditorStyles.label.normal.textColor = instance.GetColor();
+    //     }
+    //
+    //     EditorGUI.indentLevel = instance.Depth();
+    //     EditorGUILayout.BeginHorizontal();
+    //
+    //     instanceEnabled = EditorGUILayout.Toggle(instance.Name(), instanceEnabled);
+    //
+    //     if (includeGizmoBox) {
+    //         gizmosEnabled = EditorGUILayout.Toggle("Gizmos", gizmosEnabled);
+    //     }
+    //
+    //     EditorStyles.label.normal.textColor = prevColor;
+    //
+    //     GUILayout.FlexibleSpace();
+    //
+    //     EditorGUILayout.EndHorizontal();
+    //
+    //     EditorGUI.indentLevel = prevIndent;
+    //
+    //     if (prevInstanceEnabled != instanceEnabled) {
+    //         instance.SetLogEnabled(instanceEnabled);
+    //     }
+    //
+    //     if (prevGizmosEnabled != gizmosEnabled) {
+    //         instance.SetGizmosEnabled(gizmosEnabled);
+    //     }
+    // }
+
 }
