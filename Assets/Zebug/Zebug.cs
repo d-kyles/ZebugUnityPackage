@@ -35,6 +35,19 @@ namespace ZebugProject {
      | Author: Dan Kyles
      */
 
+
+    public class Zebug : Channel<Zebug> {
+        public static List<IChannel> s_Channels = new List<IChannel>();
+
+        public static ILogger s_Logger = Debug.unityLogger;
+
+        //  --- Gizmo drawing API
+        public static Dictionary<IChannel, List<LineData>> s_ChannelLines
+            = new Dictionary<IChannel, List<LineData>>();
+
+        public Zebug() : base("ZebugBase", Color.white) { }
+    }
+
     public static class ColorConverterExtensions {
         // Modified to write alpha too
         // https://stackoverflow.com/questions/2395438/convert-system-drawing-color-to-rgb-and-hex-value
@@ -147,25 +160,50 @@ namespace ZebugProject {
             m_ChannelColor = channelColor;
             m_ColorString = $"<color={channelColor.ToHexString()}>{channelName}: </color>";
 
+
+            //  --- Default on or not? This is a hard problem to solve. People who add channels
+            //      themselves would generally like them to be on and show up without having to do
+            //      anything extra. However for people not currently debugging that module, as well
+            //      as designers and artists... probably do not want it to show up randomly.
+            //      Half the point of this library is to help cut down on console log clutter.
+            //      Currently for things that default off you need to add GUI to Set the log
+            //      to true for you.
+            //      2020-11-23: You can now set a preprocessor define to force to default.
             bool defaultOn = false;
+
+            #if ZEBUG_ALL_ON
+                defaultOn = true;
+            #endif
+
+            //  --- Some builds have been run on device and have stored _off_ fields for things that
+            //      shouldn't have, like ZebugBase. This will make sure it resets them all on.
+            bool forceToDefault = false;
+
+            #if ZEBUG_FORCE_TO_DEFAULT
+            forceToDefault = true;
+            #endif
 
             if (parent != null) {
                 m_Parent = parent;
                 m_Depth = m_Parent.Depth() + 1;
-            } else if (channelName != "ZebugBase") { // todo this isn't great
-                //  --- This should potentially be a serializable null, depending on how I want the
-                //      hierarchy editor code to look.
-                m_Parent = Zebug.Instance;
-                m_Depth = 1;
-                defaultOn = true;
+            } else {
+                bool isBase = channelName == "ZebugBase"; // todo this isn't great
+                if (!isBase) {
+                    //  --- This should potentially be a serializable null, depending on how I want the
+                    //      hierarchy editor code to look.
+                    m_Parent = Zebug.Instance;
+                    m_Depth = 1;
+                } else {
+                    //  --- We're the base channel!
+                    defaultOn = true;
+                }
             }
 
             string fullName = FullName();
             string logKey = kLogKeyPrefix + fullName;
-            if (!PlayerPrefs.HasKey(logKey)) {
+            if (forceToDefault || !PlayerPrefs.HasKey(logKey)) {
                 PlayerPrefs.SetInt(logKey, defaultOn ? 1 : 0);
             }
-
             m_LogEnabled = PlayerPrefs.GetInt(logKey) == 1;
 
             string gizmoKey = kGizmoKeyPrefix + fullName;
@@ -198,6 +236,10 @@ namespace ZebugProject {
         }
 
         public static void Log(object message, Object context) {
+            if (!Instance.LogEnabled()) {
+                return;
+            }
+
             Zebug.s_Logger.Log(LogType.Log, (object) (Instance.m_ColorString + message), context);
         }
 
@@ -223,7 +265,15 @@ namespace ZebugProject {
             Object context,
             string format,
             params object[] args) {
-            if (!Instance.LogEnabled()) {
+
+            bool mutingThisLog = !Instance.LogEnabled();
+
+            if (logType != LogType.Log) {
+                if (!Instance.AllowWarningAndErrorMuting) {
+                    mutingThisLog = false;
+                }
+            }
+            if (mutingThisLog) {
                 return;
             }
 
@@ -231,7 +281,9 @@ namespace ZebugProject {
         }
 
         public static void LogError(object message) {
-            Zebug.s_Logger.Log(LogType.Error, Instance.m_ColorString + message);
+            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled()) {
+                Zebug.s_Logger.Log(LogType.Error, Instance.m_ColorString + message);
+            }
         }
 
         // public static void LogError(object message, Object context) {
@@ -239,11 +291,15 @@ namespace ZebugProject {
         // }
 
         public static void LogErrorFormat(string format, params object[] args) {
-            Zebug.s_Logger.LogFormat(LogType.Error, Instance.m_ColorString + format, args);
+            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled()) {
+                Zebug.s_Logger.LogFormat(LogType.Error, Instance.m_ColorString + format, args);
+            }
         }
 
         public static void LogErrorFormat(Object context, string format, params object[] args) {
-            Zebug.s_Logger.LogFormat(LogType.Error, context, Instance.m_ColorString + format, args);
+            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled()) {
+                Zebug.s_Logger.LogFormat(LogType.Error, context, Instance.m_ColorString + format, args);
+            }
         }
 
         // public static void LogException(Exception exception) {
@@ -400,15 +456,4 @@ namespace ZebugProject {
         public float endTime;
     }
 
-    public class Zebug : Channel<Zebug> {
-        public static List<IChannel> s_Channels = new List<IChannel>();
-
-        public static ILogger s_Logger = Debug.unityLogger;
-
-        //  --- Gizmo drawing API
-        public static Dictionary<IChannel, List<LineData>> s_ChannelLines
-            = new Dictionary<IChannel, List<LineData>>();
-
-        public Zebug() : base("ZebugBase", Color.white) { }
-    }
 }

@@ -74,5 +74,23 @@ public class Todo {
 
     // Do the auto on-load creation of hidden scene element + OnSceneUI or whatever.
 
+    Great idea: Zebug.GUIButton
+      - On startup, add your buttons, and callbacks to hook into, then a class can add debug hooks
+       for that kind of behaviour, and the main Zebug class can handle all the annoying layout
+       and enable/disable stuff.
+
+        private void OnGUI() {
+            if (channel.DebugGUIEnabled) {
+                for (int i = Zebug.s_Buttons.Count - 1; i >= 0; i--) {
+                    Button b = Zebug.s_Buttons[i];
+
+                    Rect buttonRect = Zebug.LayoutNextGUIButton(b);
+                    if (GUI.Button(buttonRect, b.name) {
+                        b.callback?.Invoke();
+                    }
+                }
+            }
+        }
+
     */
 }
