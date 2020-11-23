@@ -32,11 +32,16 @@ namespace ZebugProject {
      |  --- TODO(dan): `Channel` should be probably be renamed DebugChannel, as it's used naked and
      |                 has no context when you read it in an inheritance declaration.
      |
+     |  --- TODO(dan): Move ColorTagsOnlyInEditor to some sort of true library config
+     |
      | Author: Dan Kyles
      */
 
 
     public class Zebug : Channel<Zebug> {
+
+        public const bool ColorTagsOnlyInEditor = true;
+
         public static List<IChannel> s_Channels = new List<IChannel>();
 
         public static ILogger s_Logger = Debug.unityLogger;
@@ -158,8 +163,9 @@ namespace ZebugProject {
 
             m_ChannelName = channelName;
             m_ChannelColor = channelColor;
-            m_ColorString = $"<color={channelColor.ToHexString()}>{channelName}: </color>";
-
+            m_ColorString = (!Zebug.ColorTagsOnlyInEditor || Application.isEditor)
+                                ? $"<color={channelColor.ToHexString()}>{channelName}: </color>"
+                                : channelName + ": ";
 
             //  --- Default on or not? This is a hard problem to solve. People who add channels
             //      themselves would generally like them to be on and show up without having to do
