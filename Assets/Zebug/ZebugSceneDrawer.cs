@@ -38,7 +38,6 @@ namespace ZebugProject {
             //go.hideFlags = HideFlags.HideAndDontSave;
             DontDestroyOnLoad(go);
 
-
             Zebug.Log("Initializing Scene Drawer");
         }
 

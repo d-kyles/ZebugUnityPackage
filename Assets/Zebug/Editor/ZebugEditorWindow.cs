@@ -1,25 +1,53 @@
+//  --- Zebug v0.2 ---------------------------------------------------------------------------------
+//  Copyright (c) 2020 Dan Kyles
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+//  and associated documentation files (the "Software"), to deal in the Software without
+//  restriction, including without limitation the rights to use, copy, modify, merge, publish,
+//  distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+//  Software is furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in all copies or
+//  substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+//  BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+//  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+//  DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//  ------------------------------------------------------------------------------------------------
+
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
-using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using UnityEngine.UIElements;
-using UnityEditor.UIElements;
 using ZebugProject;
 
+public class ZebugEditorWindow : EditorWindow {
 
-public class ZebugEditorWindow : EditorWindow
-{
+    [SerializeField] private ZebugEditorWindow m_Test;
+
+    private const string kEditorLocation = "Assets/Zebug/Editor";
+    // private const string kEditorLocation = "Assets/Plugins/Zebug/Editor";
+
+    private const string kWindowElementName = "ZebugEditorWindow";
+    private const string kWindowTreePath = kEditorLocation + "/" + kWindowElementName;
+    private const string kWindowTreeLayout = kWindowTreePath + ".uxml";
+    private const string kWindowTreeStyle = kWindowTreePath + ".uss";
+
+    private const string kChannelElementName = "ZebugChannelListElement";
+    private const string kChannelElementPath = kEditorLocation + "/" + kChannelElementName;
+    private const string kChannelElementLayout = kChannelElementPath + ".uxml";
+
     [MenuItem("Window/Zebug")]
-    public static void ShowExample()
-    {
+    public static void ShowExample() {
         ZebugEditorWindow wnd = GetWindow<ZebugEditorWindow>();
         wnd.titleContent = new GUIContent("Zebug");
     }
 
-    public void OnEnable()
-    {
+    public void OnEnable() {
         // Each editor window contains a root VisualElement object
         VisualElement root = rootVisualElement;
         root.style.marginTop = 4;
@@ -35,15 +63,13 @@ public class ZebugEditorWindow : EditorWindow
         root.Add(label);
 
         // Import UXML
-        var visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Zebug/Editor/ZebugEditorWindow.uxml");
-        VisualElement labelFromUXML = visualTree.CloneTree();
-        root.Add(labelFromUXML);
+        var loadedEditorWindowTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(kWindowTreeLayout);
+        var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(kWindowTreeStyle);
+        VisualElement editorWindowLayout = loadedEditorWindowTree.CloneTree();
+        editorWindowLayout.styleSheets.Add(styleSheet);
+        root.Add(editorWindowLayout);
 
-        // A stylesheet can be added to a VisualElement.
-        // The style will be applied to the VisualElement and all of its children.
-        var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Zebug/Editor/ZebugEditorWindow.uss");
-        //labelWithStyle.styleSheets.Add(styleSheet);
-
+        var channelElemTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(kChannelElementLayout);
 
         // // Mirror value of uxml field into the C# field.
         // csharpField.RegisterCallback<ChangeEvent<bool>>((evt) => {
@@ -57,26 +83,11 @@ public class ZebugEditorWindow : EditorWindow
         //     items.Add(i.ToString());
         // }
 
-
-        var imTreeViewContainer = new IMGUIContainer();
-
-        imTreeViewContainer.onGUIHandler += () => {
-
-            //TreeView.
+        // IMGUIContainer imTreeViewContainer = new IMGUIContainer();
+        // imTreeViewContainer.onGUIHandler += () => { };
+        // root.Add(imTreeViewContainer);
 
 
-        };
-
-        root.Add(imTreeViewContainer);
-
-
-        var refreshButton = new Button(() => {
-            rootVisualElement.Clear();
-            this.OnEnable();
-        }) {
-          text = "Refresh Window"
-        };
-        root.Add(refreshButton);
 
         if (Zebug.s_Channels == null || Zebug.s_Channels.Count == 0) {
             Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -87,62 +98,96 @@ public class ZebugEditorWindow : EditorWindow
                     types.Add(type);
                 }
             }
+
             foreach (Type type in types) {
                 if (typeof(IChannel).IsAssignableFrom(type)
                     && !typeof(Channel<>).IsAssignableFrom(type)
                     && !type.IsInterface) {
                     //  --- Pre-populate the channels list
+                    //      default constructor adds instance to the base ZebugInstance
                     Activator.CreateInstance(type);
                 }
             }
         }
 
-        var zebugBase = Zebug.Instance;
-        var items = Zebug.s_Channels;
+        Channel<Zebug> zebugBase = Zebug.Instance;
+        List<IChannel> items = Zebug.s_Channels;
+
+        ZebugChannelFoldout channelFoldout = new ZebugChannelFoldout((IChannel)zebugBase);
+        root.Add(new Label("TESTING THING"));
+        root.Add(channelFoldout);
 
 
-        // The "makeItem" function will be called as needed
-        // when the ListView needs more items to render
-        Func<VisualElement> makeItem = () => {
-            return new ZebugToggleElement();
+        // var channelsContainer = editorWindowLayout.Q<VisualElement>("ChannelsContainer");
+        // channelsContainer.Add(MakeChannelElem(zebugBase));
+        //
+        // VisualElement MakeChannelElem(IChannel channel) {
+        //     var clone = channelElemTemplate.CloneTree();
+        //     var foldout = clone.Q(null, "zebug-foldout");
+        //     var foldoutCheck = foldout.Q(null, "zebug-foldout-checkmark");
+        //     var foldoutLabel = foldout.Q<Label>(null, "zebug-foldout-label");
+        //     var clickArea = foldout.Q("ClickArea");
+        //     //clickArea.clicked
+        //     foldoutLabel.text = channel.Name();
+        //     return clone;
+        // }
+
+        var refreshButton = editorWindowLayout.Q<Button>(null, "zebug-refresh-window-button");
+        refreshButton.clicked += () => {
+            rootVisualElement.Clear();
+            OnEnable();
         };
 
-        // As the user scrolls through the list, the ListView object
-        // will recycle elements created by the "makeItem"
-        // and invoke the "bindItem" callback to associate
-        // the element with the matching data item (specified as an index in the list)
-        Action<VisualElement, int> bindItem = (e, i) => {
-            if (e is ZebugToggleElement t) {
-                IChannel zChannel = items[i];
-                t.text = zChannel.Name();
-                t.style.color = zChannel.GetColor();
-                t.Channel = zChannel;
-                t.value = zChannel.LogEnabled();
-            }
-        };
 
-        var listView = root.Q<ListView>();
-        listView.styleSheets.Add(styleSheet);
-        var ss = listView.styleSheets;
-        var s = listView.style;
-        //listView.StretchToParentSize();
-        listView.makeItem = makeItem;
-        listView.bindItem = bindItem;
-        listView.itemsSource = items;
-        listView.selectionType = SelectionType.Multiple;
-
-        // Callback invoked when the user double clicks an item
-        listView.onItemChosen += obj => {
-            Debug.Log(obj);
-        };
-
-        // Callback invoked when the user changes the selection inside the ListView
-        listView.onSelectionChanged += objects => {
-            Debug.Log(objects);
-        };
-
+        {
+            //
+            // // The "makeItem" function will be called as needed
+            // // when the ListView needs more items to render
+            // Func<VisualElement> makeItem = () => {
+            //     return new ZebugToggleElement();
+            // };
+            //
+            // // As the user scrolls through the list, the ListView object
+            // // will recycle elements created by the "makeItem"
+            // // and invoke the "bindItem" callback to associate
+            // // the element with the matching data item (specified as an index in the list)
+            // Action<VisualElement, int> bindItem = (e, i) => {
+            //     if (e is ZebugToggleElement t) {
+            //         IChannel zChannel = items[i];
+            //         t.text = zChannel.Name();
+            //         t.style.color = zChannel.GetColor();
+            //         t.Channel = zChannel;
+            //         t.value = zChannel.LogEnabled();
+            //     }
+            // };
+            //
+            // ListView listView = root.Q<ListView>();
+            // listView.styleSheets.Add(styleSheet);
+            // VisualElementStyleSheetSet ss = listView.styleSheets;
+            // IStyle s = listView.style;
+            // //listView.StretchToParentSize();
+            // listView.makeItem = makeItem;
+            // listView.bindItem = bindItem;
+            // listView.itemsSource = items;
+            // listView.selectionType = SelectionType.Multiple;
+            //
+            // // Callback invoked when the user double clicks an item
+            // listView.onItemChosen += obj => {
+            //     Debug.Log(obj);
+            // };
+            //
+            // // Callback invoked when the user changes the selection inside the ListView
+            // listView.onSelectionChanged += objects => {
+            //     Debug.Log(objects);
+            // };
+        }
 
         //root.Add(listView);
+    }
+
+
+
+    public class ZebugChannelElement : Foldout {
 
     }
 
@@ -207,5 +252,4 @@ public class ZebugEditorWindow : EditorWindow
     //         instance.SetGizmosEnabled(gizmosEnabled);
     //     }
     // }
-
 }

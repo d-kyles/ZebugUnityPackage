@@ -1,11 +1,20 @@
-<?xml version="1.0" encoding="utf-8"?>
-<engine:UXML
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:engine="UnityEngine.UIElements"
-    xmlns:editor="UnityEditor.UIElements"
-    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
->
-    <engine:Label text="Hello World! From UXML" />
-    <engine:ListView class="the-uxml-listview" />
-
-</engine:UXML>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:Label text="Hello World! From UXML">
+        <Style src="ZebugEditorWindow.uss" />
+    </ui:Label>
+    <ui:ListView name="ZebugChannels" class="the-uxml-listview disabled">
+        <Style src="ZebugEditorWindow.uss" />
+    </ui:ListView>
+    <ui:Toggle text="Thingy">
+        <Style src="ZebugEditorWindow.uss" />
+    </ui:Toggle>
+    <ui:Button text="Refresh Window" class="zebug-refresh-window-button">
+        <Style src="ZebugEditorWindow.uss" />
+    </ui:Button>
+    <ZebugChannelFoldout name="ChannelNameHere" value="true" text="ChannelNameHere" class="zebug-channel-element" style="display: flex;">
+        <Style src="ZebugEditorWindow.uss" />
+        <ZebugChannelFoldout name="ChannelNameHere" value="true" text="ChannelNameHere" class="zebug-channel-element" style="display: flex;" />
+        <ZebugChannelFoldout name="ChannelNameHere" value="true" text="ChannelNameHere" class="zebug-channel-element" style="display: flex;" />
+        <ZebugChannelFoldout name="ChannelNameHere" value="true" text="ChannelNameHere" class="zebug-channel-element" style="display: flex;" />
+    </ZebugChannelFoldout>
+</ui:UXML>
