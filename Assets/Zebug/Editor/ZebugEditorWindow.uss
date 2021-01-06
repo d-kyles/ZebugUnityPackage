@@ -5,9 +5,46 @@
 }
 
 .the-uxml-listview {
-    /* Provide the list view with an explict height for every row
-    so it can calculate how many items to actually display */
     --unity-item-height: 16;
     height: 200px;
     width: 200px;
 }
+
+.zebug-foldout-label {
+}
+
+.disabled {
+    opacity: 1;
+    display: none;
+}
+
+.showthingy {
+    opacity: 1;
+    background-color: rgb(42, 42, 42);
+    border-left-color: rgba(32, 155, 255, 255);
+    border-right-color: rgba(32, 155, 255, 255);
+    border-top-color: rgba(32, 155, 255, 255);
+    border-bottom-color: rgba(32, 155, 255, 255);
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    min-height: auto;
+}
+
+.min200 {
+    min-height: 200px;
+}
+
+.zebug-channel-element {
+    background-color: rgba(50, 50, 50, 255);
+    border-left-color: rgba(52, 54, 60, 255);
+    border-right-color: rgba(52, 54, 60, 255);
+    border-top-color: rgba(52, 54, 60, 255);
+    border-bottom-color: rgba(52, 54, 60, 255);
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+}
+

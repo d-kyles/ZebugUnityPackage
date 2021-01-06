@@ -42,37 +42,9 @@ public class Todo {
       }
     ```
 
-    public class Zebug : Channel<Zebug> {
-
-        public Zebug() : base("ChannelName"
-                             , new Color(0.75f, 0.75f, 0.75f)
-                             , ZebugProject.Zebug.Instance) {
-
-        }
-
-        public static List<(Vector3, Vector3, Color, float)> s_Lines
-            = new List<(Vector3, Vector3, Color, float)>();
-
-        public static void DrawLine(Vector3 startPosition, Vector3 endPosition
-                                    , Color color, float duration) {
-            s_Lines.Add((startPosition, endPosition, color, Time.time + duration));
-        }
-    }
-
-    public void OnDrawGizmos() {
-        if (Zebug.s_Lines.Count > 0) {
-            for (int i = Zebug.s_Lines.Count - 1; i >= 0; i--) {
-                (Vector3 start, Vector3 end , Color color, float time) = Zebug.s_Lines[i];
-                Gizmos.color = color;
-                Gizmos.DrawLine(start, end);
-                if (Time.time > time) {
-                    Zebug.s_Lines.RemoveAt(i);
-                }
-            }
-        }
-    }
-
     // Do the auto on-load creation of hidden scene element + OnSceneUI or whatever.
+
+    ok... log/gizmo enabled should be flags, esp if GUIButton gets added
 
     Great idea: Zebug.GUIButton
       - On startup, add your buttons, and callbacks to hook into, then a class can add debug hooks

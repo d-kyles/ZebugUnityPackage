@@ -17,9 +17,11 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //  ------------------------------------------------------------------------------------------------
 
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
+using ZebugProject.Util;
 using Debug = UnityEngine.Debug;
 
 namespace ZebugProject {
@@ -37,8 +39,7 @@ namespace ZebugProject {
      | Author: Dan Kyles
      */
 
-
-    public class Zebug : Channel<Zebug> {
+    public sealed class Zebug : Channel<Zebug> {
 
         public const bool ColorTagsOnlyInEditor = true;
 
@@ -53,14 +54,6 @@ namespace ZebugProject {
         public Zebug() : base("ZebugBase", Color.white) { }
     }
 
-    public static class ColorConverterExtensions {
-        // Modified to write alpha too
-        // https://stackoverflow.com/questions/2395438/convert-system-drawing-color-to-rgb-and-hex-value
-        public static string ToHexString(this Color c) {
-            return $"#{(int) (c.r*255):X2}{(int) (c.g*255):X2}{(int) (c.b*255):X2}{(int) (c.a*255):X2}";
-        }
-    }
-
     public interface IChannel {
         bool LogEnabled();
         bool LocalLogEnabled();
@@ -72,6 +65,10 @@ namespace ZebugProject {
         string FullName();
         Color GetColor();
         int Depth();
+
+        //  --- should really be pseudo non-public
+        IList<IChannel> Children();
+        void AddChild(IChannel channel);
     }
 
     public partial class Channel<T> : IChannel where T : Channel<T>, new() {
@@ -112,6 +109,17 @@ namespace ZebugProject {
             return m_Depth;
         }
 
+        public IList<IChannel> Children() {
+            // groooOOOSSSsss
+            return m_Children;
+        }
+
+        public void AddChild(IChannel channel) {
+            if (!m_Children.Contains(channel)) {
+                m_Children.Add(channel);
+            }
+        }
+
         public bool GizmosEnabled() {
             bool enabled = m_GizmosEnabled;
             if (m_Parent != null) {
@@ -149,6 +157,8 @@ namespace ZebugProject {
             string logKey = kLogKeyPrefix + FullName();
             PlayerPrefs.SetInt(logKey, enabled ? 1 : 0);
         }
+
+        private List<IChannel> m_Children = new List<IChannel>();
 
         private const string kLogKeyPrefix = "ZebugLogsEnabled--";
         private const string kGizmoKeyPrefix = "ZebugGizmosEnabled--";
@@ -199,10 +209,15 @@ namespace ZebugProject {
                     //      hierarchy editor code to look.
                     m_Parent = Zebug.Instance;
                     m_Depth = 1;
+                    m_Parent.AddChild(this);
                 } else {
                     //  --- We're the base channel!
                     defaultOn = true;
                 }
+            }
+
+            if (m_Parent != null) {
+                m_Parent.AddChild(this);
             }
 
             string fullName = FullName();

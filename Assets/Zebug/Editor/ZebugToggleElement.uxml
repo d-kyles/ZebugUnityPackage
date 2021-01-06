@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:VisualElement name="ZebugToggle" focusable="true" class="unity-base-field unity-toggle unity-toggle--no-text" style="flex-direction: row; flex-shrink: 1; flex-wrap: nowrap; width: auto;">
+        <ui:Label text="Toggle" class="unity-toggle__label unity-base-field__label" style="flex-shrink: 1;" />
+        <ui:VisualElement class="unity-base-field__input unity-toggle__input" style="flex-shrink: 1; flex-grow: 0;">
+            <ui:VisualElement name="unity-checkmark" class="unity-toggle__checkmark" style="flex-shrink: 1; flex-grow: 0;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

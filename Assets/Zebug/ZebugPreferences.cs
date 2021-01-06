@@ -66,6 +66,10 @@ namespace ZebugProject {
             if (s_Instance == null) {
                 s_Instance = Resources.Load<ZebugPreferences>(kAssetName);
             }
+            //  --- TODO(dan): Addressables load here? it seems unlikely that there'd be significant
+            //                 enough resources in the plugin to require a bundle. Maybe if we start
+            //                 including non-procedural primitive geometry for physics visualization
+            //                 or something, but I'd prefer to generate that at runtime.
             if (s_Instance == null) {
                 s_Instance = CreateInstance<ZebugPreferences>();
 
