@@ -21,10 +21,10 @@
 .showthingy {
     opacity: 1;
     background-color: rgb(42, 42, 42);
-    border-left-color: rgba(32, 155, 255, 255);
-    border-right-color: rgba(32, 155, 255, 255);
-    border-top-color: rgba(32, 155, 255, 255);
-    border-bottom-color: rgba(32, 155, 255, 255);
+    border-left-color: rgb(32, 155, 255);
+    border-right-color: rgb(32, 155, 255);
+    border-top-color: rgb(32, 155, 255);
+    border-bottom-color: rgb(32, 155, 255);
     border-left-width: 1px;
     border-right-width: 1px;
     border-top-width: 1px;
@@ -37,14 +37,25 @@
 }
 
 .zebug-channel-element {
-    background-color: rgba(50, 50, 50, 255);
-    border-left-color: rgba(52, 54, 60, 255);
-    border-right-color: rgba(52, 54, 60, 255);
-    border-top-color: rgba(52, 54, 60, 255);
-    border-bottom-color: rgba(52, 54, 60, 255);
+    background-color: rgb(50, 50, 50);
+    border-left-color: rgb(52, 54, 60);
+    border-right-color: rgb(52, 54, 60);
+    border-top-color: rgb(52, 54, 60);
+    border-bottom-color: rgb(52, 54, 60);
     border-left-width: 1px;
     border-right-width: 1px;
     border-top-width: 1px;
     border-bottom-width: 1px;
 }
 
+.zebug-toggle-element {
+    padding-left: 5px;
+}
+
+.zebug-toggle-on #unity-checkmark {
+    background-image: resource('stylesheets/northstar/images/d_toggle_on.png');
+}
+
+.zebug-toggle-off #unity-checkmark {
+    background-image: resource('stylesheets/northstar/images/d_toggle_bg.png');
+}

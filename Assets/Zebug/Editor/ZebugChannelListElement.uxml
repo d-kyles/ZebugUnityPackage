@@ -1,25 +1,18 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
-    <ui:Template name="ZebugToggleElement" src="ZebugToggleElement.uxml" />
-    <ui:Foldout text="Foldout" value="false" class="disabled">
-        <Style src="ZebugEditorWindow.uss" />
-    </ui:Foldout>
-    <ui:VisualElement name="Foldout" class="unity-foldout unity-foldout--depth-0 zebug-foldout disabled" style="overflow: visible; opacity: 1;">
-        <Style src="ZebugEditorWindow.uss" />
-        <ui:VisualElement name="Toggle" class="unity-base-field unity-base-field--no-label unity-toggle">
-            <ui:VisualElement class="unity-base-field__input unity-foldout__toggle" style="flex-direction: row;">
-                <ui:VisualElement name="unity-checkmark" class="unity-toggle__checkmark zebug-foldout-checkmark" />
-                <ui:Label text="Label" class="unity-toggle__text zebug-foldout-label" style="align-items: stretch; justify-content: flex-start; width: 100%; height: 100%; margin-left: 0;" />
-            </ui:VisualElement>
-            <ui:VisualElement name="HorizontalElement" style="flex-direction: row;">
-                <ui:Instance template="ZebugToggleElement" name="ZebugToggleElement" class="zebug-log-toggle" style="height: 21px; width: 173px; flex-direction: column;" />
-                <ui:Instance template="ZebugToggleElement" name="ZebugToggleElement" class="zebug-gizmo-toggle" style="height: 19px; width: 171px;" />
-            </ui:VisualElement>
-        </ui:VisualElement>
-        <ui:VisualElement name="unity-content" class="unity-foldout__content zebug-foldout-content" />
-    </ui:VisualElement>
     <ui:VisualElement name="HorizontalElement" style="flex-direction: row;">
         <Style src="ZebugEditorWindow.uss" />
-        <ui:Instance template="ZebugToggleElement" name="ZebugToggleElement" class="zebug-log-toggle" style="height: 21px; width: 173px; flex-direction: column;" />
-        <ui:Instance template="ZebugToggleElement" name="ZebugToggleElement" class="zebug-gizmo-toggle" style="height: 19px; width: 171px;" />
+        <ui:Toggle label="Toggle" name="LogToggle" class="zebug-toggle-element" />
+        <ui:VisualElement name="LogToggle" class="unity-base-field unity-toggle zebug-toggle-element" style="flex-direction: row;">
+            <ui:Label text="Logs" class="unity-toggle__label unity-base-field__label" />
+            <ui:VisualElement class="unity-base-field__input unity-toggle__input">
+                <ui:VisualElement name="unity-checkmark" class="unity-toggle__checkmark zebug-toggle-background" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="GizmoToggle" class="unity-base-field unity-toggle zebug-toggle-element" style="flex-direction: row;">
+            <ui:Label text="Gizmos" class="unity-toggle__label unity-base-field__label" />
+            <ui:VisualElement class="unity-base-field__input unity-toggle__input">
+                <ui:VisualElement name="unity-checkmark" class="unity-toggle__checkmark zebug-toggle-background" />
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

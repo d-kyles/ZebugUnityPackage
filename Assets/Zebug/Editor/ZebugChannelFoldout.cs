@@ -17,16 +17,16 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //  ------------------------------------------------------------------------------------------------
 
-using UnityEditor;
+using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 using ZebugProject;
 
 public class ZebugChannelFoldout : BindableElement, INotifyValueChanged<bool> {
-
     internal static readonly string ussFoldoutDepthClassName = "unity-foldout--depth-";
     internal static readonly int ussFoldoutMaxDepth = 4;
 
+    //private ZebugChannelToggle m_Toggle;
     private Toggle m_Toggle;
     private VisualElement m_Container;
 
@@ -89,11 +89,14 @@ public class ZebugChannelFoldout : BindableElement, INotifyValueChanged<bool> {
         Construct(zebugBase);
     }
 
+    private static Action<bool> s_EmptyBoolAction = _ => {};
+
     private void Construct(IChannel channel) {
         m_Value = true;
         AddToClassList(ussClassName);
         AddToClassList("zebug-channel-element");
 
+        //ZebugChannelToggle toggle = new ZebugChannelToggle();
         Toggle toggle = new Toggle();
         toggle.value = true;
         m_Toggle = toggle;
@@ -106,17 +109,81 @@ public class ZebugChannelFoldout : BindableElement, INotifyValueChanged<bool> {
 
         if (channel != null) {
             text = channel.Name();
+            m_Toggle.Q<Label>().style.color = channel.GetColor();
         }
 
-        if (s_ChannelDataTemplate == null) {
-            // this is terrible! :D
-            const string kEditorLocation = "Assets/Zebug/Editor";
-            const string kChannelElementName = "ZebugChannelListElement";
-            const string kChannelElementPath = kEditorLocation + "/" + kChannelElementName;
-            const string kChannelElementLayout = kChannelElementPath + ".uxml";
-            s_ChannelDataTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(kChannelElementLayout);
+        // if (s_ChannelDataTemplate == null) {
+        //     // this is terrible! :D
+        //     const string kEditorLocation = "Assets/Zebug/Editor";
+        //     const string kChannelElementName = "ZebugChannelListElement";
+        //     const string kChannelElementPath = kEditorLocation + "/" + kChannelElementName;
+        //     const string kChannelElementLayout = kChannelElementPath + ".uxml";
+        //     s_ChannelDataTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(kChannelElementLayout);
+        // }
+        var channelData = new VisualElement {
+            name = "HorizontalElement",
+
+        };
+        IStyle horizontalElemStyle = channelData.style;
+        horizontalElemStyle.flexDirection = new StyleEnum<FlexDirection>(FlexDirection.Row);
+
+        const string kZebugToggleElement = "zebug-toggle-element";
+        var logToggle = new Toggle { name="LogToggle", text = "Log" };
+        logToggle.AddToClassList(kZebugToggleElement);
+
+        var gizmosToggle = new Toggle { name="LogToggle", text = "Gizmos" };
+        gizmosToggle.AddToClassList(kZebugToggleElement);
+
+        if (channel != null) {
+            bool logEnabled = channel.LocalLogEnabled();
+            Action<bool> logValueSetter = val => { channel.SetLogEnabled(val); };
+            Action<Action<bool>> logValueEventSubscriber = callback => channel.OnLocalLogEnabled += callback;
+            _SetupZebugToggle(logToggle, logValueSetter, logValueEventSubscriber, logEnabled);
+
+            bool gizmosEnabled = channel.LocalGizmosEnabled();
+            Action<bool> gizmosValueSetter = val => { channel.SetGizmosEnabled(val); };
+            Action<Action<bool>> gizmosValueEventSubscriber = callback => channel.OnLocalGizmosEnabled += callback;
+            _SetupZebugToggle(gizmosToggle, gizmosValueSetter, gizmosValueEventSubscriber, gizmosEnabled);
+
+        } else {
+            _SetupZebugToggle(logToggle, s_EmptyBoolAction);
+            _SetupZebugToggle(gizmosToggle, s_EmptyBoolAction);
         }
-        TemplateContainer channelData = s_ChannelDataTemplate.CloneTree();
+
+        void _SetupZebugToggle(Toggle t,
+                               Action<bool> setValue,
+                               Action<Action<bool>> callbackSubscription = null,
+                               bool initialValue = false) {
+            t.value = initialValue;
+            _SetZebugToggleClasses(t, initialValue);
+            t.RegisterValueChangedCallback(evt => {
+                bool newVal = evt.newValue;
+                setValue(newVal);
+                _SetZebugToggleClasses(t, newVal);
+            });
+
+            if (callbackSubscription != null) {
+                callbackSubscription(newVal => {
+                    t.value = newVal;
+                });
+            }
+
+            void _SetZebugToggleClasses(VisualElement ve, bool enabled) {
+                const string kToggleOn = "zebug-toggle-on";
+                const string kToggleOff = "zebug-toggle-off";
+                if (enabled) {
+                    ve.RemoveFromClassList(kToggleOff);
+                    ve.AddToClassList(kToggleOn);
+                } else {
+                    ve.RemoveFromClassList(kToggleOn);
+                    ve.AddToClassList(kToggleOff);
+                }
+            }
+        }
+
+        channelData.Add(logToggle);
+        channelData.Add(gizmosToggle);
+
         m_Toggle.Add(channelData);
 
         m_Container = new VisualElement {
@@ -127,20 +194,19 @@ public class ZebugChannelFoldout : BindableElement, INotifyValueChanged<bool> {
 
         if (channel != null) {
             var children = channel.Children();
+            if (children.Count == 0) {
+                m_Toggle.Q("unity-checkmark").style.visibility = Visibility.Hidden;
+            }
+
             foreach (var child in children) {
                 m_Container.Add(new ZebugChannelFoldout(child));
             }
-            if (children.Count == 0) {
-                //m_Toggle.Q(null, "unity-toggle__checkmark").style.display = DisplayStyle.None;
-                //m_Toggle.Q<Label>().AddToClassList(".zebug-nochild-margin");
-                // m_Toggle.Q(null, "unity-toggle__checkmark")
-                //         .AddToClassList(".zebug-no-background-image");
-                m_Toggle.Q(null, "unity-toggle__checkmark").style.visibility = Visibility.Hidden;
-            }
+
         }
 
         //RegisterCallback(new EventCallback<AttachToPanelEvent>(OnAttachToPanel));
     }
+
 
 
 
@@ -170,7 +236,7 @@ public class ZebugChannelFoldout : BindableElement, INotifyValueChanged<bool> {
     /// <summary>
     ///   <para>Instantiates a Foldout using the data read from a UXML file.</para>
     /// </summary>
-    public new class UxmlFactory : UxmlFactory<ZebugChannelFoldout, ZebugChannelFoldout.UxmlTraits> { }
+    public new class UxmlFactory : UxmlFactory<ZebugChannelFoldout, UxmlTraits> { }
 
     public new class UxmlTraits : BindableElement.UxmlTraits {
         private UxmlStringAttributeDescription m_Text;

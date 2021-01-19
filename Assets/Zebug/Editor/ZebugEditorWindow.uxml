@@ -1,20 +1,13 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
-    <ui:Label text="Hello World! From UXML">
-        <Style src="ZebugEditorWindow.uss" />
-    </ui:Label>
-    <ui:ListView name="ZebugChannels" class="the-uxml-listview disabled">
-        <Style src="ZebugEditorWindow.uss" />
-    </ui:ListView>
-    <ui:Toggle text="Thingy">
-        <Style src="ZebugEditorWindow.uss" />
-    </ui:Toggle>
     <ui:Button text="Refresh Window" class="zebug-refresh-window-button">
         <Style src="ZebugEditorWindow.uss" />
     </ui:Button>
-    <ZebugChannelFoldout name="ChannelNameHere" value="true" text="ChannelNameHere" class="zebug-channel-element" style="display: flex;">
+    <ZebugChannelFoldout text="ChannelName" class="test-color">
         <Style src="ZebugEditorWindow.uss" />
-        <ZebugChannelFoldout name="ChannelNameHere" value="true" text="ChannelNameHere" class="zebug-channel-element" style="display: flex;" />
-        <ZebugChannelFoldout name="ChannelNameHere" value="true" text="ChannelNameHere" class="zebug-channel-element" style="display: flex;" />
-        <ZebugChannelFoldout name="ChannelNameHere" value="true" text="ChannelNameHere" class="zebug-channel-element" style="display: flex;" />
+        <ZebugChannelFoldout text="ChannelName" />
+        <ZebugChannelFoldout text="ChannelName" />
     </ZebugChannelFoldout>
+    <ui:ScrollView class="zebug-scroll-view">
+        <Style src="ZebugEditorWindow.uss" />
+    </ui:ScrollView>
 </ui:UXML>
