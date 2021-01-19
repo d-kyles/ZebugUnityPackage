@@ -17,12 +17,14 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //  ------------------------------------------------------------------------------------------------
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
 using ZebugProject.Util;
 using Debug = UnityEngine.Debug;
+using Object = UnityEngine.Object;
 
 namespace ZebugProject {
     /*
@@ -69,6 +71,8 @@ namespace ZebugProject {
         //  --- should really be pseudo non-public
         IList<IChannel> Children();
         void AddChild(IChannel channel);
+        event Action<bool> OnLocalLogEnabled;
+        event Action<bool> OnLocalGizmosEnabled;
     }
 
     public partial class Channel<T> : IChannel where T : Channel<T>, new() {
@@ -120,6 +124,9 @@ namespace ZebugProject {
             }
         }
 
+        public event Action<bool> OnLocalLogEnabled;
+        public event Action<bool> OnLocalGizmosEnabled;
+
         public bool GizmosEnabled() {
             bool enabled = m_GizmosEnabled;
             if (m_Parent != null) {
@@ -130,9 +137,13 @@ namespace ZebugProject {
         }
 
         public void SetGizmosEnabled(bool enabled) {
+            bool wasEnabled = m_GizmosEnabled;
             m_GizmosEnabled = enabled;
             string gizmoKey = kGizmoKeyPrefix + FullName();
             PlayerPrefs.SetInt(gizmoKey, enabled ? 1 : 0);
+            if (wasEnabled != enabled) {
+                OnLocalGizmosEnabled?.Invoke(enabled);
+            }
         }
 
         public bool LogEnabled() {
@@ -153,9 +164,13 @@ namespace ZebugProject {
         }
 
         public void SetLogEnabled(bool enabled) {
+            bool wasEnabled = m_LogEnabled;
             m_LogEnabled = enabled;
             string logKey = kLogKeyPrefix + FullName();
             PlayerPrefs.SetInt(logKey, enabled ? 1 : 0);
+            if (wasEnabled != enabled) {
+                OnLocalLogEnabled?.Invoke(enabled);
+            }
         }
 
         private List<IChannel> m_Children = new List<IChannel>();

@@ -62,11 +62,12 @@ public class ZebugEditorWindow : EditorWindow {
         label.EnableInClassList("fancy-label", true);
         root.Add(label);
 
+        var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(kWindowTreeStyle);
+        root.styleSheets.Add(styleSheet);
+
         // Import UXML
         var loadedEditorWindowTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(kWindowTreeLayout);
-        var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(kWindowTreeStyle);
         VisualElement editorWindowLayout = loadedEditorWindowTree.CloneTree();
-        editorWindowLayout.styleSheets.Add(styleSheet);
         root.Add(editorWindowLayout);
 
         var channelElemTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(kChannelElementLayout);
@@ -114,96 +115,20 @@ public class ZebugEditorWindow : EditorWindow {
         List<IChannel> items = Zebug.s_Channels;
 
         ZebugChannelFoldout channelFoldout = new ZebugChannelFoldout((IChannel)zebugBase);
-        root.Add(new Label("TESTING THING"));
-        root.Add(channelFoldout);
-
-
-        // var channelsContainer = editorWindowLayout.Q<VisualElement>("ChannelsContainer");
-        // channelsContainer.Add(MakeChannelElem(zebugBase));
-        //
-        // VisualElement MakeChannelElem(IChannel channel) {
-        //     var clone = channelElemTemplate.CloneTree();
-        //     var foldout = clone.Q(null, "zebug-foldout");
-        //     var foldoutCheck = foldout.Q(null, "zebug-foldout-checkmark");
-        //     var foldoutLabel = foldout.Q<Label>(null, "zebug-foldout-label");
-        //     var clickArea = foldout.Q("ClickArea");
-        //     //clickArea.clicked
-        //     foldoutLabel.text = channel.Name();
-        //     return clone;
-        // }
+        var scrollPanel = root.Q<ScrollView>(null, "zebug-scroll-view");
+        if (scrollPanel != null) {
+            scrollPanel.Add(channelFoldout);
+        } else {
+            root.Add(channelFoldout);
+        }
 
         var refreshButton = editorWindowLayout.Q<Button>(null, "zebug-refresh-window-button");
         refreshButton.clicked += () => {
             rootVisualElement.Clear();
             OnEnable();
         };
-
-
-        {
-            //
-            // // The "makeItem" function will be called as needed
-            // // when the ListView needs more items to render
-            // Func<VisualElement> makeItem = () => {
-            //     return new ZebugToggleElement();
-            // };
-            //
-            // // As the user scrolls through the list, the ListView object
-            // // will recycle elements created by the "makeItem"
-            // // and invoke the "bindItem" callback to associate
-            // // the element with the matching data item (specified as an index in the list)
-            // Action<VisualElement, int> bindItem = (e, i) => {
-            //     if (e is ZebugToggleElement t) {
-            //         IChannel zChannel = items[i];
-            //         t.text = zChannel.Name();
-            //         t.style.color = zChannel.GetColor();
-            //         t.Channel = zChannel;
-            //         t.value = zChannel.LogEnabled();
-            //     }
-            // };
-            //
-            // ListView listView = root.Q<ListView>();
-            // listView.styleSheets.Add(styleSheet);
-            // VisualElementStyleSheetSet ss = listView.styleSheets;
-            // IStyle s = listView.style;
-            // //listView.StretchToParentSize();
-            // listView.makeItem = makeItem;
-            // listView.bindItem = bindItem;
-            // listView.itemsSource = items;
-            // listView.selectionType = SelectionType.Multiple;
-            //
-            // // Callback invoked when the user double clicks an item
-            // listView.onItemChosen += obj => {
-            //     Debug.Log(obj);
-            // };
-            //
-            // // Callback invoked when the user changes the selection inside the ListView
-            // listView.onSelectionChanged += objects => {
-            //     Debug.Log(objects);
-            // };
-        }
-
-        //root.Add(listView);
     }
 
-
-
-    public class ZebugChannelElement : Foldout {
-
-    }
-
-    public class ZebugToggleElement : Toggle {
-        public IChannel Channel;
-
-        public ZebugToggleElement() {
-            RegisterCallback<ChangeEvent<bool>>(OnValueChanged);
-        }
-
-        private void OnValueChanged(ChangeEvent<bool> evt) {
-            if (Channel.LocalLogEnabled() != evt.newValue) {
-                Channel.SetLogEnabled(evt.newValue);
-            }
-        }
-    }
 
     //   --- Might be easier to do something like this:
     //       `includeGizmoBox` would go nicely as a PlayerPref, saved if the channel
