@@ -1,4 +1,4 @@
-//  --- Zebug v0.2 ---------------------------------------------------------------------------------
+//  --- Zebug v0.3 ---------------------------------------------------------------------------------
 //  Copyright (c) 2020 Dan Kyles
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -37,10 +37,6 @@ public class ZebugEditorWindow : EditorWindow {
     private const string kWindowTreeLayout = kWindowTreePath + ".uxml";
     private const string kWindowTreeStyle = kWindowTreePath + ".uss";
 
-    private const string kChannelElementName = "ZebugChannelListElement";
-    private const string kChannelElementPath = kEditorLocation + "/" + kChannelElementName;
-    private const string kChannelElementLayout = kChannelElementPath + ".uxml";
-
     [MenuItem("Window/Zebug")]
     public static void ShowExample() {
         ZebugEditorWindow wnd = GetWindow<ZebugEditorWindow>();
@@ -69,26 +65,6 @@ public class ZebugEditorWindow : EditorWindow {
         var loadedEditorWindowTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(kWindowTreeLayout);
         VisualElement editorWindowLayout = loadedEditorWindowTree.CloneTree();
         root.Add(editorWindowLayout);
-
-        var channelElemTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(kChannelElementLayout);
-
-        // // Mirror value of uxml field into the C# field.
-        // csharpField.RegisterCallback<ChangeEvent<bool>>((evt) => {
-        //     csharpField.value = evt.newValue;
-        // });
-
-        // Create some list of data, here simply numbers in interval [1, 1000]
-        // const int itemCount = 1000;
-        // var items = new List<string>(itemCount);
-        // for (int i = 1; i <= itemCount; i++) {
-        //     items.Add(i.ToString());
-        // }
-
-        // IMGUIContainer imTreeViewContainer = new IMGUIContainer();
-        // imTreeViewContainer.onGUIHandler += () => { };
-        // root.Add(imTreeViewContainer);
-
-
 
         if (Zebug.s_Channels == null || Zebug.s_Channels.Count == 0) {
             Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -128,53 +104,4 @@ public class ZebugEditorWindow : EditorWindow {
             OnEnable();
         };
     }
-
-
-    //   --- Might be easier to do something like this:
-    //       `includeGizmoBox` would go nicely as a PlayerPref, saved if the channel
-    //       has seen a gizmo be called in the channel, so it doesn't show for channels
-    //       that don't have any.
-    // void ZebugIMGUIChannelToggle(IChannel instance, bool includeGizmoBox = false) {
-    //     bool instanceEnabled = instance.LocalLogEnabled();
-    //     bool prevInstanceEnabled = instanceEnabled;
-    //
-    //     bool gizmosEnabled = instance.LocalGizmosEnabled();
-    //     bool prevGizmosEnabled = gizmosEnabled;
-    //
-    //     bool notEnabledAtAll = !instance.LogEnabled();
-    //
-    //     var prevColor = EditorStyles.label.normal.textColor;
-    //     var prevIndent = EditorGUI.indentLevel;
-    //     if (notEnabledAtAll) {
-    //         //  --- Kind of like Gui.enabled = false, except you can still toggle
-    //         EditorStyles.label.normal.textColor = new Color(0.5f, 0.5f, 0.5f);
-    //     } else {
-    //         EditorStyles.label.normal.textColor = instance.GetColor();
-    //     }
-    //
-    //     EditorGUI.indentLevel = instance.Depth();
-    //     EditorGUILayout.BeginHorizontal();
-    //
-    //     instanceEnabled = EditorGUILayout.Toggle(instance.Name(), instanceEnabled);
-    //
-    //     if (includeGizmoBox) {
-    //         gizmosEnabled = EditorGUILayout.Toggle("Gizmos", gizmosEnabled);
-    //     }
-    //
-    //     EditorStyles.label.normal.textColor = prevColor;
-    //
-    //     GUILayout.FlexibleSpace();
-    //
-    //     EditorGUILayout.EndHorizontal();
-    //
-    //     EditorGUI.indentLevel = prevIndent;
-    //
-    //     if (prevInstanceEnabled != instanceEnabled) {
-    //         instance.SetLogEnabled(instanceEnabled);
-    //     }
-    //
-    //     if (prevGizmosEnabled != gizmosEnabled) {
-    //         instance.SetGizmosEnabled(gizmosEnabled);
-    //     }
-    // }
 }
