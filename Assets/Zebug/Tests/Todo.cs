@@ -19,37 +19,33 @@
 
 public class Todo {
     /*
-     1)
-      ```Debug.Log(nameof(target)+"="+(target == null ? "null" : target.ToString()), this);```
-      if you take the field as part of a delegate you can automate this.
-      ```Debug.Log(()=>target);```
-      ^^^ is this true? nameof(...) is compile time, taking the field name... this would need a language
-      intrinsic called something like `... [callerParameterNameOf] string prevParamName, ..` which would
-      be far to clunky for the language designers to include.
+1)  GUI tab for customizing build options and defaults. Auto-add the correct preprocessor directives.
+    Dev (on), Perf (off), Prod (stripped). Have logging toggleable from a pref/shortcut too,
+    so you don't just have to compile them out.
 
+2)  Zebug.Stopwatch.Start()
+     - Togglable Profiling!
 
-      maybe even as an extension, multi values ```Debug.Log(()=>speed, ()=>heading, ()=>damage);
+3)  Gizmo shapes
+    Square, cross, circle, donut? outline shapes? Arrow etc. Possible integration with the SVG
+    shapes library would be sweet, with GLLines fallback. Zebug.Draw3Cross(optionally flat on one axis)
 
-    2)
-      have logging toggleable from a pref/shortcut too, so you don't just have to compile them out.
-      --> extend this to channels
+4)  Component to drop onto a transform and design-time customize a Gizmo for a selected channel
+    (Allow creation of channels via ScriptableObject) (have something run on-load, finds type of Channel
+    from shared project type cache (spin up as separate package)
 
-    3) Log to Window, keep track of things in an inspector, rather than flooded into console
+5)  Utility extension for GameObject.FullName()
 
-    ```
-      public class Zebug : global::Zebug.Channel<Zebug> {
-          public Zebug() : base("TestZebug", Color.blue) { }
-      }
-    ```
+6)  Optionally Log to Window, keep track of things in an inspector, rather than flooded into console
 
-    // Do the auto on-load creation of hidden scene element + OnSceneUI or whatever.
+7)  Log/Gizmo enabled should be flags, esp if GUIButton gets added
 
-    ok... log/gizmo enabled should be flags, esp if GUIButton gets added
+8)  Zebug.GUIButton
+        On startup (Awake etc?), add your buttons, and callbacks to hook into, then a class can add debug hooks
+        for that kind of behaviour, and the main Zebug class can handle all the annoying layout
+        and enable/disable stuff.
 
-    Great idea: Zebug.GUIButton
-      - On startup, add your buttons, and callbacks to hook into, then a class can add debug hooks
-       for that kind of behaviour, and the main Zebug class can handle all the annoying layout
-       and enable/disable stuff.
+        Static, or per last-selected object
 
         private void OnGUI() {
             if (channel.DebugGUIEnabled) {
@@ -63,6 +59,7 @@ public class Todo {
                 }
             }
         }
+ 9)  Option for displaying logs in-game?
 
     */
 }
