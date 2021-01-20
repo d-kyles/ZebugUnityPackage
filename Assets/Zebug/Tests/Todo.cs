@@ -30,23 +30,33 @@ public class Todo {
     Square, cross, circle, donut? outline shapes? Arrow etc. Possible integration with the SVG
     shapes library would be sweet, with GLLines fallback. Zebug.Draw3Cross(optionally flat on one axis)
 
-4)  Component to drop onto a transform and design-time customize a Gizmo for a selected channel
+4)  ZebugGraph:
+    * consider using closures to store the cached channel, that way you can avoid editor only fields and preprocessor directives cluttering up the filespace
+    * "Triggering" for graphs? Stop when it gets to a value (etc?)
+    * Collapse channels between trigger values? (compare all graphs at time dt, based on channel X exceeding value)
+
+    ```C#
+    Zebug.GraphValue("Graph Name", currentDt);
+    ```
+
+5)  Component to drop onto a transform and design-time customize a Gizmo for a selected channel
     (Allow creation of channels via ScriptableObject) (have something run on-load, finds type of Channel
     from shared project type cache (spin up as separate package)
 
-5)  Utility extension for GameObject.FullName()
+6)  Utility extension for GameObject.FullName()
 
-6)  Optionally Log to Window, keep track of things in an inspector, rather than flooded into console
+7)  Optionally Log to Window, keep track of things in an inspector, rather than flooded into console
 
-7)  Log/Gizmo enabled should be flags, esp if GUIButton gets added
+8)  Log/Gizmo enabled should be flags, esp if GUIButton gets added
 
-8)  Zebug.GUIButton
+9)  Zebug.GUIButton
         On startup (Awake etc?), add your buttons, and callbacks to hook into, then a class can add debug hooks
         for that kind of behaviour, and the main Zebug class can handle all the annoying layout
         and enable/disable stuff.
 
         Static, or per last-selected object
 
+        ```C#
         private void OnGUI() {
             if (channel.DebugGUIEnabled) {
                 for (int i = Zebug.s_Buttons.Count - 1; i >= 0; i--) {
@@ -59,7 +69,8 @@ public class Todo {
                 }
             }
         }
- 9)  Option for displaying logs in-game?
+        ```
+ 10)  Option for displaying logs in-game?
 
     */
 }
