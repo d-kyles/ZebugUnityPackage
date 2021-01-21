@@ -17,29 +17,27 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //  ------------------------------------------------------------------------------------------------
 
-using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 namespace ZebugProject {
-    public partial class Channel<T> {
+    /*
+     |  --- ZebugEditorUtils
+     | Author: Dan Kyles 21/01/2020
+     */
+    internal static class ZebugEditorUtils {
+        private const string kPackageRoot = "Packages/com.zebugger.zebug/";
+        private const string kInProjectRoot = "Assets/Plugins/Zebug/";
 
-        public static void DrawLine(Vector3 startPosition, Vector3 endPosition) {
-            DrawLine(startPosition, endPosition, new Color(0,0,0));
-        }
-
-        public static void DrawLine(Vector3 startPosition, Vector3 endPosition, Color color
-            , float duration = 0) {
-            if (!Zebug.s_ChannelLines.TryGetValue(Instance, out List<LineData> lines)) {
-                lines = new List<LineData>();
-                Zebug.s_ChannelLines.Add(Instance, lines);
+        public static T LoadFromZebugRelative<T>(string relativeAssetName) where T : Object {
+            T result = AssetDatabase.LoadAssetAtPath<T>(kPackageRoot + relativeAssetName);
+            if (result != null) {
+                return result;
             }
 
-            lines.Add(new LineData {
-                startPosition = startPosition,
-                endPosition = endPosition,
-                color = color,
-                endTime = Time.time + duration,
-            });
+            //  --- Support for dragging the Zebug package to the Assets/Plugins folder.
+            result = AssetDatabase.LoadAssetAtPath<T>(kInProjectRoot + relativeAssetName);
+            return result;
         }
     }
 }

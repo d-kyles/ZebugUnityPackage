@@ -1,4 +1,4 @@
-﻿//  --- Zebug v0.3 ---------------------------------------------------------------------------------
+﻿//  --- Zebug --------------------------------------------------------------------------------------
 //  Copyright (c) 2020 Dan Kyles
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -18,26 +18,20 @@
 //  ------------------------------------------------------------------------------------------------
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+
 using UnityEngine;
+
 using ZebugProject.Util;
+
 using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 
 namespace ZebugProject {
     /*
-     |  --- TODO(dan): Make sure that you can set a channel and force it to be on in a build.
-     |                 A reasonably common use case for a library like this would be to
-     |                 replace ```if (m_Debug) { Debug.Log(...); }```, but also
-     |                 ```#ifdef SUPER_VERBOSE_LOGGING \n Debug.Log(...); \n #endif```
-     |
-     |  --- TODO(dan): `Channel` should be probably be renamed DebugChannel, as it's used naked and
-     |                 has no context when you read it in an inheritance declaration.
-     |
-     |  --- TODO(dan): Move ColorTagsOnlyInEditor to some sort of true library config
-     |
+     | Zebug
+     | A debugging library/tool, heavily inspired by XDebug, may it rest in peace.
      | Author: Dan Kyles
      */
 

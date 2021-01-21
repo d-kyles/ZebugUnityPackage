@@ -1,10 +1,22 @@
 ﻿#Todo
 
-1) GUI tab for customizing build options and defaults. Auto-add the correct preprocessor directives. Dev (on), Perf (off), Prod (stripped). Have logging toggleable from a pref/shortcut too,
-so you don't just have to compile them out.
+## Big Ideas
 
-2)  Zebug.Stopwatch.Start()
-     - Togglable Profiling!
+1) GUI tab for customizing build options and defaults. Auto-add the correct preprocessor
+   directives. Dev (on), Perf (off), Prod (stripped). Have logging toggleable from a pref/shortcut
+   too, so you don't just have to compile them out. Make sure that you can set a channel and force
+   it to be on in a build. A reasonably common use case for a library like this would be to
+   replace ```if (m_Debug) { Debug.Log(...); }```, but also 
+   ```C#
+   #ifdef SUPER_VERBOSE_LOGGING
+   Debug.Log(...); 
+   #endif
+   ```
+
+2)  Togglable Profiling!
+    ```C#
+    Zebug.Stopwatch.Start()
+    ```
 
 3)  Gizmo shapes
     Square, cross, circle, donut? outline shapes? Arrow etc. Possible integration with the SVG
@@ -52,3 +64,12 @@ so you don't just have to compile them out.
     }
     ```
  10)  Option for displaying logs in-game?
+
+## Misc Tasks
+* Cache assembly types on-reload of assemblies, extract this to a separate package, so projects can
+  share the type information without duplicating the work. (Finding network RPCs for example)
+    
+* `Channel` should be probably be renamed `ZebugChannel`, as it's used naked and
+  has no context when you read it in an inheritance declaration.
+    
+* Move ColorTagsOnlyInEditor to some sort of true library config
