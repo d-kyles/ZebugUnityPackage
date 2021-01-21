@@ -108,7 +108,7 @@
       "url": "https://packages.unity.com"
     },
     "com.zebugger.zebug": {
-      "version": "file:Zebug",
+      "version": "file:com.zebugger.zebug",
       "depth": 0,
       "source": "embedded",
       "dependencies": {}
