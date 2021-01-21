@@ -39,10 +39,21 @@ namespace ZebugProject {
         private const string kWindowTreeLayout = kWindowTreePath + ".uxml";
         private const string kWindowTreeStyle = kWindowTreePath + ".uss";
 
+        private static ZebugEditorWindow s_Window;
+
         [MenuItem("Window/Zebug")]
         public static void ShowExample() {
             ZebugEditorWindow wnd = GetWindow<ZebugEditorWindow>();
             wnd.titleContent = new GUIContent("Zebug");
+            s_Window = wnd;
+        }
+
+        [InitializeOnLoadMethod]
+        protected static void InitializeOnLoad() {
+            if (s_Window != null) {
+                s_Window.rootVisualElement.Clear();
+                s_Window.OnEnable();
+            }
         }
 
         protected void OnEnable() {
@@ -91,12 +102,6 @@ namespace ZebugProject {
             } else {
                 root.Add(channelFoldout);
             }
-
-            var refreshButton = editorWindowLayout.Q<Button>(null, "zebug-refresh-window-button");
-            refreshButton.clicked += () => {
-                rootVisualElement.Clear();
-                OnEnable();
-            };
         }
     }
 }
