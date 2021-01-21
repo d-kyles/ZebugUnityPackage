@@ -25,15 +25,15 @@ public class SimpleLineGizmoDrawTest : MonoBehaviour {
 
     //  --------------------------------------------------------------------------------------------
 
-    public class Zebug : Channel<Zebug> {
-        public Zebug() : base("Zebug Line Draw Test"
-            , new Color(0.25f, 0.66f, 0.95f)
-            , ZebugProject.Zebug.Instance) {
-            //  --- TODO(dan): It's just straight up too hard to turn on a channel, or figure out
-            //                 if the channel is turned on. Fix this as the highest prio.
-            m_LogEnabled = true;
-            m_GizmosEnabled = true;
-        }
+    public class Zebug { //: Channel<Zebug> {
+        // public Zebug() : base("Zebug Line Draw Test"
+        //     , new Color(0.25f, 0.66f, 0.95f)
+        //     , ZebugProject.Zebug.Instance) {
+        //     //  --- TODO(dan): It's just straight up too hard to turn on a channel, or figure out
+        //     //                 if the channel is turned on. Fix this as the highest prio.
+        //     m_LogEnabled = true;
+        //     m_GizmosEnabled = true;
+        // }
     }
 
     //  --------------------------------------------------------------------------------------------
@@ -71,7 +71,7 @@ public class SimpleLineGizmoDrawTest : MonoBehaviour {
                                     , 0
                                     , (float) Math.Cos(6.28f*Time.time));
 
-        Zebug.DrawLine(pos, pos + offset);
+        //Zebug.DrawLine(pos, pos + offset);
 
         Vector3 pp = m_NextStartPos;
         float inc = Time.deltaTime * 0.01f;
@@ -93,7 +93,7 @@ public class SimpleLineGizmoDrawTest : MonoBehaviour {
             pp = AddSpherical(pp, radius, theta, phi);
             pp *= 0.87f;
 
-            Zebug.DrawLine(lastPos, pp);
+            //Zebug.DrawLine(lastPos, pp);
             lastPos = pp;
 
             if (i < m_LastStart + m_Speed) {
