@@ -38,6 +38,8 @@ namespace ZebugProject {
      |
      |  --- TODO(dan): Move ColorTagsOnlyInEditor to some sort of true library config
      |
+     |  Testing a change from the first repo, should conflict.
+     |
      |  Test changes from a different repo
      |
      | Author: Dan Kyles
