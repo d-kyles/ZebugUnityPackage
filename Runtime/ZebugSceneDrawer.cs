@@ -1,4 +1,4 @@
-﻿//  --- Zebug v0.3 ---------------------------------------------------------------------------------
+﻿//  --- Zebug v0.4.0 -------------------------------------------------------------------------------
 //  Copyright (c) 2020 Dan Kyles
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of this software
