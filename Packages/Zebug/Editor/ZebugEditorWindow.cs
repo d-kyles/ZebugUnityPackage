@@ -25,15 +25,35 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using ZebugProject;
 
+using static ZebugUtils;
+
+internal static class ZebugUtils {
+
+    private const string kPackageRoot = "Packages/com.zebugger.zebug/";
+    private const string kInProjectRoot = "Assets/Plugins/Zebug/";
+
+    public static T LoadFromZebugRelative<T>(string relativeAssetName) where T: UnityEngine.Object  {
+
+        T result = AssetDatabase.LoadAssetAtPath<T>(kPackageRoot+relativeAssetName);
+        if (result != null) {
+            return result;
+        }
+
+        //  --- Support for dragging the Zebug package to the Assets/Plugins folder.
+        result = AssetDatabase.LoadAssetAtPath<T>(kInProjectRoot+relativeAssetName);
+        return result;
+    }
+}
+
 public class ZebugEditorWindow : EditorWindow {
 
     [SerializeField] private ZebugEditorWindow m_Test;
 
-    private const string kEditorLocation = "Assets/Zebug/Editor";
-    // private const string kEditorLocation = "Assets/Plugins/Zebug/Editor";
+    private const string kEditorUIFolder = "Editor/UI/";
+    //private const string kEditorUIRoot = "Packages/Zebug/Editor/UI/";
 
     private const string kWindowElementName = "ZebugEditorWindow";
-    private const string kWindowTreePath = kEditorLocation + "/" + kWindowElementName;
+    private const string kWindowTreePath = kWindowElementName;
     private const string kWindowTreeLayout = kWindowTreePath + ".uxml";
     private const string kWindowTreeStyle = kWindowTreePath + ".uss";
 
@@ -43,7 +63,7 @@ public class ZebugEditorWindow : EditorWindow {
         wnd.titleContent = new GUIContent("Zebug");
     }
 
-    public void OnEnable() {
+    protected void OnEnable() {
         // Each editor window contains a root VisualElement object
         VisualElement root = rootVisualElement;
         root.style.marginTop = 4;
@@ -51,18 +71,16 @@ public class ZebugEditorWindow : EditorWindow {
         root.style.marginRight = 4;
         root.style.marginBottom = 4;
 
-        // VisualElements objects can contain other VisualElement following a tree hierarchy.
         VisualElement label = new Label("Zebug Editor");
-        //  --- TODO(dan): Up to figuring out why this won't pick up the class name from the uss file
         label.AddToClassList("fancy-label");
         label.EnableInClassList("fancy-label", true);
         root.Add(label);
 
-        var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(kWindowTreeStyle);
+        var styleSheet = LoadFromZebugRelative<StyleSheet>(kEditorUIFolder + kWindowTreeStyle);
         root.styleSheets.Add(styleSheet);
 
         // Import UXML
-        var loadedEditorWindowTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(kWindowTreeLayout);
+        var loadedEditorWindowTree = LoadFromZebugRelative<VisualTreeAsset>(kEditorUIFolder + kWindowTreeLayout);
         VisualElement editorWindowLayout = loadedEditorWindowTree.CloneTree();
         root.Add(editorWindowLayout);
 

@@ -112,14 +112,6 @@ public class ZebugChannelFoldout : BindableElement, INotifyValueChanged<bool> {
             m_Toggle.Q<Label>().style.color = channel.GetColor();
         }
 
-        // if (s_ChannelDataTemplate == null) {
-        //     // this is terrible! :D
-        //     const string kEditorLocation = "Assets/Zebug/Editor";
-        //     const string kChannelElementName = "ZebugChannelListElement";
-        //     const string kChannelElementPath = kEditorLocation + "/" + kChannelElementName;
-        //     const string kChannelElementLayout = kChannelElementPath + ".uxml";
-        //     s_ChannelDataTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(kChannelElementLayout);
-        // }
         var channelData = new VisualElement {
             name = "HorizontalElement",
 

@@ -41,31 +41,27 @@ Lines:
 public class LineDrawer : MonoBehaviour {
     protected void Update() {
         Vector3 transformPos = m_Transform.position;
-            Vector3 pos = transformPos ;
-            float t = Time.time;
-            
-            Vector3 offset = new Vector3((float) Math.Sin(6.28f*t)
-                                        , 0
-                                        , (float) Math.Cos(6.28f*t));
-            //  --- By default this line will appear on screen for 1 frame
-            //      if the game update rate is higher than the Scene GUI, 
-            //      there may be multiple lines on screen at once.      
-            Zebug.DrawLine(pos, pos + offset);
-        }
+        Vector3 pos = transformPos ;
+        float t = Time.time;
+        
+        Vector3 offset = new Vector3((float) Math.Sin(6.28f*t)
+                                    , 0
+                                    , (float) Math.Cos(6.28f*t));
+        //  --- By default this line will appear on screen for 1 frame
+        //      if the game update rate is higher than the Scene GUI, 
+        //      there may be multiple lines on screen at once.      
+        Zebug.DrawLine(pos, pos + offset);
     }
 }
 ```
-
 
 Installation
 ------------
 Good luck
 
-Release Notes
--------------
-
-### v0.3
- * EditorWindow: Functional UIElements based tree
+Changelog
+---------
+[Changelog](CHANGELOG.md)
 
 License
 -------
