@@ -1,3 +1,3 @@
 [submodule "Packages/Zebug"]
 	path = Packages/Zebug
-	url = D:/Zebug/
+	url = git@github.com:d-kyles/ZebugUnityPackage.git
