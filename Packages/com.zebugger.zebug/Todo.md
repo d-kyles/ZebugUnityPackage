@@ -12,6 +12,8 @@
    Debug.Log(...); 
    #endif
    ```
+    First up though, I really need a component I can put in a scene that will show me the defaults,
+    and make sure those selected settings are applied in a build with that scene in it.
 
 2)  Togglable Profiling!
     ```C#
@@ -73,3 +75,10 @@
   has no context when you read it in an inheritance declaration.
     
 * Move ColorTagsOnlyInEditor to some sort of true library config
+* Make sure [StringFormatMethod] is used!
+* GetDefaultChannel(stacklevel) newStackFrame().GetMethod() in Dict<MethodBase, Channel>.
+Channel name is Method.DeclaringType.name if IsSubclassOf(MonoBehaviour)
+* if logFrameNumbers: <color={0}>{1}</color> 〚{2}〛: 
+* channel calls static formatmessage with static stringbuilder
+* Dictionary<MethodBase, HashSet<ILOffset>> assertOnceLocations
+
