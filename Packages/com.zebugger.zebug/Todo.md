@@ -81,4 +81,5 @@ Channel name is Method.DeclaringType.name if IsSubclassOf(MonoBehaviour)
 * if logFrameNumbers: <color={0}>{1}</color> 〚{2}〛: 
 * channel calls static formatmessage with static stringbuilder
 * Dictionary<MethodBase, HashSet<ILOffset>> assertOnceLocations
+* [DebuggerStepThrough] [DebuggerNonUserCode] annotations
 
