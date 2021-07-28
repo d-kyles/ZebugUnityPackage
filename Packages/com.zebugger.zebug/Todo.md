@@ -28,6 +28,8 @@
     * consider using closures to store the cached channel, that way you can avoid editor only fields and preprocessor directives cluttering up the filespace
     * "Triggering" for graphs? Stop when it gets to a value (etc?)
     * Collapse channels between trigger values? (compare all graphs at time dt, based on channel X exceeding value)
+    * The api for the underlying UI for ShaderGraph etc should be publicly available by now. (maybe experimental still?)
+        * yup, still experimental even as of 2021.2 UnityEditor.Experimental.GraphView. Good grief.
 
     ```C#
     Zebug.GraphValue("Graph Name", currentDt);
@@ -65,7 +67,13 @@
         }
     }
     ```
- 10)  Option for displaying logs in-game?
+ 10) Option for displaying logs in-game?
+     
+ 11) StompyRobot has a good debugger, where you can quad tap a small square at the top to open a debug menu, 
+     then you can edit features in submenus, editing debug values like LiveDebug used to. The feature I super
+     love though, is that you can hit the pin button and select multiple debug variables to appear on the screen
+     during play. Just exceptionally useful.
+
 
 ## Misc Tasks
 * Cache assembly types on-reload of assemblies, extract this to a separate package, so projects can
@@ -82,4 +90,5 @@ Channel name is Method.DeclaringType.name if IsSubclassOf(MonoBehaviour)
 * channel calls static formatmessage with static stringbuilder
 * Dictionary<MethodBase, HashSet<ILOffset>> assertOnceLocations
 * [DebuggerStepThrough] [DebuggerNonUserCode] annotations
-
+* `/UserSettings` is a reasonable place for putting per-user prefs, if PlayerPreferences isn't going to work.
+* Make sure the public API is sane and appropriately limited.
