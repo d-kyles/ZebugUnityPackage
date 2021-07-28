@@ -6,6 +6,7 @@ MIT open source Unity debug library.
 1. [Usage](#Usage)
 1. [Installation](#Installation)
 1. [Release Notes](#release-notes)
+1. [Making a Release](#Making-a-Release)
 1. [License](#license)
 
 Usage
@@ -62,6 +63,17 @@ Good luck
 Changelog
 ---------
 [Changelog](CHANGELOG.md)
+
+Making a Release
+----------------
+* Update version number 
+    * in Packages/Zebug/package.json
+    * Follow https://semver.org/spec/v2.0.0.html 
+    * It must be able to be found on it's own line with the following regex
+      `^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$`
+* Create new entry in CHANGELOG.md
+* Commit with new version number in the following format `v 0.4.1`
+* Tag that commit with the same name as the commit format above.
 
 License
 -------
