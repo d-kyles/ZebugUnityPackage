@@ -58,6 +58,25 @@ namespace ZebugProject {
         protected void Awake() {
             m_Transform = transform;
             m_NextStartPos = m_Transform.position + new Vector3(0, 0.1f, 0);
+
+            Quaternion ninety = Quaternion.Euler(0,90, 0);
+            Quaternion negNinety = Quaternion.Euler(0,-90, 0);
+            Quaternion twoSeventy = Quaternion.Euler(0,270, 0);
+            Quaternion negTwoSeventy = Quaternion.Euler(0,-270, 0);
+
+            Zebug.Log($"90: {ninety}");
+            Zebug.Log($"-90: {negNinety}");
+            Zebug.Log($"270: {twoSeventy}");
+            Zebug.Log($"-270: {negTwoSeventy}");
+            Zebug.Log($"90inv: {Quaternion.Inverse(Quaternion.Euler(0,90, 0))}");
+            Zebug.Log($"-90inv: {Quaternion.Inverse(negNinety)}");
+            Zebug.Log($"270inv: {Quaternion.Inverse(twoSeventy)}");
+            Zebug.Log($"-270inv: {Quaternion.Inverse(negTwoSeventy)}");
+
+
+            Quaternion mightBeShort = Quaternion.Slerp(Quaternion.identity, negTwoSeventy, 1f);
+            Zebug.Log($"shortPath(-270) = {mightBeShort}");
+            Zebug.Log($"90: {ninety}");
         }
 
         //  --------------------------------------------------------------------------------------------
