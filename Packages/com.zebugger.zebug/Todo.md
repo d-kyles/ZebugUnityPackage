@@ -23,6 +23,7 @@
 3)  Gizmo shapes
     Square, cross, circle, donut? outline shapes? Arrow etc. Possible integration with the SVG
     shapes library would be sweet, with GLLines fallback. Zebug.Draw3Cross(optionally flat on one axis)
+     - DrawLocator a good one to start with! Use Debug.DrawLine with smart defaults.
 
 4)  ZebugGraph:
     * consider using closures to store the cached channel, that way you can avoid editor only fields and preprocessor directives cluttering up the filespace
