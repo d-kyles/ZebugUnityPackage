@@ -93,3 +93,7 @@ Channel name is Method.DeclaringType.name if IsSubclassOf(MonoBehaviour)
 * [DebuggerStepThrough] [DebuggerNonUserCode] annotations
 * `/UserSettings` is a reasonable place for putting per-user prefs, if PlayerPreferences isn't going to work.
 * Make sure the public API is sane and appropriately limited.
+* DebugAssert in ARFoundations is interesting, it uses DebugAssert.That(...)?.Message($"{expensive}")
+  to avoid the GC in string interpolation in cases where your assert won't fire. Works nicely with aggressive
+  inlining.
+
