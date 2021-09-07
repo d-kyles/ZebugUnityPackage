@@ -96,4 +96,6 @@ Channel name is Method.DeclaringType.name if IsSubclassOf(MonoBehaviour)
 * DebugAssert in ARFoundations is interesting, it uses DebugAssert.That(...)?.Message($"{expensive}")
   to avoid the GC in string interpolation in cases where your assert won't fire. Works nicely with aggressive
   inlining.
+* https://bottosson.github.io/posts/oklab/ --- for graph colors, or auto color select. (_good_ uniform luminance)
 
+ 
