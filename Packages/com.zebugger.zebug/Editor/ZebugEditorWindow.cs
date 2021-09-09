@@ -102,6 +102,21 @@ namespace ZebugProject {
             } else {
                 root.Add(channelFoldout);
             }
+
+            // var imgui = root.Q<IMGUIContainer>();
+            // imgui.onGUIHandler += OnIMGUI;
+        }
+
+        private bool settingsFolded;
+
+        protected void OnIMGUI() {
+            // if (GUILayout.Button("Settings")) {
+            //     settingsFolded = !settingsFolded;
+            // }
+            //
+            // if (!settingsFolded) {
+            //     GUILayout.Label("Thing");
+            // }
         }
     }
 }

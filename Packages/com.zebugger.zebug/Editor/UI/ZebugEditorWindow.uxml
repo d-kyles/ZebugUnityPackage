@@ -1,12 +1,14 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:Button text="Refresh Window" class="zebug-refresh-window-button" />
     <ui:VisualElement style="flex-direction: row;">
-        <ui:Label text="Debug Channels" class="fancy-label" style="font-size: 18px;" />
-        <ui:Button text="Settings" display-tooltip-when-elided="true" class="fancy-label" style="align-items: stretch;" />
+        <ui:Label text="Debug Channels" style="font-size: 18px; height: auto;" />
     </ui:VisualElement>
     <ZebugChannelFoldout text="ChannelName" class="test-color disabled">
         <Style src="ZebugEditorWindow.uss" />
         <ZebugChannelFoldout text="ChannelName" />
         <ZebugChannelFoldout text="ChannelName" />
     </ZebugChannelFoldout>
+    <ui:Foldout text="Settings">
+        <ui:IMGUIContainer class="zebug-imgui" style="height: 114px; width: auto;" />
+    </ui:Foldout>
 </ui:UXML>
