@@ -30,14 +30,14 @@ namespace ZebugProject {
 
     public class ZebugEditorWindow : EditorWindow {
 
-        [SerializeField] private ZebugEditorWindow m_Test;
+        //[SerializeField] private ZebugEditorWindow m_Test;
 
-        private const string kEditorUIFolder = "Editor/UI/";
+        //private const string kEditorUIFolder = "Editor/UI/";
 
-        private const string kWindowElementName = "ZebugEditorWindow";
-        private const string kWindowTreePath = kWindowElementName;
-        private const string kWindowTreeLayout = kWindowTreePath + ".uxml";
-        private const string kWindowTreeStyle = kWindowTreePath + ".uss";
+        // private const string kWindowElementName = "ZebugEditorWindow";
+        // private const string kWindowTreePath = kWindowElementName;
+        // private const string kWindowTreeLayout = kWindowTreePath + ".uxml";
+        // private const string kWindowTreeStyle = kWindowTreePath + ".uss";
 
         private static ZebugEditorWindow s_Window;
 
@@ -58,19 +58,19 @@ namespace ZebugProject {
 
         protected void OnEnable() {
             // Each editor window contains a root VisualElement object
-            VisualElement root = rootVisualElement;
-            root.style.marginTop = 4;
-            root.style.marginLeft = 4;
-            root.style.marginRight = 4;
-            root.style.marginBottom = 4;
+            // VisualElement root = rootVisualElement;
+            // root.style.marginTop = 4;
+            // root.style.marginLeft = 4;
+            // root.style.marginRight = 4;
+            // root.style.marginBottom = 4;
 
-            var styleSheet = LoadFromZebugRelative<StyleSheet>(kEditorUIFolder + kWindowTreeStyle);
-            root.styleSheets.Add(styleSheet);
-
-            // Import UXML
-            var loadedEditorWindowTree = LoadFromZebugRelative<VisualTreeAsset>(kEditorUIFolder + kWindowTreeLayout);
-            VisualElement editorWindowLayout = loadedEditorWindowTree.CloneTree();
-            root.Add(editorWindowLayout);
+            // var styleSheet = LoadFromZebugRelative<StyleSheet>(kEditorUIFolder + kWindowTreeStyle);
+            // root.styleSheets.Add(styleSheet);
+            //
+            // // Import UXML
+            // var loadedEditorWindowTree = LoadFromZebugRelative<VisualTreeAsset>(kEditorUIFolder + kWindowTreeLayout);
+            // VisualElement editorWindowLayout = loadedEditorWindowTree.CloneTree();
+            // root.Add(editorWindowLayout);
 
             if (Zebug.s_Channels == null || Zebug.s_Channels.Count == 0) {
                 Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -93,15 +93,13 @@ namespace ZebugProject {
                 }
             }
 
-            Channel<Zebug> zebugBase = Zebug.Instance;
-
-            ZebugChannelFoldout channelFoldout = new ZebugChannelFoldout((IChannel)zebugBase);
-            var scrollPanel = root.Q<ScrollView>(null, "zebug-scroll-view");
-            if (scrollPanel != null) {
-                scrollPanel.Add(channelFoldout);
-            } else {
-                root.Add(channelFoldout);
-            }
+            // ZebugChannelFoldout channelFoldout = new ZebugChannelFoldout((IChannel)zebugBase);
+            // var scrollPanel = root.Q<ScrollView>(null, "zebug-scroll-view");
+            // if (scrollPanel != null) {
+            //     scrollPanel.Add(channelFoldout);
+            // } else {
+            //     root.Add(channelFoldout);
+            // }
 
             // var imgui = root.Q<IMGUIContainer>();
             // imgui.onGUIHandler += OnIMGUI;
@@ -117,6 +115,69 @@ namespace ZebugProject {
             // if (!settingsFolded) {
             //     GUILayout.Label("Thing");
             // }
+        }
+
+        Dictionary<IChannel, bool> _channelExpanded = new Dictionary<IChannel, bool>();
+
+        private void OnGUI() {
+            Channel<Zebug> zebugBase = Zebug.Instance;
+
+            EditorGUILayout.LabelField("Converted to IMGUI. Disappointing about UIElements being half-baked :(");
+
+            DrawChannel(zebugBase);
+
+            // maybe?
+                    //EditorGUILayout.BeginFoldoutHeaderGroup()
+                    // EditorGUIUtility.hierarchyMode
+
+            void DrawChannel(IChannel channel) {
+                using (new GUILayout.VerticalScope()) {
+                    bool channelExpanded = false;
+                    using (new GUILayout.HorizontalScope(EditorStyles.helpBox)) {
+
+                        IList<IChannel> children = channel.Children();
+                        if (children.Count > 0) {
+                            GUIStyle foldoutTextStyle = new GUIStyle(EditorStyles.foldout);
+                            {
+                                foldoutTextStyle.normal.textColor =
+                                foldoutTextStyle.onNormal.textColor = channel.GetColor();
+                            }
+
+                            if (!_channelExpanded.TryGetValue(channel, out bool expanded)) {
+                                _channelExpanded.Add(channel, false);
+                            }
+
+                            channelExpanded = EditorGUILayout.Foldout(expanded, channel.Name(), true, foldoutTextStyle);
+                            if (channelExpanded != expanded) {
+                                _channelExpanded[channel] = channelExpanded;
+                            }
+                        } else {
+                            var foldoutTextStyle = new GUIStyle();
+                            foldoutTextStyle.normal.textColor = channel.GetColor();
+                            foldoutTextStyle.onNormal.textColor = channel.GetColor();
+                            foldoutTextStyle.contentOffset = new Vector2(30 * EditorGUI.indentLevel,0);
+                            GUILayout.Label(channel.Name(), foldoutTextStyle);
+                        }
+                        GUILayout.FlexibleSpace();
+
+                        const float togglesWidth = 150f;
+                        using (new EditorGUI.IndentLevelScope(-EditorGUI.indentLevel))
+                        using (new GUILayout.HorizontalScope()) {
+                            EditorGUILayout.ToggleLeft("Log", true, GUILayout.Width(togglesWidth/2));
+                            EditorGUILayout.ToggleLeft("Gizmos", true, GUILayout.Width(togglesWidth/2));
+                        }
+                    }
+
+                    if (channelExpanded) {
+                        using (new EditorGUI.IndentLevelScope(1))
+                        using (new GUILayout.VerticalScope()) {
+                            foreach (IChannel child in channel.Children()) {
+                                DrawChannel(child);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

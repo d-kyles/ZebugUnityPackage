@@ -98,5 +98,4 @@ Channel name is Method.DeclaringType.name if IsSubclassOf(MonoBehaviour)
   inlining.
 * https://bottosson.github.io/posts/oklab/ --- for graph colors, or auto color select. (_good_ uniform luminance)
   - pick different luminances for dark-mode and light-mode 
-
  
