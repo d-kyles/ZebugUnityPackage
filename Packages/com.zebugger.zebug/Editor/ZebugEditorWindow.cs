@@ -117,7 +117,7 @@ namespace ZebugProject {
             // }
         }
 
-        Dictionary<IChannel, bool> _channelExpanded = new Dictionary<IChannel, bool>();
+        private static Dictionary<IChannel, bool> s_ChannelExpanded = new Dictionary<IChannel, bool>();
 
         private void OnGUI() {
             Channel<Zebug> zebugBase = Zebug.Instance;
@@ -143,13 +143,13 @@ namespace ZebugProject {
                                 foldoutTextStyle.onNormal.textColor = channel.GetColor();
                             }
 
-                            if (!_channelExpanded.TryGetValue(channel, out bool expanded)) {
-                                _channelExpanded.Add(channel, false);
+                            if (!s_ChannelExpanded.TryGetValue(channel, out bool expanded)) {
+                                s_ChannelExpanded.Add(channel, false);
                             }
 
                             channelExpanded = EditorGUILayout.Foldout(expanded, channel.Name(), true, foldoutTextStyle);
                             if (channelExpanded != expanded) {
-                                _channelExpanded[channel] = channelExpanded;
+                                s_ChannelExpanded[channel] = channelExpanded;
                             }
                         } else {
                             var foldoutTextStyle = new GUIStyle();
@@ -160,11 +160,44 @@ namespace ZebugProject {
                         }
                         GUILayout.FlexibleSpace();
 
+                        const float disabledColorVal = 1f/255f;
+                        Color disabledTextColor = new Color(disabledColorVal, disabledColorVal,disabledColorVal);
+
                         const float togglesWidth = 150f;
                         using (new EditorGUI.IndentLevelScope(-EditorGUI.indentLevel))
                         using (new GUILayout.HorizontalScope()) {
-                            EditorGUILayout.ToggleLeft("Log", true, GUILayout.Width(togglesWidth/2));
-                            EditorGUILayout.ToggleLeft("Gizmos", true, GUILayout.Width(togglesWidth/2));
+
+                            var toggleTextStyle = new GUIStyle();
+                            var normalTextColor = toggleTextStyle.normal.textColor;
+                            if (!channel.ParentLogEnabled()) {
+                                toggleTextStyle.normal.textColor =
+                                    toggleTextStyle.onNormal.textColor = disabledTextColor;
+                            }
+
+                            //using (new EditorGUI.DisabledScope(!channel.ParentLogEnabled())) {
+                            bool logEnabled = channel.LocalLogEnabled();
+                            bool newLogEnabled = EditorGUILayout.ToggleLeft("Log", logEnabled, GUILayout.Width(togglesWidth/2));
+                            if (newLogEnabled != logEnabled) {
+                                channel.SetLogEnabled(newLogEnabled);
+                            }
+                            //}
+
+                            if (!channel.ParentGizmosEnabled()) {
+                                toggleTextStyle.normal.textColor =
+                                    toggleTextStyle.onNormal.textColor = disabledTextColor;
+                            } else {
+                                toggleTextStyle.normal.textColor
+                                    = toggleTextStyle.onNormal.textColor
+                                    = normalTextColor;
+                            }
+
+                            using (new EditorGUI.DisabledScope(!channel.ParentGizmosEnabled())) {
+                                bool gizmosEnabled = channel.LocalGizmosEnabled();
+                                bool newGizmosEnabled = EditorGUILayout.ToggleLeft("Gizmos", gizmosEnabled, GUILayout.Width(togglesWidth/2));
+                                if (newGizmosEnabled != gizmosEnabled) {
+                                    channel.SetGizmosEnabled(newGizmosEnabled);
+                                }
+                            }
                         }
                     }
 

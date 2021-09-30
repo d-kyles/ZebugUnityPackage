@@ -54,9 +54,13 @@ namespace ZebugProject {
         bool LogEnabled();
         bool LocalLogEnabled();
         void SetLogEnabled(bool enabled);
+        bool ParentLogEnabled();
+
         bool GizmosEnabled();
         bool LocalGizmosEnabled();
         void SetGizmosEnabled(bool enabled);
+        bool ParentGizmosEnabled();
+
         string Name();
         string FullName();
         Color GetColor();
@@ -140,6 +144,11 @@ namespace ZebugProject {
             }
         }
 
+        public bool ParentGizmosEnabled() {
+            if (m_Parent == null) { return true; }
+            return m_Parent.GizmosEnabled();
+        }
+
         public bool LogEnabled() {
             bool enabled = m_LogEnabled;
             if (m_Parent != null) {
@@ -165,6 +174,11 @@ namespace ZebugProject {
             if (wasEnabled != enabled) {
                 OnLocalLogEnabled?.Invoke(enabled);
             }
+        }
+
+        public bool ParentLogEnabled() {
+            if (m_Parent == null) { return true; }
+            return m_Parent.LogEnabled();
         }
 
         private List<IChannel> m_Children = new List<IChannel>();
