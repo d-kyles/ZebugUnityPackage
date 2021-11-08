@@ -99,3 +99,5 @@ Channel name is Method.DeclaringType.name if IsSubclassOf(MonoBehaviour)
 * https://bottosson.github.io/posts/oklab/ --- for graph colors, or auto color select. (_good_ uniform luminance)
   - pick different luminances for dark-mode and light-mode 
 * Make sure that the release notes explain how to ship without tests, so that test channels don't mess up the editor window.
+* C# 10 will have (ref StringBuilder.AppendInterpolatedStringHandler handler), in other words, the called method will be able 
+  to do the interpolation. Needless to say, all Zebug calls should use this to avoid all the string interpolation involved.
