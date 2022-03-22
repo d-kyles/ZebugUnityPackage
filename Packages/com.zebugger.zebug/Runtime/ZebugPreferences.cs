@@ -18,8 +18,8 @@
 
 using UnityEngine;
 
-namespace ZebugProject {
-
+namespace ZebugProject
+{
     /*
      |  --- ZebugPreferences
      |      The settings for which channel is enabled will need to persist into builds, so
@@ -40,64 +40,86 @@ namespace ZebugProject {
      |
      | Author: Dan Kyles
      */
-    public class ZebugPreferences : ScriptableObject {
+    public class ZebugPreferences : ScriptableObject
+    {
 
         //  --- TODO(dan): Find a good way to auto find settings, as people probably want to
         //                 customise where it is and what it's called.
         private const string kAssetName = "ZebugPreferences";
 
         private static ZebugPreferences s_Instance;
-        public static ZebugPreferences Instance {
-            get {
-                if (s_Instance == null) {
+
+        public static ZebugPreferences Instance
+        {
+            get
+            {
+                if (s_Instance == null)
+                {
                     return GetPreferences();
                 }
+
                 return s_Instance;
             }
         }
 
-        private ZebugPreferences() { s_Instance = this; }
+        private ZebugPreferences()
+        {
+            s_Instance = this;
+        }
 
-        private void OnDestroy() { s_Instance = null; }
+        private void OnDestroy()
+        {
+            s_Instance = null;
+        }
 
         //  ----------------------------------------------------------------------------------------
 
-        private static ZebugPreferences GetPreferences() {
-            if (s_Instance == null) {
+        private static ZebugPreferences GetPreferences()
+        {
+            if (s_Instance == null)
+            {
                 s_Instance = Resources.Load<ZebugPreferences>(kAssetName);
             }
+
             //  --- TODO(dan): Addressables load here? it seems unlikely that there'd be significant
             //                 enough resources in the plugin to require a bundle. Maybe if we start
             //                 including non-procedural primitive geometry for physics visualization
             //                 or something, but I'd prefer to generate that at runtime.
-            if (s_Instance == null) {
+            if (s_Instance == null)
+            {
                 s_Instance = CreateInstance<ZebugPreferences>();
 
                 #if UNITY_EDITOR
                 {
                     string folderPath = "Assets/Ignore/Resources";
 
-                    if (!UnityEditor.AssetDatabase.IsValidFolder(folderPath)) {
+                    if (!UnityEditor.AssetDatabase.IsValidFolder(folderPath))
+                    {
                         string[] folders = folderPath.Split('/');
                         int folderCount = folders.Length;
                         string currentValid = (folderCount > 2)
                                                   ? folders[0]
                                                   : "";
 
-                        for (int i = 1; i < folderCount -1; i++) {
+                        for (int i = 1; i < folderCount - 1; i++)
+                        {
                             string nextFolder = folders[i];
                             string testFolder = currentValid + "/" + nextFolder;
-                            if (!UnityEditor.AssetDatabase.IsValidFolder(testFolder)) {
+                            if (!UnityEditor.AssetDatabase.IsValidFolder(testFolder))
+                            {
                                 UnityEditor.AssetDatabase.CreateFolder(currentValid, nextFolder);
                             }
+
                             currentValid = testFolder;
                         }
                     }
+
                     UnityEditor.AssetDatabase.CreateAsset(s_Instance, folderPath + kAssetName + ".asset");
 
                     UnityEditor.EditorUtility.SetDirty(s_Instance);
 
-                    if (!UnityEditor.EditorApplication.isPlaying) {
+                    if (!UnityEditor.EditorApplication.isPlaying)
+                    {
                         //  --- There are definite issues with saving at runtime, I had a different
                         //      project stop rendering all cameras, and the in-game GUI was
                         //      unresponsive. Just skip all that.
@@ -106,7 +128,9 @@ namespace ZebugProject {
                 }
                 #endif
             }
+
             return s_Instance;
         }
     }
+
 }

@@ -20,22 +20,21 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-
 using UnityEngine;
-
 using ZebugProject.Util;
-
 using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 
-namespace ZebugProject {
+namespace ZebugProject
+{
+
     /*
      | Zebug
      | A debugging library/tool, heavily inspired by XDebug, may it rest in peace.
      | Author: Dan Kyles
      */
-
-    public sealed class Zebug : Channel<Zebug> {
+    public sealed class Zebug : Channel<Zebug>
+    {
 
         public const bool ColorTagsOnlyInEditor = true;
 
@@ -50,7 +49,8 @@ namespace ZebugProject {
         public Zebug() : base("ZebugBase", Color.white) { }
     }
 
-    public interface IChannel {
+    public interface IChannel
+    {
         bool LogEnabled();
         bool LocalLogEnabled();
         void SetLogEnabled(bool enabled);
@@ -73,7 +73,8 @@ namespace ZebugProject {
         event Action<bool> OnLocalGizmosEnabled;
     }
 
-    public partial class Channel<T> : IChannel where T : Channel<T>, new() {
+    public partial class Channel<T> : IChannel where T : Channel<T>, new()
+    {
         public bool m_GizmosEnabled;
         public bool m_LogEnabled;
 
@@ -87,9 +88,12 @@ namespace ZebugProject {
         private int m_Depth;
 
 
-        public static Channel<T> Instance {
-            get {
-                if (s_Instance == null) {
+        public static Channel<T> Instance
+        {
+            get
+            {
+                if (s_Instance == null)
+                {
                     // ReSharper disable once ObjectCreationAsStatement
                     new T();
                     // --- T() will assign s_Instance.
@@ -99,25 +103,31 @@ namespace ZebugProject {
             }
         }
 
-        public string Name() {
+        public string Name()
+        {
             return m_ChannelName;
         }
 
-        public Color GetColor() {
+        public Color GetColor()
+        {
             return m_ChannelColor;
         }
 
-        public int Depth() {
+        public int Depth()
+        {
             return m_Depth;
         }
 
-        public IList<IChannel> Children() {
+        public IList<IChannel> Children()
+        {
             // groooOOOSSSsss
             return m_Children;
         }
 
-        public void AddChild(IChannel channel) {
-            if (!m_Children.Contains(channel)) {
+        public void AddChild(IChannel channel)
+        {
+            if (!m_Children.Contains(channel))
+            {
                 m_Children.Add(channel);
             }
         }
@@ -125,21 +135,25 @@ namespace ZebugProject {
         public event Action<bool> OnLocalLogEnabled;
         public event Action<bool> OnLocalGizmosEnabled;
 
-        public bool GizmosEnabled() {
+        public bool GizmosEnabled()
+        {
             bool enabled = m_GizmosEnabled;
-            if (m_Parent != null) {
+            if (m_Parent != null)
+            {
                 enabled &= m_Parent.GizmosEnabled();
             }
 
             return enabled;
         }
 
-        public void SetGizmosEnabled(bool enabled) {
+        public void SetGizmosEnabled(bool enabled)
+        {
             bool wasEnabled = m_GizmosEnabled;
             m_GizmosEnabled = enabled;
             string gizmoKey = kGizmoKeyPrefix + FullName();
             PlayerPrefs.SetInt(gizmoKey, enabled ? 1 : 0);
-            if (wasEnabled != enabled) {
+            if (wasEnabled != enabled)
+            {
                 OnLocalGizmosEnabled?.Invoke(enabled);
             }
         }
@@ -148,30 +162,35 @@ namespace ZebugProject {
             if (m_Parent == null) { return true; }
             return m_Parent.GizmosEnabled();
         }
-
-        public bool LogEnabled() {
+        public bool LogEnabled()
+        {
             bool enabled = m_LogEnabled;
-            if (m_Parent != null) {
+            if (m_Parent != null)
+            {
                 enabled &= m_Parent.LogEnabled();
             }
 
             return enabled;
         }
 
-        public bool LocalLogEnabled() {
+        public bool LocalLogEnabled()
+        {
             return m_LogEnabled;
         }
 
-        public bool LocalGizmosEnabled() {
+        public bool LocalGizmosEnabled()
+        {
             return m_GizmosEnabled;
         }
 
-        public void SetLogEnabled(bool enabled) {
+        public void SetLogEnabled(bool enabled)
+        {
             bool wasEnabled = m_LogEnabled;
             m_LogEnabled = enabled;
             string logKey = kLogKeyPrefix + FullName();
             PlayerPrefs.SetInt(logKey, enabled ? 1 : 0);
-            if (wasEnabled != enabled) {
+            if (wasEnabled != enabled)
+            {
                 OnLocalLogEnabled?.Invoke(enabled);
             }
         }
@@ -186,17 +205,19 @@ namespace ZebugProject {
         private const string kLogKeyPrefix = "ZebugLogsEnabled--";
         private const string kGizmoKeyPrefix = "ZebugGizmosEnabled--";
 
-        protected Channel(string channelName, Color channelColor, IChannel parent = null) {
+        protected Channel(string channelName, Color channelColor, IChannel parent = null)
+        {
 
-            if (s_Instance != null) {
+            if (s_Instance != null)
+            {
                 return;
-            } else {
-                s_Instance = this;
             }
+
+            s_Instance = this;
 
             m_ChannelName = channelName;
             m_ChannelColor = channelColor;
-            m_ColorString = (!Zebug.ColorTagsOnlyInEditor || Application.isEditor)
+            m_ColorString = !Zebug.ColorTagsOnlyInEditor || Application.isEditor
                                 ? $"<color={channelColor.ToHexString()}>{channelName}: </color>"
                                 : channelName + ": ";
 
@@ -219,39 +240,49 @@ namespace ZebugProject {
             bool forceToDefault = false;
 
             #if ZEBUG_FORCE_TO_DEFAULT
-            forceToDefault = true;
+                forceToDefault = true;
             #endif
 
-            if (parent != null) {
+            if (parent != null)
+            {
                 m_Parent = parent;
                 m_Depth = m_Parent.Depth() + 1;
-            } else {
+            }
+            else
+            {
                 bool isBase = channelName == "ZebugBase"; // todo this isn't great
-                if (!isBase) {
+                if (!isBase)
+                {
                     //  --- This should potentially be a serializable null, depending on how I want the
                     //      hierarchy editor code to look.
                     m_Parent = Zebug.Instance;
                     m_Depth = 1;
                     m_Parent.AddChild(this);
-                } else {
+                }
+                else
+                {
                     //  --- We're the base channel!
                     defaultOn = true;
                 }
             }
 
-            if (m_Parent != null) {
+            if (m_Parent != null)
+            {
                 m_Parent.AddChild(this);
             }
 
             string fullName = FullName();
             string logKey = kLogKeyPrefix + fullName;
-            if (forceToDefault || !PlayerPrefs.HasKey(logKey)) {
+            if (forceToDefault || !PlayerPrefs.HasKey(logKey))
+            {
                 PlayerPrefs.SetInt(logKey, defaultOn ? 1 : 0);
             }
+
             m_LogEnabled = PlayerPrefs.GetInt(logKey) == 1;
 
             string gizmoKey = kGizmoKeyPrefix + fullName;
-            if (!PlayerPrefs.HasKey(gizmoKey)) {
+            if (!PlayerPrefs.HasKey(gizmoKey))
+            {
                 PlayerPrefs.SetInt(gizmoKey, 0);
             }
 
@@ -260,8 +291,10 @@ namespace ZebugProject {
             Zebug.s_Channels.Add(this);
         }
 
-        public string FullName() {
-            if (m_Parent == null) {
+        public string FullName()
+        {
+            if (m_Parent == null)
+            {
                 return Name();
             }
 
@@ -271,32 +304,40 @@ namespace ZebugProject {
         //  ----------------------------------------------------------------------------------------
         //  ----------------------------------------------------------------------------------------
 
-        public static void Log(object message) {
-            if (!Instance.LogEnabled()) {
+        public static void Log(object message)
+        {
+            if (!Instance.LogEnabled())
+            {
                 return;
             }
 
             Zebug.s_Logger.Log(LogType.Log, Instance.m_ColorString + message);
         }
 
-        public static void Log(object message, Object context) {
-            if (!Instance.LogEnabled()) {
+        public static void Log(object message, Object context)
+        {
+            if (!Instance.LogEnabled())
+            {
                 return;
             }
 
-            Zebug.s_Logger.Log(LogType.Log, (object) (Instance.m_ColorString + message), context);
+            Zebug.s_Logger.Log(LogType.Log, (object)(Instance.m_ColorString + message), context);
         }
 
-        public static void LogFormat(string format, params object[] args) {
-            if (!Instance.LogEnabled()) {
+        public static void LogFormat(string format, params object[] args)
+        {
+            if (!Instance.LogEnabled())
+            {
                 return;
             }
 
             Zebug.s_Logger.LogFormat(LogType.Log, Instance.m_ColorString + format, args);
         }
 
-        public static void LogFormat(Object context, string format, params object[] args) {
-            if (!Instance.LogEnabled()) {
+        public static void LogFormat(Object context, string format, params object[] args)
+        {
+            if (!Instance.LogEnabled())
+            {
                 return;
             }
 
@@ -308,24 +349,31 @@ namespace ZebugProject {
             LogOption logOptions,
             Object context,
             string format,
-            params object[] args) {
+            params object[] args)
+        {
 
             bool mutingThisLog = !Instance.LogEnabled();
 
-            if (logType != LogType.Log) {
-                if (!Instance.AllowWarningAndErrorMuting) {
+            if (logType != LogType.Log)
+            {
+                if (!Instance.AllowWarningAndErrorMuting)
+                {
                     mutingThisLog = false;
                 }
             }
-            if (mutingThisLog) {
+
+            if (mutingThisLog)
+            {
                 return;
             }
 
             Debug.LogFormat(logType, logOptions, context, Instance.m_ColorString + format, args);
         }
 
-        public static void LogError(object message) {
-            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled()) {
+        public static void LogError(object message)
+        {
+            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
+            {
                 Zebug.s_Logger.Log(LogType.Error, Instance.m_ColorString + message);
             }
         }
@@ -334,14 +382,18 @@ namespace ZebugProject {
         //     Zebug.s_Logger.Log(LogType.Error, Instance.m_ColorString + message, context);
         // }
 
-        public static void LogErrorFormat(string format, params object[] args) {
-            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled()) {
+        public static void LogErrorFormat(string format, params object[] args)
+        {
+            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
+            {
                 Zebug.s_Logger.LogFormat(LogType.Error, Instance.m_ColorString + format, args);
             }
         }
 
-        public static void LogErrorFormat(Object context, string format, params object[] args) {
-            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled()) {
+        public static void LogErrorFormat(Object context, string format, params object[] args)
+        {
+            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
+            {
                 Zebug.s_Logger.LogFormat(LogType.Error, context, Instance.m_ColorString + format, args);
             }
         }
@@ -354,8 +406,10 @@ namespace ZebugProject {
         //     Zebug.s_Logger.LogException(exception, context);
         // }
 
-        public static void LogWarning(object message) {
-            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled()) {
+        public static void LogWarning(object message)
+        {
+            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
+            {
                 Zebug.s_Logger.Log(LogType.Warning, Instance.m_ColorString + message);
             }
         }
@@ -364,58 +418,74 @@ namespace ZebugProject {
         //     Zebug.s_Logger.Log(LogType.Warning, Instance.m_ColorString + message, context);
         // }
 
-        public static void LogWarningFormat(string format, params object[] args) {
-            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled()) {
+        public static void LogWarningFormat(string format, params object[] args)
+        {
+            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
+            {
                 Zebug.s_Logger.LogFormat(LogType.Warning, Instance.m_ColorString + format, args);
             }
         }
 
-        public static void LogWarningFormat(Object context, string format, params object[] args) {
-            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled()) {
+        public static void LogWarningFormat(Object context, string format, params object[] args)
+        {
+            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
+            {
                 Zebug.s_Logger.LogFormat(LogType.Warning, context, Instance.m_ColorString + format, args);
             }
         }
 
         [Conditional("UNITY_ASSERTIONS")]
-        public static void Assert(bool condition) {
-            if (condition) {
+        public static void Assert(bool condition)
+        {
+            if (condition)
+            {
                 return;
             }
 
-            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled()) {
+            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
+            {
                 Zebug.s_Logger.Log(LogType.Assert, Instance.m_ColorString + "Assertion failed");
             }
         }
 
         [Conditional("UNITY_ASSERTIONS")]
-        public static void Assert(bool condition, Object context) {
-            if (condition) {
+        public static void Assert(bool condition, Object context)
+        {
+            if (condition)
+            {
                 return;
             }
 
-            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled()) {
-                Zebug.s_Logger.Log(LogType.Assert, (object) (Instance.m_ColorString + "Assertion failed"), context);
+            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
+            {
+                Zebug.s_Logger.Log(LogType.Assert, (object)(Instance.m_ColorString + "Assertion failed"), context);
             }
         }
 
         [Conditional("UNITY_ASSERTIONS")]
-        public static void Assert(bool condition, object message) {
-            if (condition) {
+        public static void Assert(bool condition, object message)
+        {
+            if (condition)
+            {
                 return;
             }
 
-            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled()) {
+            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
+            {
                 Zebug.s_Logger.Log(LogType.Assert, Instance.m_ColorString + message);
             }
         }
 
         [Conditional("UNITY_ASSERTIONS")]
-        public static void Assert(bool condition, string message) {
-            if (condition) {
+        public static void Assert(bool condition, string message)
+        {
+            if (condition)
+            {
                 return;
             }
 
-            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled()) {
+            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
+            {
                 Zebug.s_Logger.Log(LogType.Assert, Instance.m_ColorString + message);
             }
         }
@@ -430,23 +500,29 @@ namespace ZebugProject {
         // }
 
         [Conditional("UNITY_ASSERTIONS")]
-        public static void Assert(bool condition, string message, Object context) {
-            if (condition) {
+        public static void Assert(bool condition, string message, Object context)
+        {
+            if (condition)
+            {
                 return;
             }
 
-            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled()) {
-                Zebug.s_Logger.Log(LogType.Assert, (object) (Instance.m_ColorString + message), context);
+            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
+            {
+                Zebug.s_Logger.Log(LogType.Assert, (object)(Instance.m_ColorString + message), context);
             }
         }
 
         [Conditional("UNITY_ASSERTIONS")]
-        public static void AssertFormat(bool condition, string format, params object[] args) {
-            if (condition) {
+        public static void AssertFormat(bool condition, string format, params object[] args)
+        {
+            if (condition)
+            {
                 return;
             }
 
-            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled()) {
+            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
+            {
                 Zebug.s_Logger.LogFormat(LogType.Assert, Instance.m_ColorString + format, args);
             }
         }
@@ -456,19 +532,24 @@ namespace ZebugProject {
             bool condition,
             Object context,
             string format,
-            params object[] args) {
-            if (condition) {
+            params object[] args)
+        {
+            if (condition)
+            {
                 return;
             }
 
-            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled()) {
+            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
+            {
                 Zebug.s_Logger.LogFormat(LogType.Assert, context, Instance.m_ColorString + format, args);
             }
         }
 
         [Conditional("UNITY_ASSERTIONS")]
-        public static void LogAssertion(object message) {
-            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled()) {
+        public static void LogAssertion(object message)
+        {
+            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
+            {
                 Zebug.s_Logger.Log(LogType.Assert, message);
             }
         }
@@ -479,25 +560,21 @@ namespace ZebugProject {
         // }
 
         [Conditional("UNITY_ASSERTIONS")]
-        public static void LogAssertionFormat(string format, params object[] args) {
-            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled()) {
+        public static void LogAssertionFormat(string format, params object[] args)
+        {
+            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
+            {
                 Zebug.s_Logger.LogFormat(LogType.Assert, Instance.m_ColorString + format, args);
             }
         }
 
         [Conditional("UNITY_ASSERTIONS")]
-        public static void LogAssertionFormat(Object context, string format, params object[] args) {
-            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled()) {
+        public static void LogAssertionFormat(Object context, string format, params object[] args)
+        {
+            if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
+            {
                 Zebug.s_Logger.LogFormat(LogType.Assert, context, Instance.m_ColorString + format, args);
             }
         }
     }
-
-    public struct LineData {
-        public Vector3 startPosition;
-        public Vector3 endPosition;
-        public Color color;
-        public float endTime;
-    }
-
 }

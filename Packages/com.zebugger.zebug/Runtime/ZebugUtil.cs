@@ -18,21 +18,22 @@
 //  ------------------------------------------------------------------------------------------------
 using UnityEngine;
 
-namespace ZebugProject.Util {
+namespace ZebugProject.Util
+{
 
-    public static class ZebugUtil {
-
-    }
+    public static class ZebugUtil { }
 
     /*
      |  --- ColorExtensions
      | Author: Dan Kyles 17/12/2020
      */
-    public static class ColorExtensions {
+    public static class ColorExtensions
+    {
         // https://stackoverflow.com/questions/2395438/convert-system-drawing-color-to-rgb-and-hex-value
         //  --- NOTE(dan): Modified to write alpha
-        public static string ToHexString(this Color c) {
-            return $"#{(int) (c.r*255):X2}{(int) (c.g*255):X2}{(int) (c.b*255):X2}{(int) (c.a*255):X2}";
+        public static string ToHexString(this Color c)
+        {
+            return $"#{(int)(c.r * 255):X2}{(int)(c.g * 255):X2}{(int)(c.b * 255):X2}{(int)(c.a * 255):X2}";
         }
     }
 }

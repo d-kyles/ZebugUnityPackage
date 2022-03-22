@@ -20,16 +20,20 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace ZebugProject {
-    public class ZebugSceneDrawer : MonoBehaviour {
+namespace ZebugProject
+{
+    public class ZebugSceneDrawer : MonoBehaviour
+    {
 
         private static ZebugSceneDrawer s_Instance;
 
         //  ----------------------------------------------------------------------------------------
 
         [RuntimeInitializeOnLoadMethod]
-        protected static void InitializeOnLoad() {
-            if (s_Instance != null) {
+        protected static void InitializeOnLoad()
+        {
+            if (s_Instance != null)
+            {
                 return;
             }
 
@@ -43,21 +47,27 @@ namespace ZebugProject {
 
         //  ----------------------------------------------------------------------------------------
 
-        private void OnDrawGizmos() {
+        private void OnDrawGizmos()
+        {
             Color oldGizmoColor = Gizmos.color;
             float time = Time.time;
 
-            foreach (KeyValuePair<IChannel,List<LineData>> lineChannel in Zebug.s_ChannelLines) {
+            foreach (KeyValuePair<IChannel, List<LineData>> lineChannel in Zebug.s_ChannelLines)
+            {
                 IChannel channel = lineChannel.Key;
                 bool drawGizmos = channel.GizmosEnabled();
-                List<LineData> lines =  lineChannel.Value;
-                for (int i = lines.Count - 1; i >= 0; i--) {
+                List<LineData> lines = lineChannel.Value;
+                for (int i = lines.Count - 1; i >= 0; i--)
+                {
                     LineData line = lines[i];
-                    if (drawGizmos) {
+                    if (drawGizmos)
+                    {
                         Gizmos.color = line.color;
                         Gizmos.DrawLine(line.startPosition, line.endPosition);
                     }
-                    if (time > line.endTime) {
+
+                    if (time > line.endTime)
+                    {
                         lines.RemoveAt(i);
                     }
                 }
@@ -66,4 +76,5 @@ namespace ZebugProject {
             Gizmos.color = oldGizmoColor;
         }
     }
+
 }
