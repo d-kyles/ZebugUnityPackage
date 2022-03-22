@@ -1,5 +1,5 @@
 ﻿//  --- Zebug --------------------------------------------------------------------------------------
-//  Copyright (c) 2020 Dan Kyles
+//  Copyright (c) 2022 Dan Kyles
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 //  and associated documentation files (the "Software"), to deal in the Software without
@@ -48,6 +48,9 @@ namespace ZebugProject {
 
         public static void DrawLine(Vector3 startPosition, Vector3 endPosition, Color color
             , float duration = 0) {
+            if (!Instance.GizmosEnabled()) {
+                return;
+            }
             if (!Zebug.s_ChannelLines.TryGetValue(Instance, out List<LineData> lines)) {
                 lines = new List<LineData>();
                 Zebug.s_ChannelLines.Add(Instance, lines);
@@ -60,5 +63,61 @@ namespace ZebugProject {
                 endTime = Time.time + duration,
             });
         }
+
+        //  ----------------------------------------------------------------------------------------
+        //  ----------------------------------------------------------------------------------------
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void DrawBox(Vector3 center, Quaternion rotation, Vector3 size)
+        {
+            DrawBox(center, rotation, size, Instance.m_ChannelColor);
+        }
+
+        //  ----------------------------------------------------------------------------------------
+
+        public static void DrawBox( Vector3    center
+                                  , Quaternion rotation
+                                  , Vector3    size
+                                  , Color      color
+                                  , float      duration = 0)
+        {
+            if (!Instance.GizmosEnabled())
+            {
+                return;
+            }
+            else
+            {
+                Vector3 halfSize = size * 0.5f;
+
+                Vector3 ruf = (rotation * Vector3.Scale(new Vector3(1, 1, 1), halfSize)) + center;
+                Vector3 rub = (rotation * Vector3.Scale(new Vector3(1, 1, -1), halfSize)) + center;
+                Vector3 rdf = (rotation * Vector3.Scale(new Vector3(1, -1, 1), halfSize)) + center;
+                Vector3 rdb = (rotation * Vector3.Scale(new Vector3(1, -1, -1), halfSize)) + center;
+                Vector3 luf = (rotation * Vector3.Scale(new Vector3(-1, 1, 1), halfSize)) + center;
+                Vector3 lub = (rotation * Vector3.Scale(new Vector3(-1, 1, -1), halfSize)) + center;
+                Vector3 ldf = (rotation * Vector3.Scale(new Vector3(-1, -1, 1), halfSize)) + center;
+                Vector3 ldb = (rotation * Vector3.Scale(new Vector3(-1, -1, -1), halfSize)) + center;
+
+                // --- up square
+                DrawLine(ruf, rub, color, duration);
+                DrawLine(rub, lub, color, duration);
+                DrawLine(lub, luf, color, duration);
+                DrawLine(luf, ruf, color, duration);
+
+                // --- edges down
+                DrawLine(ruf, rdf, color, duration);
+                DrawLine(rub, rdb, color, duration);
+                DrawLine(lub, ldb, color, duration);
+                DrawLine(luf, ldf, color, duration);
+
+                // --- down square
+                DrawLine(rdf, rdb, color, duration);
+                DrawLine(rdb, ldb, color, duration);
+                DrawLine(ldb, ldf, color, duration);
+                DrawLine(ldf, rdf, color, duration);
+            }
+        }
+
+        //  ----------------------------------------------------------------------------------------
     }
 }
