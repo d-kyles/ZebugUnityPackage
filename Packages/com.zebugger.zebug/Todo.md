@@ -100,4 +100,14 @@ Channel name is Method.DeclaringType.name if IsSubclassOf(MonoBehaviour)
   - pick different luminances for dark-mode and light-mode 
 * Make sure that the release notes explain how to ship without tests, so that test channels don't mess up the editor window.
 * C# 10 will have (ref StringBuilder.AppendInterpolatedStringHandler handler), in other words, the called method will be able 
-  to do the interpolation. Needless to say, all Zebug calls should use this to avoid all the string interpolation involved.* Move ColorTagsOnlyInEditor to some sort of true library config
+  to do the interpolation. Needless to say, all Zebug calls should use this to avoid all the string interpolation involved.
+* [Conditional("UNITY_EDITOR")] for gizmos
+* `private static int FixedFrame() { return (int)(Time.fixedTime / Time.fixedDeltaTime); }` (log in fixed update spams [0,>1] times, this shows which.)
+* 
+    ```C#
+    void DrawLocator() { 
+        DrawLine(pos, pos + Vector3.right*scale, Color.red);
+        DrawLine(pos, pos + Vector3.up*scale, Color.green);
+        DrawLine(pos, pos + Vector3.forward*scale, Color.blue);
+    }
+    ```
