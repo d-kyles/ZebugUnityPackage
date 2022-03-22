@@ -41,8 +41,9 @@ namespace ZebugProject {
                 DrawLine(position + new Vector3(-size, size, -size), position + new Vector3(size, -size, size), color, duration);
             }
         }
+
         public static void DrawLine(Vector3 startPosition, Vector3 endPosition) {
-            DrawLine(startPosition, endPosition, new Color(0,0,0));
+            DrawLine(startPosition, endPosition, Instance.m_ChannelColor);
         }
 
         public static void DrawLine(Vector3 startPosition, Vector3 endPosition, Color color

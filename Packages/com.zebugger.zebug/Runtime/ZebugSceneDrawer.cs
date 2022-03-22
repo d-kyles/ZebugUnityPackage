@@ -54,6 +54,7 @@ namespace ZebugProject {
                 for (int i = lines.Count - 1; i >= 0; i--) {
                     LineData line = lines[i];
                     if (drawGizmos) {
+                        Gizmos.color = line.color;
                         Gizmos.DrawLine(line.startPosition, line.endPosition);
                     }
                     if (time > line.endTime) {
