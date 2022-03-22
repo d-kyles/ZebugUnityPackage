@@ -324,6 +324,7 @@ namespace ZebugProject
             Zebug.s_Logger.Log(LogType.Log, (object)(Instance.m_ColorString + message), context);
         }
 
+        [StringFormatMethod("format")]
         public static void LogFormat(string format, params object[] args)
         {
             if (!Instance.LogEnabled())
@@ -334,6 +335,7 @@ namespace ZebugProject
             Zebug.s_Logger.LogFormat(LogType.Log, Instance.m_ColorString + format, args);
         }
 
+        [StringFormatMethod("format")]
         public static void LogFormat(Object context, string format, params object[] args)
         {
             if (!Instance.LogEnabled())
@@ -344,6 +346,7 @@ namespace ZebugProject
             Zebug.s_Logger.LogFormat(LogType.Log, context, Instance.m_ColorString + format, args);
         }
 
+        [StringFormatMethod("format")]
         public static void LogFormat(
             LogType logType,
             LogOption logOptions,
@@ -382,6 +385,7 @@ namespace ZebugProject
         //     Zebug.s_Logger.Log(LogType.Error, Instance.m_ColorString + message, context);
         // }
 
+        [StringFormatMethod("format")]
         public static void LogErrorFormat(string format, params object[] args)
         {
             if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
@@ -390,6 +394,7 @@ namespace ZebugProject
             }
         }
 
+        [StringFormatMethod("format")]
         public static void LogErrorFormat(Object context, string format, params object[] args)
         {
             if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
@@ -418,6 +423,7 @@ namespace ZebugProject
         //     Zebug.s_Logger.Log(LogType.Warning, Instance.m_ColorString + message, context);
         // }
 
+        [StringFormatMethod("format")]
         public static void LogWarningFormat(string format, params object[] args)
         {
             if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
@@ -426,6 +432,7 @@ namespace ZebugProject
             }
         }
 
+        [StringFormatMethod("format")]
         public static void LogWarningFormat(Object context, string format, params object[] args)
         {
             if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
@@ -514,6 +521,7 @@ namespace ZebugProject
         }
 
         [Conditional("UNITY_ASSERTIONS")]
+        [StringFormatMethod("format")]
         public static void AssertFormat(bool condition, string format, params object[] args)
         {
             if (condition)
@@ -528,6 +536,7 @@ namespace ZebugProject
         }
 
         [Conditional("UNITY_ASSERTIONS")]
+        [StringFormatMethod("format")]
         public static void AssertFormat(
             bool condition,
             Object context,
@@ -560,6 +569,7 @@ namespace ZebugProject
         // }
 
         [Conditional("UNITY_ASSERTIONS")]
+        [StringFormatMethod("format")]
         public static void LogAssertionFormat(string format, params object[] args)
         {
             if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
@@ -569,6 +579,7 @@ namespace ZebugProject
         }
 
         [Conditional("UNITY_ASSERTIONS")]
+        [StringFormatMethod("format")]
         public static void LogAssertionFormat(Object context, string format, params object[] args)
         {
             if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
