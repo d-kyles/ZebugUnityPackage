@@ -32,23 +32,6 @@ namespace ZebugProject
         public float endTime;
     }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void DrawBurst(Vector3 position, float size, Color color = new Color(), float duration = 0f)
-        {
-            if (Instance.m_GizmosEnabled)
-            {
-                DrawLine(position + new Vector3(0, -size, 0), position + new Vector3(0, size, 0), color, duration);
-                DrawLine(position + new Vector3(-size, 0, 0), position + new Vector3(size, 0, 0), color, duration);
-                DrawLine(position + new Vector3(0, 0, -size), position + new Vector3(0, 0, size), color, duration);
-
-                //  --- diagonal
-                size = size/1.73f;
-                DrawLine(position + new Vector3(-size, -size, -size), position + new Vector3(size, size, size), color, duration);
-                DrawLine(position + new Vector3(-size, -size, size), position + new Vector3(size, size, -size), color, duration);
-                DrawLine(position + new Vector3(-size, size, size), position + new Vector3(size, -size, -size), color, duration);
-                DrawLine(position + new Vector3(-size, size, -size), position + new Vector3(size, -size, size), color, duration);
-            }
-        }
     //  ----------------------------------------------------------------------------------------
     //  ----------------------------------------------------------------------------------------
 
@@ -84,6 +67,26 @@ namespace ZebugProject
                 color = color,
                 endTime = Time.time + duration,
             });
+        }
+
+        //  ----------------------------------------------------------------------------------------
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void DrawBurst(Vector3 position, float size, Color color = new Color(), float duration = 0f)
+        {
+            if (Instance.m_GizmosEnabled)
+            {
+                DrawLine(position + new Vector3(0, -size, 0), position + new Vector3(0, size, 0), color, duration);
+                DrawLine(position + new Vector3(-size, 0, 0), position + new Vector3(size, 0, 0), color, duration);
+                DrawLine(position + new Vector3(0, 0, -size), position + new Vector3(0, 0, size), color, duration);
+
+                //  --- diagonal
+                size = size/1.73f;
+                DrawLine(position + new Vector3(-size, -size, -size), position + new Vector3(size, size, size), color, duration);
+                DrawLine(position + new Vector3(-size, -size, size), position + new Vector3(size, size, -size), color, duration);
+                DrawLine(position + new Vector3(-size, size, size), position + new Vector3(size, -size, -size), color, duration);
+                DrawLine(position + new Vector3(-size, size, -size), position + new Vector3(size, -size, size), color, duration);
+            }
         }
 
         //  ----------------------------------------------------------------------------------------
