@@ -52,6 +52,8 @@ namespace ZebugProject {
         private Transform m_Transform;
         private Vector3 m_NextStartPos;
         private float m_LastStart;
+        private float m_LastBurstTime;
+        private float m_BurstDuration = 1f;
 
 
         //  --------------------------------------------------------------------------------------------
@@ -116,6 +118,14 @@ namespace ZebugProject {
                     m_NextStartPos = lastPos;
                 }
             }
+
+            if (Time.time > m_LastBurstTime + m_BurstDuration) {
+                Zebug.DrawBurst(new Vector3(-2, 2, -2), 0.25f, new Color(1f, 1f, 0f) * 0.8f, 0.5f * m_BurstDuration);
+                m_LastBurstTime = Time.time;
+            }
+
+            Zebug.DrawBox(new Vector3(2f, 2f, 2f), Quaternion.identity, new Vector3(1, 1, 2));
+            Zebug.DrawLocator(new Vector3(0,0,0));
 
             m_LastStart += m_Speed;
         }

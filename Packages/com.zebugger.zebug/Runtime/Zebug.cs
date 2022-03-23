@@ -25,20 +25,20 @@ using JetBrains.Annotations;
 
 using UnityEngine;
 using ZebugProject.Util;
+
 using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 
 namespace ZebugProject
 {
-
     /*
-     | Zebug
-     | A debugging library/tool, heavily inspired by XDebug, may it rest in peace.
-     | Author: Dan Kyles
+     |  --- Zebug
+     |
+     |      A debugging library/tool, heavily inspired by XDebug, may it rest in peace.
+     |      Author: Dan Kyles
      */
     public sealed class Zebug : Channel<Zebug>
     {
-
         public const bool ColorTagsOnlyInEditor = true;
 
         public static List<IChannel> s_Channels = new List<IChannel>();
@@ -350,14 +350,12 @@ namespace ZebugProject
         }
 
         [StringFormatMethod("format")]
-        public static void LogFormat(
-            LogType logType,
-            LogOption logOptions,
-            Object context,
-            string format,
-            params object[] args)
+        public static void LogFormat( LogType logType
+                                    , LogOption logOptions
+                                    , Object context
+                                    , string format
+                                    , params object[] args)
         {
-
             bool mutingThisLog = !Instance.LogEnabled();
 
             if (logType != LogType.Log)

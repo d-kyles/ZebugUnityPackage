@@ -16,12 +16,18 @@
 //  DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //  ------------------------------------------------------------------------------------------------
+
 using UnityEngine;
 
 namespace ZebugProject.Util
 {
+    public static class ZebugUtil {
 
-    public static class ZebugUtil { }
+        public static Vector3 RightVec   = new Vector3(1, 0, 0);
+        public static Vector3 UpVec      = new Vector3(0, 1, 0);
+        public static Vector3 ForwardVec = new Vector3(0, 0, 1);
+
+    }
 
     /*
      |  --- ColorExtensions

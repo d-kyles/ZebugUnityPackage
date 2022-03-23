@@ -17,12 +17,16 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //  ------------------------------------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using ZebugProject.Util;
 
 namespace ZebugProject
 {
+    using static ZebugUtil;
 
     public struct LineData
     {
@@ -32,8 +36,8 @@ namespace ZebugProject
         public float endTime;
     }
 
-    //  ----------------------------------------------------------------------------------------
-    //  ----------------------------------------------------------------------------------------
+    //  --------------------------------------------------------------------------------------------
+    //  --------------------------------------------------------------------------------------------
 
     public partial class Channel<T>
     {
@@ -72,6 +76,24 @@ namespace ZebugProject
         //  ----------------------------------------------------------------------------------------
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Conditional("UNITY_EDITOR")]
+        public static void DrawLocator(Vector3 position, float scale = 0.1f, Quaternion rotation = default, float duration = 0)
+        {
+
+            if (Math.Abs(rotation.x + rotation.x + rotation.x + rotation.x) < 0.0001f)
+            {
+                rotation = new Quaternion(0,0,0,1);
+            }
+
+            DrawLine(position, position + (rotation * RightVec * scale),   Color.red,   duration);
+            DrawLine(position, position + (rotation * UpVec * scale),      Color.green, duration);
+            DrawLine(position, position + (rotation * ForwardVec * scale), Color.blue,  duration);
+        }
+
+        //  ----------------------------------------------------------------------------------------
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Conditional("UNITY_EDITOR")]
         public static void DrawBurst(Vector3 position, float size, Color color = new Color(), float duration = 0f)
         {
             if (Instance.m_GizmosEnabled)
@@ -92,6 +114,7 @@ namespace ZebugProject
         //  ----------------------------------------------------------------------------------------
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Conditional("UNITY_EDITOR")]
         public static void DrawBox(Vector3 center, Quaternion rotation, Vector3 size)
         {
             DrawBox(center, rotation, size, Instance.m_ChannelColor);
@@ -99,6 +122,7 @@ namespace ZebugProject
 
         //  ----------------------------------------------------------------------------------------
 
+        [Conditional("UNITY_EDITOR")]
         public static void DrawBox( Vector3 center
                                   , Quaternion rotation
                                   , Vector3 size

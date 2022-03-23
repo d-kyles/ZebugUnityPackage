@@ -84,7 +84,6 @@
   has no context when you read it in an inheritance declaration.
     
 * Move ColorTagsOnlyInEditor to some sort of true library config
-* Make sure [StringFormatMethod] is used!
 * GetDefaultChannel(stacklevel) newStackFrame().GetMethod() in Dict<MethodBase, Channel>.
 Channel name is Method.DeclaringType.name if IsSubclassOf(MonoBehaviour)
 * if logFrameNumbers: <color={0}>{1}</color> 〚{2}〛: 
@@ -103,11 +102,3 @@ Channel name is Method.DeclaringType.name if IsSubclassOf(MonoBehaviour)
   to do the interpolation. Needless to say, all Zebug calls should use this to avoid all the string interpolation involved.
 * [Conditional("UNITY_EDITOR")] for gizmos
 * `private static int FixedFrame() { return (int)(Time.fixedTime / Time.fixedDeltaTime); }` (log in fixed update spams [0,>1] times, this shows which.)
-* 
-    ```C#
-    void DrawLocator() { 
-        DrawLine(pos, pos + Vector3.right*scale, Color.red);
-        DrawLine(pos, pos + Vector3.up*scale, Color.green);
-        DrawLine(pos, pos + Vector3.forward*scale, Color.blue);
-    }
-    ```
