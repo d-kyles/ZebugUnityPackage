@@ -16,6 +16,7 @@
 //   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //  ------------------------------------------------------------------------------------------------
 
+using System;
 using UnityEngine;
 
 namespace ZebugProject
@@ -26,7 +27,7 @@ namespace ZebugProject
      |      PlayerPrefs won't do the trick.
      |
      |      Currently this file isn't used, and channels with important production diagnostic info
-     |      can default to being on in builds by calling the follwing in their constructor:
+     |      can default to being on in builds by calling the following in their constructor:
      |          `if (!Application.isEditor) { SetEnabled(true) }`
      |
      |      Ideally you want to make sure your version control system ignores this file, as your
@@ -40,13 +41,121 @@ namespace ZebugProject
      |
      | Author: Dan Kyles
      */
+    [Serializable]
+    public class ChannelPreference
+    {
+        public bool logEnabled;
+        public bool gizmoEnabled;
+    } 
+    
     public class ZebugPreferences : ScriptableObject
     {
+        [SerializeField] private ZebugPreferenceDictionary _channelDict;
 
         //  --- TODO(dan): Find a good way to auto find settings, as people probably want to
         //                 customise where it is and what it's called.
         private const string kAssetName = "ZebugPreferences";
+        private const string kChannelsDefault = "ZebugChannelsDefaultEnabled";
 
+        public ZebugPreferenceDictionary Data => _channelDict;
+        
+        public bool ChannelsEnabledByDefault
+        {
+            get
+            {
+                if (!PlayerPrefs.HasKey(kChannelsDefault))
+                {
+                    PlayerPrefs.SetInt(kChannelsDefault, 0);    
+                }
+                bool result = PlayerPrefs.GetInt(kChannelsDefault) > 0;
+                return result;
+            }
+            set
+            {
+                PlayerPrefs.SetInt(kChannelsDefault, value ? 1 : 0);
+            }
+        }
+
+        
+        private static ChannelPreference Create(string key, bool defaultOn)
+        {
+            //PlayerPrefs.SetInt(key, enabled ? 1 : 0);
+            if (!Instance._channelDict.ContainsKey(key))
+            {
+                var result = new ChannelPreference
+                {
+                    logEnabled = defaultOn,
+                    gizmoEnabled = defaultOn,
+                };
+                Instance._channelDict.Add(key, result);
+                return result;
+            }
+            else
+            {
+                return Instance._channelDict[key]; 
+            }
+        }
+        
+        private static bool HasKey(string key)
+        {
+            //return PlayerPrefs.HasKey(key);
+            return Instance._channelDict.ContainsKey(key);
+        }
+        
+        private static ChannelPreference Get(string key)
+        {
+            if (!Instance._channelDict.TryGetValue(key, out ChannelPreference value))
+            {
+                bool defaultOn = Instance.ChannelsEnabledByDefault;
+
+                if (key == "ZebugBase")
+                {
+                    defaultOn = true;
+                }
+                            
+                #if ZEBUG_ALL_ON
+                    defaultOn = true;
+                #endif
+            
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+                value = Create(key, defaultOn);
+            }
+            
+            return value;
+        }
+
+        public static void SetLog(string fullName, bool enabled)
+        {
+            ChannelPreference pref = Get(fullName);
+            pref.logEnabled = enabled;
+        }
+        
+        public static void SetGizmo(string fullName, bool enabled)
+        {
+            ChannelPreference pref = Get(fullName);
+            pref.gizmoEnabled = enabled;
+        }
+
+        public static bool GetLog(string fullName)
+        {
+            ChannelPreference pref = Get(fullName);
+            return pref.logEnabled;
+        }
+        
+        public static bool GetGizmo(string fullName)
+        {
+            ChannelPreference pref = Get(fullName);
+            return pref.gizmoEnabled;
+        }
+
+        public static void RemoveChannelData(string key)
+        {
+            if (Instance._channelDict.ContainsKey(key))
+            {
+                Instance._channelDict.Remove(key);
+            } 
+        }
+        
         private static ZebugPreferences s_Instance;
 
         public static ZebugPreferences Instance
@@ -91,7 +200,7 @@ namespace ZebugProject
 
                 #if UNITY_EDITOR
                 {
-                    string folderPath = "Assets/Ignore/Resources";
+                    string folderPath = "Assets/Ignore/Resources/";
 
                     if (!UnityEditor.AssetDatabase.IsValidFolder(folderPath))
                     {
@@ -131,6 +240,7 @@ namespace ZebugProject
 
             return s_Instance;
         }
+
     }
 
 }

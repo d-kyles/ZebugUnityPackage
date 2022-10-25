@@ -28,10 +28,6 @@ namespace ZebugProject {
             public Zebug() : base("Zebug Line Draw Test"
                 , new Color(0.25f, 0.66f, 0.95f)
                 , ZebugProject.Zebug.Instance) {
-                //  --- TODO(dan): It's just straight up too hard to turn on a channel, or figure out
-                //                 if the channel is turned on. Fix this as the highest prio.
-                m_LogEnabled = true;
-                m_GizmosEnabled = true;
             }
         }
 
