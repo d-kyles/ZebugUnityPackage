@@ -5,7 +5,7 @@ MIT open source Unity debug library.
 
 1. [Usage](#Usage)
 1. [Installation](#Installation)
-1. [Release Notes](#release-notes)
+1. [Changelog](#Changelog)
 1. [License](#license)
 
 Usage
