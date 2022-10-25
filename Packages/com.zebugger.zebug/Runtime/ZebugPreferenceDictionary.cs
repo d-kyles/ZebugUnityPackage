@@ -1,5 +1,10 @@
+<<<<<<<< HEAD:Packages/com.zebugger.zebug/Runtime/ZebugPreferenceDictionary.cs
 ﻿//  --- Zebug --------------------------------------------------------------------------------------
 //  Copyright (c) 2022 Dan Kyles
+========
+﻿//  --- Zebug v0.4.0 -------------------------------------------------------------------------------
+//  Copyright (c) 2020 Dan Kyles
+>>>>>>>> github.com/main:Runtime/ZebugGizmos.cs
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 //  and associated documentation files (the "Software"), to deal in the Software without
