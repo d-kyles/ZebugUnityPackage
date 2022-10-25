@@ -48,12 +48,15 @@ namespace ZebugProject {
         [SerializeField] private float m_PhiBase = 10f;
         [SerializeField] private float m_ThetaBase = 30f;
 
+        [SerializeField] private bool m_LogChannelsEnabled;
+        
         private float m_ThetaInc = 1f;
         private Transform m_Transform;
         private Vector3 m_NextStartPos;
         private float m_LastStart;
         private float m_LastBurstTime;
         private float m_BurstDuration = 1f;
+        private float m_LastPeriodicLogTime = 0f;
 
 
         //  --------------------------------------------------------------------------------------------
@@ -128,6 +131,28 @@ namespace ZebugProject {
             Zebug.DrawLocator(new Vector3(0,0,0));
 
             m_LastStart += m_Speed;
+            
+            
+            if (m_LogChannelsEnabled && Time.time > m_LastPeriodicLogTime + 5f)
+            {
+                m_LastPeriodicLogTime = Time.time;
+                
+                void TestLogAll(IChannel channel)
+                {
+                    global::ZebugProject.Zebug.LogFormat("Channel ({0}) is enabled? LE({1}), LLE({2})"
+                                                        , channel.Name()
+                                                        , channel.LogEnabled()
+                                                        , channel.LocalLogEnabled());
+
+                    foreach (IChannel child in channel.Children())
+                    {
+                        TestLogAll(child);
+                    }
+                }
+                
+                TestLogAll(global::ZebugProject.Zebug.Instance);
+            }
+            
         }
 
         private Vector3 AddSpherical(Vector3 p, float r, float theta, float phi) {
