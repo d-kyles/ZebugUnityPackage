@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2022-10-26
+
+### Added
+- Advanced options foldout:
+  - New TestChannels hiding option, test channels hidden by default now.
+  - Option for clearning old/missing channel data now under this foldout 
+
+### Updated
+- Refresh window button now hardcoded to be hidden. (It's for Dev only)
+- Default resources location changed to Assets/Resources by default (was Assets/Ignore/Resources)
+- Updated docs re:git-ignore of log channels preferences object. 
+
+### Fixed
+- Channel Expansion should now survive window reload
+
 ## [0.5.0] - 2022-10-26
 ### Added
 - The Zebug channel enabled state is now read from a project asset (resource).
