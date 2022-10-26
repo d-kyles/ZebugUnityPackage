@@ -58,7 +58,11 @@ public class LineDrawer : MonoBehaviour {
 
 Installation
 ------------
-Good luck
+Good luck!
+1) Normal Unity Package things.
+1) Zebug will create a preferences scriptableObject at `Assets/Resources` if you don't have one 
+   already. This can be moved to whichever `Resources` folder you like. NOTE: you should git-ignore 
+   this file and it's meta file so that your channel preferences are different than your colleages.
 
 Changelog
 ---------

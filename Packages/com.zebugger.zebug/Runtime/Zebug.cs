@@ -100,7 +100,7 @@ namespace ZebugProject
                 if (s_Instance == null)
                 {
                     // ReSharper disable once ObjectCreationAsStatement
-                    new T();
+                    new T(); 
                     // --- T() will assign s_Instance.
                 }
 
@@ -210,7 +210,6 @@ namespace ZebugProject
 
         protected Channel(string channelName, Color channelColor, IChannel parent = null)
         {
-
             if (s_Instance != null)
             {
                 return;
@@ -238,20 +237,18 @@ namespace ZebugProject
                     //      hierarchy editor code to look.
                     m_Parent = Zebug.Instance;
                     m_Depth = 1;
-                    m_Parent.AddChild(this);
                 }
             }
+            
+            string fullName = FullName();
+            m_LogEnabled = ZebugPreferences.GetLog(fullName); 
+            m_GizmosEnabled = ZebugPreferences.GetGizmo(fullName);
 
             if (m_Parent != null)
             {
                 m_Parent.AddChild(this);
             }
             
-            string fullName = FullName();
-            
-            m_LogEnabled = ZebugPreferences.GetLog(fullName); 
-            m_GizmosEnabled = ZebugPreferences.GetGizmo(fullName);
-
             Zebug.s_Channels.Add(this);
         }
 

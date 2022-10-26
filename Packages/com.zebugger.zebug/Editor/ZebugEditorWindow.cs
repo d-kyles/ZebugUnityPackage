@@ -21,7 +21,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Codice.CM.Common;
 using UnityEditor;
 using UnityEngine;
 
@@ -47,6 +46,38 @@ namespace ZebugProject {
         }
 
         private static Dictionary<IChannel, bool> s_ChannelExpanded = new Dictionary<IChannel, bool>();
+        
+        [SerializeField] private ExpandedChannelsSet _channelExpandedSet;  
+        
+        [Serializable]
+        private class ExpandedChannelsSet : Dictionary<string, bool>, ISerializationCallbackReceiver
+        {
+            [SerializeField, HideInInspector] private List<string> _keys = new List<string>();
+            [SerializeField, HideInInspector] private List<bool> _values = new List<bool>();
+
+            public void OnBeforeSerialize()
+            {
+                _keys.Clear();
+                _keys.AddRange(Keys);
+            
+                _values.Clear();
+                _values.AddRange(Values);
+            }
+
+            public void OnAfterDeserialize()
+            {
+                Clear();
+                int count = _keys.Count;
+ 
+                for(int i = 0; i < count; i++)
+                {
+                    Add(_keys[i], _values[i]);
+                }
+            }
+        }
+                
+        
+        private static HashSet<IChannel> s_TestChannels = new HashSet<IChannel>();
         private static int s_ExpandedCount = 0; 
         private GUIStyle _channelRowStyleTop;
         private GUIStyle _channelRowStyleInner;
@@ -56,50 +87,63 @@ namespace ZebugProject {
         private bool _preprocessorAllOnSet;
         private float _lastFetchedPreprocessorTime;
         private string[] _symbols;
-
+        private bool _advOptionsExpanded;
+        private bool _showTestChannels;
 
         protected void OnEnable() {
 
             _lastFetchedPreprocessorTime = 0;
             
             // ZebugEditorUtils.LoadFromZebugRelative Packages/com.zebugger.zebug or Assets/Plugins/Zebug/
-    
-            ZebugPreferences thing =  ZebugPreferences.Instance;
-            
+
+            //  --- Make sure preferences are loaded 
+            var _ = ZebugPreferences.Instance;
+
             if (Zebug.s_Channels == null || Zebug.s_Channels.Count == 0) {
                 
-                Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-                HashSet<Type> types = new HashSet<Type>();
-                for (int i = 0; i < loadedAssemblies.Length; i++) {
-                    Assembly a = loadedAssemblies[i];
-                    foreach (Type type in a.GetTypes()) {
-                        types.Add(type);
-                    }
-                }
-                
-                //    = TypeCache.GetTypesDerivedFrom<IChannel>()
-                //        .Where(x => !x.IsConstructedGenericType)?
-
-                foreach (Type type in types) {
-                    if (typeof(IChannel).IsAssignableFrom(type)
-                        && !typeof(Channel<>).IsAssignableFrom(type)
-                        && !type.IsInterface) {
+                TypeCache.TypeCollection types = TypeCache.GetTypesDerivedFrom<IChannel>();
+                foreach (Type type in types)
+                {
+                    if (!typeof(Channel<>).IsAssignableFrom(type)
+                        && !type.IsConstructedGenericType) { 
                         //  --- Pre-populate the channels list
                         //      default constructor adds instance to the base ZebugInstance
                         
-                        IChannel channel = (IChannel)Activator.CreateInstance(type);
-                        
-                        if (!s_ChannelExpanded.ContainsKey(channel))
+                        var propInfo = type.BaseType.GetProperty
+                            (
+                                name: "Instance",
+                                bindingAttr: BindingFlags.Public | BindingFlags.Static
+                            );
+                        IChannel channel = (IChannel)propInfo.GetValue(null); 
+
+                        string fullName = channel.FullName();
+                        bool isBase = fullName == "ZebugBase";
+                        if (isBase)
                         {
-                            s_ChannelExpanded.Add(channel, true);
-                        } 
+                            //  --- Activator.CreateInstance bypasses the normal construction, and
+                            //      Zebug.Instance may already have been called in the constructors
+                            //      of other child channels, when they link to the hierarchy.
+                            //      the channel we just made won't cause issues just lying around.
+                            //      As it's editor window only.
+                            channel = Zebug.Instance;
+                        }
                         
-                        if (channel.FullName() == "ZebugBase")
+                        if (!_channelExpandedSet.ContainsKey(fullName))
+                        { 
+                            //  --- Default to expanding to show new channels
+                            _channelExpandedSet.Add(fullName, true);
+                        }  
+                        
+                        if (type.AssemblyQualifiedName.Contains("EditorTests"))
                         {
-                            s_ChannelExpanded[channel] = true;
-                            s_ExpandedCount = 1;
+                            s_TestChannels.Add(channel); 
                         }
                     }
+                }
+                
+                foreach (KeyValuePair<string,bool> kvp in _channelExpandedSet)
+                {
+                    s_ExpandedCount += kvp.Value ? 1 : 0;
                 }
             }
             
@@ -126,16 +170,16 @@ namespace ZebugProject {
         }
 
         private void OnGUI() {
-            Channel<Zebug> zebugBase = Zebug.Instance;
 
             var lineColor = new Color(0.34f, 0.34f, 0.34f);
             
+            /*
             if (GUILayout.Button("Refresh Window"))
             {
                 OnEnable();
             }
-            
             ZebugGUIStyles.Line(lineColor, 2);
+            */
             
             int currentChannel = 0;
             int visibleChannelCount = s_ExpandedCount;
@@ -147,7 +191,7 @@ namespace ZebugProject {
             GUI.backgroundColor = Color.white;
             GUILayout.Space(5);
             GUILayout.Label("Channels", EditorStyles.largeLabel);
-            DrawChannel(zebugBase);
+            DrawChannel(Zebug.Instance);
             GUI.backgroundColor = oldColor;
 
             GUILayout.Space(5);
@@ -163,7 +207,7 @@ namespace ZebugProject {
             {
                 if (_symbols == null || Time.time - _lastFetchedPreprocessorTime > 2f)
                 {
-                    UpdatePreprocessorStuff();
+                    PreprocessorUpdate();
                 }                    
                 
                 using (new GUILayout.VerticalScope())
@@ -172,82 +216,88 @@ namespace ZebugProject {
                     newValue = GUILayout.Toggle(_preprocessorAllOnSet, "Force All On");
                     if (newValue != oldValue)
                     {
-                        SetPreprocessorString(kAllOnPreprocessor, newValue);
-                        UpdatePreprocessorStuff();
+                        PreprocessorSetString(kAllOnPreprocessor, newValue);
+                        PreprocessorUpdate();
                     }
-                    
-                    // oldValue = _preprocessorForceToDefault; 
-                    // newValue = GUILayout.Toggle(_preprocessorForceToDefault, "Force to default");
-                    // if (newValue != oldValue)
-                    // {
-                    //     SetPreprocessorString(kForceToDefault, newValue);
-                    //     UpdatePreprocessorStuff();
-                    // }
                 }
-                
                 
                 using (new GUILayout.VerticalScope())
                 {
                     GUILayout.Label("Scripting Define Symbols");
                     using (new GUILayout.VerticalScope(EditorStyles.textArea))
                     {
-                        for (int sIdx = 0; sIdx < _symbols.Length; sIdx++)
+                        if (_symbols!= null)
                         {
-                            string symbol = _symbols[sIdx];
-                            GUILayout.Label(symbol);
+                            for (int sIdx = 0; sIdx < _symbols.Length; sIdx++)
+                            {
+                                string symbol = _symbols[sIdx];
+                                GUILayout.Label(symbol);
+                            }
                         }
                     }
                 }
-                
-                void UpdatePreprocessorStuff()
-                {
-                    BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
-                    BuildTargetGroup buildTargetGroup = BuildPipeline.GetBuildTargetGroup(buildTarget);
-                    string symbolString = PlayerSettings.GetScriptingDefineSymbolsForGroup(buildTargetGroup);
-                    string[] symbolArray = symbolString.Split(';');
-                    _symbols = symbolArray;
-                    _preprocessorAllOnSet = HasPreprocessorString(kAllOnPreprocessor);
-                    _lastFetchedPreprocessorTime = Time.time;
-                }
-                
-                bool HasPreprocessorString(string target)
-                {
-                    bool result = _symbols.Contains(target); 
-                    return result;
-                }
-                
-                void SetPreprocessorString(string target, bool targetEnabled)
-                {
-                    bool existing = HasPreprocessorString(target);
-                    if (existing == targetEnabled)
-                    {
-                        return;
-                    }
-                    
-                    if (targetEnabled)
-                    {
-                        // adding
-                        Array.Resize(ref _symbols, _symbols.Length+1);
-                        _symbols[_symbols.Length-1] = target;
-                    } 
-                    else
-                    {
-                        // swap with back element
-                        int idx = Array.FindIndex(_symbols, x=> x == target);
-                        _symbols[idx] = _symbols[_symbols.Length-1];
-                        Array.Resize(ref _symbols, _symbols.Length-1);
-                    }
-                    BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
-                    BuildTargetGroup buildTargetGroup = BuildPipeline.GetBuildTargetGroup(buildTarget);
-                    PlayerSettings.SetScriptingDefineSymbolsForGroup(buildTargetGroup, _symbols);
-                }
-                
             }
             
             // maybe?
                     //EditorGUILayout.BeginFoldoutHeaderGroup()
                     //EditorGUIUtility.hierarchyMode
 
+            ZebugGUIStyles.Line(lineColor, 2);
+            
+            using (new GUILayout.VerticalScope())
+            {
+                using (new GUILayout.HorizontalScope())
+                {
+                    GUILayout.Label("New channels enabled by default?");
+                    
+                    oldValue = ZebugPreferences.Instance.ChannelsEnabledByDefault; 
+                    newValue = EditorGUILayout.Toggle("", oldValue);
+                    if (newValue != oldValue)
+                    {
+                        ZebugPreferences.Instance.ChannelsEnabledByDefault = newValue;
+                    }
+                }
+                
+                _advOptionsExpanded = EditorGUILayout.Foldout(_advOptionsExpanded
+                                                             , "Advanced Options"
+                                                             , toggleOnLabelClick: true);
+                if (_advOptionsExpanded)
+                {
+                    using (new GUILayout.VerticalScope(EditorStyles.helpBox))
+                    {
+                        using (new GUILayout.HorizontalScope())
+                        {
+                            GUILayout.Label("Clear unused channel data");
+                            if (GUILayout.Button("Clear"))
+                            {
+
+                                ClearRedundantChannelData();
+                            }
+                        }
+                        
+                        using (new GUILayout.HorizontalScope())
+                        {
+                            GUILayout.Label("Show test channels");
+                            const string kShowTestChannels = "ZebugShowTestChannels";
+                            if (!PlayerPrefs.HasKey(kShowTestChannels))
+                            {
+                                PlayerPrefs.SetInt(kShowTestChannels, 0);
+                            }
+                            
+                            _showTestChannels = PlayerPrefs.GetInt(kShowTestChannels) > 0;
+                            bool newShowTestValue = GUILayout.Toggle(_showTestChannels, ""); 
+                            if (_showTestChannels != newShowTestValue)
+                            {
+                                _showTestChannels = newShowTestValue;
+                                PlayerPrefs.SetInt(kShowTestChannels, newShowTestValue ? 1 : 0);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            //   -----------------------------------------------------------------------------------
+            
             void DrawChannel(IChannel channel) {
                 
                 s_ExpandedCount++;
@@ -276,13 +326,13 @@ namespace ZebugProject {
                                 foldoutTextStyle.onNormal.textColor = channel.GetColor();
                             }
 
-                            if (!s_ChannelExpanded.TryGetValue(channel, out bool expanded)) {
-                                s_ChannelExpanded.Add(channel, false);
+                            if (!_channelExpandedSet.TryGetValue(channel.FullName(), out bool expanded)) {
+                                _channelExpandedSet.Add(channel.FullName(), false);
                             }
 
                             channelExpanded = EditorGUILayout.Foldout(expanded, channel.Name(), true, foldoutTextStyle);
                             if (channelExpanded != expanded) {
-                                s_ChannelExpanded[channel] = channelExpanded;
+                                _channelExpandedSet[channel.FullName()] = channelExpanded;
                             }
                         } else {
                             var foldoutTextStyle = new GUIStyle();
@@ -337,68 +387,93 @@ namespace ZebugProject {
                     if (channelExpanded) {
                         using (new EditorGUI.IndentLevelScope(1))
                         using (new GUILayout.VerticalScope()) {
-                            foreach (IChannel child in channel.Children()) {
-                                DrawChannel(child);
+                            foreach (IChannel child in channel.Children())
+                            {
+                                if (_showTestChannels || !s_TestChannels.Contains(child))
+                                {
+                                    DrawChannel(child);
+                                } 
                             }
                         }
                     }
                     
                 }
             }
-            
-            ZebugGUIStyles.Line(lineColor, 2);
-            
-            using (new GUILayout.VerticalScope())
+        }
+
+        private static void ClearRedundantChannelData()
+        {
+            HashSet<string> channels = new HashSet<string>();
+            AddChannels(Zebug.Instance, channels);
+
+            static void AddChannels(IChannel channel, HashSet<string> list)
             {
-                using (new GUILayout.HorizontalScope())
+                list.Add(channel.FullName());
+                IList<IChannel> children = channel.Children();
+                for (int idx = 0; idx < children.Count; idx++)
                 {
-                    GUILayout.Label("New channels enabled by default?");
-                    
-                    oldValue = ZebugPreferences.Instance.ChannelsEnabledByDefault; 
-                    newValue = EditorGUILayout.Toggle("", oldValue);
-                    if (newValue != oldValue)
-                    {
-                        ZebugPreferences.Instance.ChannelsEnabledByDefault = newValue;
-                    }
-                }
-                
-                using (new GUILayout.HorizontalScope())
-                {
-                    GUILayout.Label("Clear unused channel data");
-                    if (GUILayout.Button("Clear"))
-                    {
-                        HashSet<string> channels = new HashSet<string>();
-                        AddChannels(Zebug.Instance, channels);
-                        
-                        static void AddChannels(IChannel channel, HashSet<string> list)
-                        {
-                            list.Add(channel.FullName());
-                            IList<IChannel> children = channel.Children();
-                            for (int idx = 0; idx < children.Count; idx++)
-                            {
-                                AddChannels(children[idx], list);
-                            }
-                        }
-                        
-                        List<string> keysToRemove = new List<string>(); 
-                        foreach (KeyValuePair<string, ChannelPreference> kvp in ZebugPreferences.Instance.Data)
-                        {
-                            string channelName = kvp.Key;
-                            if (!channels.Contains(channelName))
-                            {
-                                keysToRemove.Add(channelName);
-                            }
-                        }
-                        
-                        //  --- Mustn't modify data while iterating 
-                        foreach (string key in keysToRemove)
-                        {
-                            ZebugPreferences.RemoveChannelData(key);
-                        }
-                    }
+                    AddChannels(children[idx], list);
                 }
             }
+
+            List<string> keysToRemove = new List<string>();
+            foreach (KeyValuePair<string, ChannelPreference> kvp in ZebugPreferences.Instance.Data)
+            {
+                string channelName = kvp.Key;
+                if (!channels.Contains(channelName))
+                {
+                    keysToRemove.Add(channelName);
+                }
+            }
+
+            //  --- Mustn't modify data while iterating 
+            foreach (string key in keysToRemove)
+            {
+                ZebugPreferences.RemoveChannelData(key);
+            }
+        }
+
+        private void PreprocessorUpdate()
+        {
+            BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
+            BuildTargetGroup buildTargetGroup = BuildPipeline.GetBuildTargetGroup(buildTarget);
+            string symbolString = PlayerSettings.GetScriptingDefineSymbolsForGroup(buildTargetGroup);
+            string[] symbolArray = symbolString.Split(';');
+            _symbols = symbolArray;
+            _preprocessorAllOnSet = PreprocessorHasString(kAllOnPreprocessor);
+            _lastFetchedPreprocessorTime = Time.time;
+        }
+        
+        private bool PreprocessorHasString(string target)
+        {
+            bool result = _symbols.Contains(target); 
+            return result;
+        }
+        
+        private void PreprocessorSetString(string target, bool targetEnabled)
+        {
+            bool existing = PreprocessorHasString(target);
+            if (existing == targetEnabled)
+            {
+                return;
+            }
             
+            if (targetEnabled)
+            {
+                // adding
+                Array.Resize(ref _symbols, _symbols.Length+1);
+                _symbols[_symbols.Length-1] = target;
+            } 
+            else
+            {
+                // swap with back element
+                int idx = Array.FindIndex(_symbols, x=> x == target);
+                _symbols[idx] = _symbols[_symbols.Length-1];
+                Array.Resize(ref _symbols, _symbols.Length-1);
+            }
+            BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
+            BuildTargetGroup buildTargetGroup = BuildPipeline.GetBuildTargetGroup(buildTarget);
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(buildTargetGroup, _symbols);
         }
     }
     
