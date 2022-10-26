@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.3] - 2022-10-26
+
 ### Added
 - New scroll view added to the main Zebug window.
 
