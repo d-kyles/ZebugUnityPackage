@@ -45,9 +45,7 @@ namespace ZebugProject {
             }
         }
 
-        private static Dictionary<IChannel, bool> s_ChannelExpanded = new Dictionary<IChannel, bool>();
-        
-        [SerializeField] private ExpandedChannelsSet _channelExpandedSet;  
+        [SerializeField] private ExpandedChannelsSet _channelExpandedSet = new ExpandedChannelsSet();  
         
         [Serializable]
         private class ExpandedChannelsSet : Dictionary<string, bool>, ISerializationCallbackReceiver

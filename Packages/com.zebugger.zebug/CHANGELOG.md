@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- `channelExpandedSet` could be null when new.
+
 ## [0.6.1] - 2022-10-26
 
 ### Fixed
