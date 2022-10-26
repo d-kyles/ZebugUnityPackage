@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Tag number format was incorrectly stated in the readme.
+
 ## [0.6.0] - 2022-10-26
 
 ### Added

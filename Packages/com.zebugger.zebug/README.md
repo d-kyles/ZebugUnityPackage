@@ -77,7 +77,7 @@ Making a Release
       `^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$`
 * Create new entry in CHANGELOG.md
 * Commit with new version number in the following format `v 0.4.1`
-* Tag that commit with the same name as the commit format above.
+* Tag that commit with the verion number. E.G. `0.6.0`.
 
 License
 -------
