@@ -58,7 +58,11 @@ public class LineDrawer : MonoBehaviour {
 
 Installation
 ------------
-Good luck
+Good luck!
+1) Normal Unity Package things.
+1) Zebug will create a preferences scriptableObject at `Assets/Resources` if you don't have one 
+   already. This can be moved to whichever `Resources` folder you like. NOTE: you should git-ignore 
+   this file and it's meta file so that your channel preferences are different than your colleages.
 
 Changelog
 ---------
@@ -73,7 +77,7 @@ Making a Release
       `^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$`
 * Create new entry in CHANGELOG.md
 * Commit with new version number in the following format `v 0.4.1`
-* Tag that commit with the same name as the commit format above.
+* Tag that commit with the verion number. E.G. `0.6.0`.
 
 License
 -------

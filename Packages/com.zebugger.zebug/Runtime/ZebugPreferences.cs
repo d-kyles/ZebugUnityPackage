@@ -56,6 +56,7 @@ namespace ZebugProject
         //                 customise where it is and what it's called.
         private const string kAssetName = "ZebugPreferences";
         private const string kChannelsDefault = "ZebugChannelsDefaultEnabled";
+        private const string kFolderPath = "Assets/Resources/";
 
         public ZebugPreferenceDictionary Data => _channelDict;
         
@@ -187,6 +188,10 @@ namespace ZebugProject
         {
             if (s_Instance == null)
             {
+                //  --- By default if someone has the preferences as an asset in the project
+                //      somewhere, we'll use that one. People can move it wherever and have it
+                //      ignored it in git etc. Might cause problems if people don't git ignore
+                //      during first-time setup.
                 s_Instance = Resources.Load<ZebugPreferences>(kAssetName);
             }
 
@@ -200,11 +205,10 @@ namespace ZebugProject
 
                 #if UNITY_EDITOR
                 {
-                    string folderPath = "Assets/Ignore/Resources/";
 
-                    if (!UnityEditor.AssetDatabase.IsValidFolder(folderPath))
+                    if (!UnityEditor.AssetDatabase.IsValidFolder(kFolderPath))
                     {
-                        string[] folders = folderPath.Split('/');
+                        string[] folders = kFolderPath.Split('/');
                         int folderCount = folders.Length;
                         string currentValid = (folderCount > 2)
                                                   ? folders[0]
@@ -223,7 +227,7 @@ namespace ZebugProject
                         }
                     }
 
-                    UnityEditor.AssetDatabase.CreateAsset(s_Instance, folderPath + kAssetName + ".asset");
+                    UnityEditor.AssetDatabase.CreateAsset(s_Instance, kFolderPath + kAssetName + ".asset");
 
                     UnityEditor.EditorUtility.SetDirty(s_Instance);
 
