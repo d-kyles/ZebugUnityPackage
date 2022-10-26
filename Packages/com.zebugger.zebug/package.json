@@ -1,7 +1,7 @@
 {
   "name": "com.zebugger.zebug",
   "displayName": "Zebug",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "unity": "2020.3",
   "description": "A Debug system, with a togglable hierarchy of channels.",
   "keywords": [
