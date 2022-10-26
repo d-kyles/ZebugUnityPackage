@@ -73,14 +73,15 @@ namespace ZebugProject {
                 }
             }
         }
-                
-        
+
         private static HashSet<IChannel> s_TestChannels = new HashSet<IChannel>();
         private static int s_ExpandedCount = 0; 
         private GUIStyle _channelRowStyleTop;
         private GUIStyle _channelRowStyleInner;
         private GUIStyle _channelRowStyleBottom;
 
+        private Vector2 _scrollPosition;
+        
         private const string kAllOnPreprocessor = "ZEBUG_ALL_ON"; 
         private bool _preprocessorAllOnSet;
         private float _lastFetchedPreprocessorTime;
@@ -178,7 +179,8 @@ namespace ZebugProject {
             }
             ZebugGUIStyles.Line(lineColor, 2);
             */
-            
+            _scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
+
             int currentChannel = 0;
             int visibleChannelCount = s_ExpandedCount;
             
@@ -294,6 +296,9 @@ namespace ZebugProject {
                 }
             }
             
+            GUILayout.EndScrollView();
+
+            //   -----------------------------------------------------------------------------------
             //   -----------------------------------------------------------------------------------
             
             void DrawChannel(IChannel channel) {
