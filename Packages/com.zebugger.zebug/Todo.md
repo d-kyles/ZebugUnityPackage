@@ -64,7 +64,8 @@
      debug menu, then you can edit features in submenus, editing debug values like LiveDebug used 
      to. The feature I super love though, is that you can hit the pin button and select multiple 
      debug variables to appear on the screen during play. Just exceptionally useful.
-
+     
+ 11) The 'additional prefix' on iOS could benefit from auto epansion of timestamp etc.
 
 ## Misc Tasks
 * `Channel` should be probably be renamed `ZebugChannel`, as it's used naked and

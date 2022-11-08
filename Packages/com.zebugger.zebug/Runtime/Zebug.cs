@@ -223,6 +223,15 @@ namespace ZebugProject
                                 ? $"<color={channelColor.ToHexString()}>{channelName}: </color>"
                                 : channelName + ": ";
 
+            #if PLATFORM_IOS
+            {
+                if (ZebugPreferences.Instance.UseAdditionalPrefixOnIos)
+                {
+                    m_ColorString = ZebugPreferences.Instance.AdditionalIosPrefix + m_ColorString; 
+                }
+            }
+            #endif
+            
             if (parent != null)
             {
                 m_Parent = parent;

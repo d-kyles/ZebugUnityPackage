@@ -292,6 +292,39 @@ namespace ZebugProject {
                                 PlayerPrefs.SetInt(kShowTestChannels, newShowTestValue ? 1 : 0);
                             }
                         }
+                        
+                        using (new GUILayout.HorizontalScope())
+                        {
+                            GUILayout.Label("Add an additional prefix on iOS?");
+                            oldValue = ZebugPreferences.Instance.UseAdditionalPrefixOnIos; 
+                            newValue = EditorGUILayout.Toggle("", oldValue);
+                            if (newValue != oldValue)
+                            {
+                                ZebugPreferences.Instance.UseAdditionalPrefixOnIos = newValue;
+                            }
+                        }
+                        
+                        ///
+                        /// iOS devices logging back into XCode have no formatting to facilitate
+                        /// syntax highlighting, which makes the logs much harder to read. This
+                        /// enables a dev to spoof a format like ADB logs (for example) in the case
+                        /// that they want to look at the logs of an android device next to ones
+                        /// that have been captured on an iOS device.   
+                        /// 
+                        
+                        using (new GUILayout.HorizontalScope())
+                        {
+                            GUILayout.Label("iOS additional prefix:");
+                            bool wasEnabled = GUI.enabled;
+                            GUI.enabled = ZebugPreferences.Instance.UseAdditionalPrefixOnIos;
+                            string oldPrefix = ZebugPreferences.Instance.AdditionalIosPrefix;
+                            string newPrefix = EditorGUILayout.DelayedTextField("",oldPrefix);
+                            if (newPrefix != oldPrefix)
+                            {
+                                ZebugPreferences.Instance.AdditionalIosPrefix = newPrefix;
+                            }
+                            GUI.enabled = wasEnabled;
+                        }
                     }
                 }
             }

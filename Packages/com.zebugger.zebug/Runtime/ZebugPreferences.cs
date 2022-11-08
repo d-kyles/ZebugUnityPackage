@@ -52,11 +52,20 @@ namespace ZebugProject
     {
         [SerializeField] private ZebugPreferenceDictionary _channelDict;
 
+        [SerializeField] private bool _useAdditionalPrefixOnIos; 
+        [SerializeField] private string _additionalIosPrefix = "1-1 1 1 1 I "; 
+
         //  --- TODO(dan): Find a good way to auto find settings, as people probably want to
         //                 customise where it is and what it's called.
         private const string kAssetName = "ZebugPreferences";
         private const string kChannelsDefault = "ZebugChannelsDefaultEnabled";
         private const string kFolderPath = "Assets/Resources/";
+        
+        public string AdditionalIosPrefix
+        {
+            get => _additionalIosPrefix;
+            set => _additionalIosPrefix = value;
+        }
 
         public ZebugPreferenceDictionary Data => _channelDict;
         
@@ -64,6 +73,10 @@ namespace ZebugProject
         {
             get
             {
+                //  --- TODO(dan): This is wiped out on device, so if you somehow don't see the
+                //                 channel in editor then this setting won't help you much for your
+                //                 build. Not a frequent issue, but would definitely be annoying.
+                //                 Fix
                 if (!PlayerPrefs.HasKey(kChannelsDefault))
                 {
                     PlayerPrefs.SetInt(kChannelsDefault, 0);    
@@ -76,7 +89,18 @@ namespace ZebugProject
                 PlayerPrefs.SetInt(kChannelsDefault, value ? 1 : 0);
             }
         }
-
+        
+        public bool UseAdditionalPrefixOnIos
+        {
+            get
+            {
+                return _useAdditionalPrefixOnIos;
+            }
+            set
+            {
+                _useAdditionalPrefixOnIos = value;
+            }
+        } 
         
         private static ChannelPreference Create(string key, bool defaultOn)
         {

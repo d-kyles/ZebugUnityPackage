@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Optionally add a prefix to all logs on iOS. Allows the dev to match various syntax highlighting formats to help readability of XCode's logs. 
+
 ## [0.6.3] - 2022-10-26
 
 ### Added
