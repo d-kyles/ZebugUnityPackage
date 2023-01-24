@@ -610,6 +610,11 @@ namespace ZebugProject
                 Zebug.s_Logger.LogFormat(LogType.Assert, context, Instance.m_ColorString + format, args);
             }
         }
+
+        public ILogger ILoggerWrapper()
+        {
+            return new ZebugILoggerWrapper<T>(this);
+        }
     }
 
 }

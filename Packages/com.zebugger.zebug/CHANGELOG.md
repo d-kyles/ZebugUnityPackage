@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Add a useful utility instance method for getting simpler ILogger interfaces from a ZebugChannel
+- Potential fix for editor window throwing it's toys when you drop this package over an old version with the window open
+
 ## [0.6.4] - 2022-11-08
 
 ### Added
