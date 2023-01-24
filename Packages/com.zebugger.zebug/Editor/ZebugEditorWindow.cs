@@ -88,6 +88,7 @@ namespace ZebugProject {
         private string[] _symbols;
         private bool _advOptionsExpanded;
         private bool _showTestChannels;
+        private bool s_StylesLoaded = false;
 
         protected void OnEnable() {
 
@@ -146,22 +147,28 @@ namespace ZebugProject {
                 }
             }
             
+            LoadStyles();
+        }
+
+        private void LoadStyles()
+        {
             try
             {
-                _channelRowStyleTop = new GUIStyle(EditorStyles.helpBox);    
-                _channelRowStyleTop.margin = new RectOffset(-1,-1,-1,-1);
+                _channelRowStyleTop = new GUIStyle(EditorStyles.helpBox);
+                _channelRowStyleTop.margin = new RectOffset(-1, -1, -1, -1);
                 Texture2D backgroundTextureOuter = Resources.Load<Texture2D>("ZebugBackgroundBox_Top");
                 _channelRowStyleTop.normal.background = backgroundTextureOuter;
-            
+
                 _channelRowStyleInner = new GUIStyle(_channelRowStyleTop);
                 Texture2D backgroundTextureInner = Resources.Load<Texture2D>("ZebugBackgroundBox_Inner");
                 _channelRowStyleInner.normal.background = backgroundTextureInner;
-            
+
                 _channelRowStyleBottom = new GUIStyle(_channelRowStyleTop);
                 Texture2D backgroundTextureBottom = Resources.Load<Texture2D>("ZebugBackgroundBox_Bottom");
                 _channelRowStyleBottom.normal.background = backgroundTextureBottom;
-            } 
-            catch (NullReferenceException)
+
+                s_StylesLoaded = _channelRowStyleInner != null;
+            } catch (NullReferenceException)
             {
                 //  --- NOTE(dan): Shortly after recompiling, EditorStyles.helpBox doesn't exist.
                 //                 Not sure how to avoid this.
@@ -337,6 +344,11 @@ namespace ZebugProject {
             void DrawChannel(IChannel channel) {
                 
                 s_ExpandedCount++;
+                
+                if (!s_StylesLoaded)
+                {
+                    LoadStyles();
+                }
                 
                 var style = _channelRowStyleInner;
                 if (currentChannel == 0)
