@@ -87,6 +87,8 @@ namespace UnityTemplateProjects {
         [Tooltip("Whether or not to invert our Y axis for mouse input to rotation.")]
         public bool invertY;
 
+        private Vector3 _externalDir;
+
         private void OnEnable() {
             m_TargetCameraState.SetFromTransform(transform);
             m_InterpolatingCameraState.SetFromTransform(transform);
@@ -118,6 +120,9 @@ namespace UnityTemplateProjects {
                 direction += Vector3.up;
             }
 
+            direction += _externalDir;
+            _externalDir = default;
+            
             return direction;
         }
 
@@ -180,6 +185,26 @@ namespace UnityTemplateProjects {
             m_InterpolatingCameraState.LerpTowards(m_TargetCameraState, positionLerpPct, rotationLerpPct);
 
             m_InterpolatingCameraState.UpdateTransform(transform);
+        }
+
+        public void Forward()
+        {
+            _externalDir += Vector3.forward;
+        }
+
+        public void Left()
+        {
+            _externalDir += Vector3.left;
+        }
+
+        public void Back()
+        {
+            _externalDir += Vector3.back;
+        }
+
+        public void Right()
+        {
+            _externalDir += Vector3.right;
         }
     }
 }

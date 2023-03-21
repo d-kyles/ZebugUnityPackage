@@ -28,6 +28,9 @@ namespace ZebugProject
 {
     using static ZebugUtil;
 
+    //  --------------------------------------------------------------------------------------------
+    //  --------------------------------------------------------------------------------------------
+    
     public struct LineData
     {
         public Vector3 startPosition;
@@ -35,36 +38,75 @@ namespace ZebugProject
         public Color color;
         public float endTime;
     }
+    
+    //  --------------------------------------------------------------------------------------------
+    //  --------------------------------------------------------------------------------------------
+
+    public class ChannelLineData
+    {
+        public enum Type
+        {
+            Editor,  //  --- default, uses gizmo
+            Runtime, //  --- uses line renderer 
+        }
+
+        public List<LineData> lines = new List<LineData>();
+        public Type type = Type.Editor;
+    }
 
     //  --------------------------------------------------------------------------------------------
     //  --------------------------------------------------------------------------------------------
 
     public partial class Channel<T>
     {
+        //  --- Your inheriting class can override this value to do all its drawing on device
+        //  --- TODO(dan): make this a part of the scriptable object 
+        protected ChannelLineData.Type m_LineDrawingType;
+        
+        //  ----------------------------------------------------------------------------------------
+        
+        public void SetLineRenderType(ChannelLineData.Type renderType)
+        {
+            m_LineDrawingType = renderType; 
+            if (Zebug.s_ChannelLines.TryGetValue(Instance, out ChannelLineData data))
+            {
+                data.type = m_LineDrawingType;
+            }
+        }
+        
         //  ----------------------------------------------------------------------------------------
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Conditional("DEVELOPMENT_BUILD")]
+        [Conditional("UNITY_EDITOR")]
         public static void DrawLine(Vector3 startPosition, Vector3 endPosition)
         {
-            DrawLine(startPosition, endPosition, new Color(0, 0, 0));
+            DrawLine(startPosition, endPosition, Instance.m_ChannelColor);
         }
 
+        [Conditional("DEVELOPMENT_BUILD")]
+        [Conditional("UNITY_EDITOR")]
         public static void DrawLine( Vector3 startPosition
                                    , Vector3 endPosition
                                    , Color color
                                    , float duration = 0)
         {
-            if (!Instance.GizmosEnabled())
+            Channel<T> instance = Instance;
+            
+            if (!instance.GizmosEnabled())
             {
                 return;
             }
 
-            if (!Zebug.s_ChannelLines.TryGetValue(Instance, out List<LineData> lines))
+            if (!Zebug.s_ChannelLines.TryGetValue(instance, out ChannelLineData data))
             {
-                lines = new List<LineData>();
-                Zebug.s_ChannelLines.Add(Instance, lines);
+                data = new ChannelLineData();
+                data.type = instance.m_LineDrawingType;
+                
+                Zebug.s_ChannelLines.Add(instance, data);
             }
 
-            lines.Add(new LineData
+            data.lines.Add(new LineData
             {
                 startPosition = startPosition,
                 endPosition = endPosition,
@@ -76,6 +118,15 @@ namespace ZebugProject
         //  ----------------------------------------------------------------------------------------
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Conditional("DEVELOPMENT_BUILD")]
+        [Conditional("UNITY_EDITOR")]
+        public static void DrawTransformLocator(Transform tForm, float scale = 0.1f, float duration = 0)
+        {
+            DrawLocator(tForm.position, scale, tForm.rotation, duration);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Conditional("DEVELOPMENT_BUILD")]
         [Conditional("UNITY_EDITOR")]
         public static void DrawLocator(Vector3 position, float scale = 0.1f, Quaternion rotation = default, float duration = 0)
         {
@@ -93,6 +144,7 @@ namespace ZebugProject
         //  ----------------------------------------------------------------------------------------
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Conditional("DEVELOPMENT_BUILD")]
         [Conditional("UNITY_EDITOR")]
         public static void DrawBurst(Vector3 position, float size, Color color = new Color(), float duration = 0f)
         {
@@ -114,6 +166,7 @@ namespace ZebugProject
         //  ----------------------------------------------------------------------------------------
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Conditional("DEVELOPMENT_BUILD")]
         [Conditional("UNITY_EDITOR")]
         public static void DrawBox(Vector3 center, Quaternion rotation, Vector3 size)
         {
@@ -122,6 +175,7 @@ namespace ZebugProject
 
         //  ----------------------------------------------------------------------------------------
 
+        [Conditional("DEVELOPMENT_BUILD")]
         [Conditional("UNITY_EDITOR")]
         public static void DrawBox( Vector3 center
                                   , Quaternion rotation

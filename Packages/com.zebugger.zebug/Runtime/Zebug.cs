@@ -48,8 +48,8 @@ namespace ZebugProject
         public static ILogger s_Logger = Debug.unityLogger;
 
         //  --- Gizmo drawing API
-        public static Dictionary<IChannel, List<LineData>> s_ChannelLines
-            = new Dictionary<IChannel, List<LineData>>();
+        public static Dictionary<IChannel, ChannelLineData> s_ChannelLines
+            = new Dictionary<IChannel, ChannelLineData>();
 
         public Zebug() : base("ZebugBase", Color.white) { }
     }

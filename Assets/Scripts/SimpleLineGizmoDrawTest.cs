@@ -19,6 +19,7 @@
 
 using System;
 using UnityEngine;
+using UnityTemplateProjects;
 
 namespace ZebugProject {
     public class SimpleLineGizmoDrawTest : MonoBehaviour {
@@ -46,6 +47,8 @@ namespace ZebugProject {
 
         [SerializeField] private bool m_LogChannelsEnabled;
         
+        [SerializeField] private ChannelLineData.Type m_RenderType;
+        
         private float m_ThetaInc = 1f;
         private Transform m_Transform;
         private Vector3 m_NextStartPos;
@@ -53,6 +56,7 @@ namespace ZebugProject {
         private float m_LastBurstTime;
         private float m_BurstDuration = 1f;
         private float m_LastPeriodicLogTime = 0f;
+        private ChannelLineData.Type m_LastRenderType;
 
 
         //  --------------------------------------------------------------------------------------------
@@ -78,6 +82,10 @@ namespace ZebugProject {
             Quaternion mightBeShort = Quaternion.Slerp(Quaternion.identity, negTwoSeventy, 1f);
             Zebug.Log($"shortPath(-270) = {mightBeShort}");
             Zebug.Log($"90: {ninety}");
+            
+            Zebug.Log("Zebug.GizmosEnabled = " + Zebug.Instance.GizmosEnabled());
+            
+            SetRenderType(m_RenderType);
         }
 
         //  --------------------------------------------------------------------------------------------
@@ -149,6 +157,16 @@ namespace ZebugProject {
                 TestLogAll(global::ZebugProject.Zebug.Instance);
             }
             
+            if (m_LastRenderType != m_RenderType)
+            {
+                SetRenderType(m_RenderType);
+            }
+        }
+        
+        private void SetRenderType(ChannelLineData.Type renderType)
+        {
+            Zebug.Instance.SetLineRenderType(renderType);
+            m_LastRenderType = renderType;
         }
 
         private Vector3 AddSpherical(Vector3 p, float r, float theta, float phi) {
@@ -158,5 +176,63 @@ namespace ZebugProject {
             p.z += (float) (r*Math.Sin(phi));
             return p;
         }
+        
+        private void OnGUI()
+        {
+            
+            Camera c = Camera.main;
+            Rect camRect = c.pixelRect;
+            
+            float size = Application.isMobilePlatform ? (Screen.dpi * 0.5f) : 100;
+            float half = size * 0.5f;
+            
+            float cMinY = camRect.yMin; // from top down
+            float cMaxY = camRect.yMax; // bottom of screen
+            float cMinX = camRect.xMin; 
+            float cMaxX = camRect.xMax;
+            float midX = camRect.center.x;
+            
+            Rect upRect = new Rect(midX - half, cMaxY-size-size, size, size);
+            Rect leftRect = new Rect(midX - half - size, cMaxY-size, size, size);
+            Rect rightRect = new Rect(midX - half + size, cMaxY-size, size, size);
+            Rect downRect = new Rect(midX - half, cMaxY-size, size, size);
+            
+            if (GUI.RepeatButton(upRect, "W"))
+            {
+                if (Camera.main.TryGetComponent(out SimpleCameraController control))
+                {
+                    control.Forward();
+                }   
+            }
+            if (GUI.RepeatButton(leftRect, "A"))
+            {
+                if (Camera.main.TryGetComponent(out SimpleCameraController control))
+                {
+                    control.Left();
+                }
+            }
+            if (GUI.RepeatButton(downRect, "S"))
+            {
+                if (Camera.main.TryGetComponent(out SimpleCameraController control))
+                {
+                    control.Back();
+                }
+            }
+            if (GUI.RepeatButton(rightRect, "D"))
+            {
+                if (Camera.main.TryGetComponent(out SimpleCameraController control))
+                {
+                    control.Right();
+                }
+            }
+            
+            Rect channelToggleBox = new Rect(cMinX, cMaxY-3*size, size*2, size);
+            
+            if (GUI.Button(channelToggleBox, "Toggle channel"))
+            {
+                Zebug.Instance.SetGizmosEnabled(!Zebug.Instance.LocalGizmosEnabled());
+            }
+        }
+        
     }
 }

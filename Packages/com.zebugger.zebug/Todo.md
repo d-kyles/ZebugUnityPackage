@@ -1,6 +1,13 @@
-﻿#Todo
+﻿# Todo
 
-## Big Ideas
+-------------------------------------------------------------------------------------
+
+## Ideas
+
+1) Use Debug.Draw so that ZebugGizmoDrawer works in Edit mode too
+    2) Most of the uses of Zebug.Draw should probably be that way, as they're not gizmos.
+       Gizmos select the drawing object if clicked on, and are probably more heavyweight.
+    3) Use of Zebug.Draw to do gizmos should probably be in a specific OnGizmo method.
 
 1)  Togglable Profiling!
     ```C#
@@ -58,14 +65,15 @@
         }
     }
     ```
- 9) Option for displaying logs in-game?
+9) Option for displaying logs in-game?
      
- 10) StompyRobot has a good debugger, where you can quad tap a small square at the top to open a 
-     debug menu, then you can edit features in submenus, editing debug values like LiveDebug used 
-     to. The feature I super love though, is that you can hit the pin button and select multiple 
-     debug variables to appear on the screen during play. Just exceptionally useful.
+10) StompyRobot has a good debugger, where you can quad tap a small square at the top to open a 
+    debug menu, then you can edit features in submenus, editing debug values like LiveDebug used 
+    to. The feature I super love though, is that you can hit the pin button and select multiple 
+    debug variables to appear on the screen during play. Just exceptionally useful.
      
- 11) The 'additional prefix' on iOS could benefit from auto epansion of timestamp etc.
+11) The 'additional prefix' on iOS could benefit from auto epansion of timestamp etc.
+12) Maybe we could do Zebug.DrawHandle(something, handleResultDelegate) and get values out?
 
 ## Misc Tasks
 * `Channel` should be probably be renamed `ZebugChannel`, as it's used naked and
@@ -87,3 +95,4 @@ Channel name is Method.DeclaringType.name if IsSubclassOf(MonoBehaviour)
   to do the interpolation. Needless to say, all Zebug calls should use this to avoid all the string interpolation involved.
 * [Conditional("UNITY_EDITOR")] for gizmos
 * `private static int FixedFrame() { return (int)(Time.fixedTime / Time.fixedDeltaTime); }` (log in fixed update spams [0,>1] times, this shows which.)
+* Optionally annotate Log methods with `[BurstDiscard]`, so you can throw managed debug statements into job functions but have them removed for compiled methods. 

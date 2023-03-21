@@ -2,15 +2,13 @@
 // -------------------------------------------------------------------------------------------------
 
 using System;
-using UnityEditor;
+
 using UnityEngine;
 
 namespace ZebugProject
 {
-
     public class ZebugGizmoDrawer : MonoBehaviour
     {
-
         [SerializeField] private DrawWhen _drawWhen = DrawWhen.Gizmo;
         [SerializeField] private Type _drawType = Type.Locator;
         [SerializeField] private Color _color = new Color(0.48f, 0.51f, 0.71f);
@@ -21,6 +19,7 @@ namespace ZebugProject
             None,
             Gizmo,
             GizmoSelected,
+            Runtime,
         }
 
         public enum Type
@@ -34,12 +33,22 @@ namespace ZebugProject
         }
 
         private Transform _transform;
+        [NonSerialized] private bool _hasTransform = false;
 
         protected void Awake()
         {
             _transform = transform;
+            _hasTransform = true;
         }
 
+        protected void Update()
+        {
+            if (_drawWhen == DrawWhen.Runtime)
+            {
+                DrawGizmo();
+            }
+        }
+        
         protected void OnDrawGizmos()
         {
             if (_drawWhen == DrawWhen.Gizmo)
@@ -58,6 +67,12 @@ namespace ZebugProject
 
         private void DrawGizmo()
         {
+            if (!_hasTransform)
+            {
+                _transform = transform;
+                _hasTransform = true;
+            }
+            
             switch (_drawType)
             {
                 case Type.LineX:
