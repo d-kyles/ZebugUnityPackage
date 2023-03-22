@@ -37,6 +37,28 @@ namespace ZebugProject
         public Vector3 endPosition;
         public Color color;
         public float endTime;
+        public float width;
+    }
+    
+    //  --------------------------------------------------------------------------------------------
+    //  --------------------------------------------------------------------------------------------
+
+    public enum WidthType
+    {
+        // Default. Feels good, costs a bit more.
+        Adaptive,    
+            
+        //  --- Costs the same as Adaptive, good depth cues. Disappears in the distance.
+        World,
+            
+        //  --- Long distance lines may feel cluttered and odd. Hard to get a good
+        //      The way the width changes conflicts with expected depth cues, so doesn't feel great       
+        Pixels,
+            
+        //  --- Cheap, feels like it disappears up close, hard to see on high DPI screens
+        SinglePixel,
+            
+        Count,
     }
     
     //  --------------------------------------------------------------------------------------------
@@ -52,6 +74,7 @@ namespace ZebugProject
 
         public List<LineData> lines = new List<LineData>();
         public Type type = Type.Editor;
+        public WidthType widthType = WidthType.Adaptive;
     }
 
     //  --------------------------------------------------------------------------------------------
@@ -62,6 +85,8 @@ namespace ZebugProject
         //  --- Your inheriting class can override this value to do all its drawing on device
         //  --- TODO(dan): make this a part of the scriptable object 
         protected ChannelLineData.Type m_LineDrawingType;
+        protected WidthType m_LineWidthType = WidthType.Adaptive;
+        protected float m_LineDrawingWidth = 2f;
         
         //  ----------------------------------------------------------------------------------------
         
@@ -71,6 +96,15 @@ namespace ZebugProject
             if (Zebug.s_ChannelLines.TryGetValue(Instance, out ChannelLineData data))
             {
                 data.type = m_LineDrawingType;
+            }
+        }
+        
+        public void SetLineRenderWidthType(WidthType widthType)
+        {
+            m_LineWidthType = widthType;
+            if (Zebug.s_ChannelLines.TryGetValue(Instance, out ChannelLineData data))
+            {
+                data.widthType = m_LineWidthType;
             }
         }
         
@@ -102,7 +136,8 @@ namespace ZebugProject
             {
                 data = new ChannelLineData();
                 data.type = instance.m_LineDrawingType;
-                
+                data.widthType = instance.m_LineWidthType;
+
                 Zebug.s_ChannelLines.Add(instance, data);
             }
 
@@ -112,6 +147,7 @@ namespace ZebugProject
                 endPosition = endPosition,
                 color = color,
                 endTime = Time.time + duration,
+                width = instance.m_LineDrawingWidth
             });
         }
 

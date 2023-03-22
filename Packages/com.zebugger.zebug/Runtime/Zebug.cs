@@ -125,7 +125,6 @@ namespace ZebugProject
 
         public IList<IChannel> Children()
         {
-            // groooOOOSSSsss
             return m_Children;
         }
 
@@ -272,6 +271,13 @@ namespace ZebugProject
         }
 
         //  ----------------------------------------------------------------------------------------
+
+        public ILogger ILoggerWrapper()
+        {
+            return new ZebugILoggerWrapper<T>(this);
+        }
+        
+        //  ----------------------------------------------------------------------------------------
         //  ----------------------------------------------------------------------------------------
 
         public static void Log(object message)
@@ -343,34 +349,23 @@ namespace ZebugProject
         
         public static bool ShouldLog(LogType logType)
         {
-            if (!Instance.AllowWarningAndErrorMuting) 
+            Channel<T> instance = Instance;
+            if (!instance.AllowWarningAndErrorMuting)
             {
-                if (logType == LogType.Warning
-                    || logType == LogType.Error 
-                    || logType == LogType.Assert) 
+                if (logType == LogType.Assert 
+                    || logType == LogType.Warning
+                    || logType == LogType.Error)
                 {
-                    return false;
-                } 
-                else
-                {
-                    return Instance.LogEnabled(); 
+                    return true;
                 }
             }
-            else 
-            {
-                return Instance.LogEnabled();
-            }
+            return instance.LogEnabled();
         }
         
         [StringFormatMethod("format")]
         public static void LogFormat(LogType logType, Object context, string format, params object[] args)
         {
-            bool isWarningOrError = 
-                logType == LogType.Assert 
-                || logType == LogType.Warning
-                || logType == LogType.Error;
-            
-            if ((isWarningOrError && !Instance.AllowWarningAndErrorMuting) || Instance.LogEnabled())
+            if (ShouldLog(logType)) 
             {
                 Zebug.s_Logger.LogFormat(logType, context, Instance.m_ColorString + format, args);    
             }
@@ -611,10 +606,6 @@ namespace ZebugProject
             }
         }
 
-        public ILogger ILoggerWrapper()
-        {
-            return new ZebugILoggerWrapper<T>(this);
-        }
     }
 
 }

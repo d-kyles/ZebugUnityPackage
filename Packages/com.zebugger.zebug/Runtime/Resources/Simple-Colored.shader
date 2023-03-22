@@ -15,7 +15,7 @@ Shader "Zebug/Simple-Colored"
         _ZTest ("ZTest", Int) = 4.0 // LEqual
         _Cull ("Cull", Int) = 0.0 // Off
         _ZBias ("ZBias", Float) = 0.0
-        _OccludedAlpha ("OccludedAlpha", Float) = 0.5
+        _OccludedAlpha ("OccludedAlpha", Float) = 0.125
     }
 
     SubShader
