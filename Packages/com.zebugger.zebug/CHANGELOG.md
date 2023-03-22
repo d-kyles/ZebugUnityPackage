@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2023-03-22
+
 ### Added
 - `Zebug.DrawX` functions now optionally run in non-editor development builds!
 - DrawX can use a channel defined width, 4 variants of how width changes with distance.
