@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- `Zebug.DrawX` functions now optionally run in non-editor development builds!
+- DrawX can use a channel defined width, 4 variants of how width changes with distance.
+* `Adaptive` --- Default. Feels good, costs a bit more.
+* `World` --- Costs the same as Adaptive, good depth cues. Disappears in the distance.
+* `Pixels` --- Long distance lines may feel cluttered and odd. The way the width changes conflicts
+               with expected depth cues, so doesn't always feel great       
+* `SinglePixel` --- Cheap, feels like it disappears up close, hard to see on high DPI screens
+
+### Fixed
+* ShouldLog wasn't used internally, but returned the wrong value.
+* Simple-Color Shader now discoverable in build.
+
 ## [0.6.5] - 2023-01-24
 
 ### Added
