@@ -20,9 +20,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
+
 using JetBrains.Annotations;
 
 using UnityEngine;
+
 using ZebugProject.Util;
 
 using Debug = UnityEngine.Debug;
@@ -86,6 +89,8 @@ namespace ZebugProject
         protected bool AllowWarningAndErrorMuting = true;
 
         private static Channel<T> s_Instance;
+        private static HashSet<AssertLocation> _assertOnceLocations = new HashSet<AssertLocation>();
+
         private Color m_ChannelColor;
         private string m_ColorString;
         private string m_ChannelName;
@@ -453,6 +458,48 @@ namespace ZebugProject
             if (!Instance.AllowWarningAndErrorMuting || Instance.LogEnabled())
             {
                 Zebug.s_Logger.LogFormat(LogType.Warning, context, Instance.m_ColorString + format, args);
+            }
+        }
+
+        private struct AssertLocation : IEquatable<AssertLocation>
+        {
+            public string file;
+            public int line;
+
+            public bool Equals(AssertLocation other) { return file == other.file && line == other.line; }
+            public override bool Equals(object obj) { return obj is AssertLocation other && Equals(other); }
+
+            public override int GetHashCode()
+            {
+                unchecked { return ((file != null ? file.GetHashCode() : 0) * 397) ^ line; }
+            }
+        }
+
+        [Conditional("UNITY_ASSERTIONS")]
+        public static void AssertOnce( bool condition
+                                     , [CallerFilePath] string filePath = ""
+                                     , [CallerLineNumber] int lineNumber = 0)
+        {
+            if (Instance.AllowWarningAndErrorMuting && !Instance.LogEnabled())
+            {
+                return;
+            }
+
+            //  --- TODO(dan): Check to see if it's guaranteed that CallerFilePath gives
+            //                 forward-slash style separators.
+            //  --- TODO(dan): can we use Span<char>? We could do hash of a smaller string:
+            //                 `int pastSep = filePath.LastIndexOf('/');`
+            AssertLocation location = new AssertLocation
+            {
+                file = filePath,
+                line = lineNumber,
+            };
+
+            bool asserted = _assertOnceLocations.Count != 0 && _assertOnceLocations.Contains(location);
+            if (!asserted && !condition)
+            {
+                _assertOnceLocations.Add(location);
+                Zebug.s_Logger.Log(LogType.Assert, Instance.m_ColorString + "Assertion failed");
             }
         }
 

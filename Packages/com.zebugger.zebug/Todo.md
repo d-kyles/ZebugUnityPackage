@@ -95,4 +95,5 @@ Channel name is Method.DeclaringType.name if IsSubclassOf(MonoBehaviour)
   to do the interpolation. Needless to say, all Zebug calls should use this to avoid all the string interpolation involved.
 * [Conditional("UNITY_EDITOR")] for gizmos
 * `private static int FixedFrame() { return (int)(Time.fixedTime / Time.fixedDeltaTime); }` (log in fixed update spams [0,>1] times, this shows which.)
+* Should AllowWarningAndErrorMuting be changed to be false by defualt? I think asserts and errors especially will be confusing if they don't show up.
 * Optionally annotate Log methods with `[BurstDiscard]`, so you can throw managed debug statements into job functions but have them removed for compiled methods. 

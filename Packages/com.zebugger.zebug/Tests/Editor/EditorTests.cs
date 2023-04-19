@@ -1,8 +1,10 @@
 ﻿
+using System;
 using NUnit.Framework;
 using UnityEngine;
 
 using ZebugProject;
+using Object = UnityEngine.Object;
 
 namespace Tests {
 
@@ -25,6 +27,7 @@ namespace Tests {
              BlueZebug.Instance.SetLogEnabled(true);
              RedZebug.Instance.SetLogEnabled(true);
              ChildOfRedZebug.Instance.SetLogEnabled(true);
+             Zebug.s_Logger = Debug.unityLogger;
          }
          
          [Test]
@@ -59,6 +62,47 @@ namespace Tests {
 
              ChildOfRedZebug.Log("Error if seen.");
          }
+
+         private class AssertOnceLogger : ILogger
+         {
+             public int count;
+             public void LogFormat(LogType logType, Object context, string format, params object[] args) { count++; }
+             public void LogException(Exception exception, Object context) { count++; }
+             public bool IsLogTypeAllowed(LogType logType) { return true; }
+             public void Log(LogType logType, object message) { count++; }
+             public void Log(LogType logType, object message, Object context) { count++; }
+             public void Log(LogType logType, string tag, object message) { count++; }
+             public void Log(LogType logType, string tag, object message, Object context) { count++; }
+             public void Log(object message) { count++; }
+             public void Log(string tag, object message) { count++; }
+             public void Log(string tag, object message, Object context) { count++; }
+             public void LogWarning(string tag, object message) { count++; }
+             public void LogWarning(string tag, object message, Object context) { count++; }
+             public void LogError(string tag, object message) { count++; }
+             public void LogError(string tag, object message, Object context) { count++; }
+             public void LogFormat(LogType logType, string format, params object[] args) { count++; }
+             public void LogException(Exception exception) { count++; }
+             public ILogHandler logHandler { get; set; }
+             public bool logEnabled { get; set; }
+             public LogType filterLogType { get; set; }
+         }
+
+         [Test]
+         public void AssertOnceOnlyPrintsOnce()
+         {
+             var assertOnceLogger = new AssertOnceLogger();
+             assertOnceLogger.count = 0;
+             Zebug.s_Logger = assertOnceLogger;
+
+             for (int i = 0; i < 3; i++)
+             {
+                 Zebug.AssertOnce(false);
+             }
+
+             Assert.That(assertOnceLogger.count == 1);
+         }
+
+
 
     }
 }
