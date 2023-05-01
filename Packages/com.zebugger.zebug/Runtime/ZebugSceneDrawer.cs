@@ -62,6 +62,12 @@ namespace ZebugProject
             Camera.onPostRender -= OnCamPostRender;
             RenderPipelineManager.endCameraRendering -= OnSrpEndCamRendering;
         }
+
+        protected void OnGUI()
+        {
+            //  --- TODO(dan): Migrate to proper UI
+            ZebugDebugGuiLayout.Instance.OnGUI();
+        }
         
         private void CreateLineMaterial()
         {
@@ -118,7 +124,7 @@ namespace ZebugProject
         }
         
         private LineRenderData[] _renderTypeData = new LineRenderData[(int)WidthType.Count];
-        
+
         //  --- NOTE(dan): OnRenderObject is a better time to be calling this, because it's before
         //                 the depth buffer gets wiped out by post-processing or something.
         //                 occlusion transparency isn't working great in OnCamPostRender.
@@ -480,6 +486,9 @@ namespace ZebugProject
 
             Gizmos.color = oldGizmoColor;
         }
+
     }
+
+
 
 }

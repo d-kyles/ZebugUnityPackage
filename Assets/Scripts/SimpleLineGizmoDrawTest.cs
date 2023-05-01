@@ -34,6 +34,7 @@ namespace ZebugProject
             public Zebug() : base("Zebug Line Draw Test"
                 , new Color(0.25f, 0.66f, 0.95f)
                 , ZebugProject.Zebug.Instance) { }
+
         }
         
         public class AnotherDebugChannel : Channel<AnotherDebugChannel>
@@ -110,6 +111,11 @@ namespace ZebugProject
             
             _cam = Camera.main;
             _simpleCameraController = _cam.GetComponent<SimpleCameraController>();
+
+            Zebug.AddDebugGuiButton("TestAutoButton", OnTestAutoButtonClicked);
+            Zebug.AddDebugGuiButton("Parent1/P1_Child0", OnTestAutoButtonClicked);
+            Zebug.AddDebugGuiButton("Parent2/P2_Child0", OnTestAutoButtonClicked);
+            Zebug.AddDebugGuiButton("Parent2/P2_Child1", OnTestAutoButtonClicked);
         }
 
         //  ----------------------------------------------------------------------------------------
@@ -220,7 +226,14 @@ namespace ZebugProject
         }
 
         //  ----------------------------------------------------------------------------------------
-        
+
+        private void OnTestAutoButtonClicked()
+        {
+            Zebug.Log("OnTestAutoButtonClicked called");
+        }
+
+        //  ----------------------------------------------------------------------------------------
+
         private void OnGUI()
         {
             Rect camRect = _cam.pixelRect;
