@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.iOS;
 
 namespace ZebugProject
 {
@@ -87,30 +88,35 @@ namespace ZebugProject
                 _currentElement = _root;
             }
 
-            if (Input.GetKeyDown(KeyCode.BackQuote))
-            {
-                _showWindow = !_showWindow;
-            }
-
-            if (!_showWindow)
+            if (!ZebugPreferences.Instance.ShowDebugGUI)
             {
                 return;
             }
 
             const float defaultScale = 100f;
-
-            float scale = Screen.dpi / defaultScale;
-
+            const float refWidth = 1170;
+            const float refHeight = 2532;
+            const float averageRef = (refWidth + refHeight) * 0.5f;
+            
+            float dpiScale = Screen.dpi / defaultScale;
+            
             (int width, int height) = (Screen.width, Screen.height);
-
-            width = (int)(width / scale);
-            height = (int)(height / scale);
-
+            
+            float refComparison = (width + height) * 0.5f;
+            float refScale = averageRef / refComparison; 
+            
+            float scale = (refScale + dpiScale) * 0.5f;
+            
             Matrix4x4 oldMat = GUI.matrix;
             GUI.matrix = GUI.matrix * Matrix4x4.Scale(Vector3.one * scale);
+            
+            Rect screenRect = UnityEngine.Device.Screen.safeArea;
 
+            screenRect.position /= scale;
+            screenRect.size /= scale;
+            
             // use top third
-            Rect screenRect = new Rect(0,0, width, height/3f);
+            screenRect.height = screenRect.height / 3f; 
 
             GUILayout.Window( 0
                             , screenRect
@@ -152,6 +158,8 @@ namespace ZebugProject
                     GUILayout.Label("/");
                 }
                 GUILayout.Label(_currentElement.name);
+                GUILayout.ExpandWidth(true);
+                GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
@@ -194,8 +202,6 @@ namespace ZebugProject
 
     public partial class Channel<T>
     {
-        public bool DebugGUIEnabled { get; set; }
-
         public static void AddDebugGuiButton(string buttonPath,  ZebugGuiElement.ButtonClickedHandler handler)
         {
             ZebugDebugGuiLayout.Instance.RegisterAutoButton(buttonPath, handler);

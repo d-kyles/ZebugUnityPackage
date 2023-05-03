@@ -89,6 +89,8 @@ namespace ZebugProject {
         private bool _advOptionsExpanded;
         private bool _showTestChannels;
         private bool s_StylesLoaded = false;
+        private SerializedObject _zebugPrefSO;
+        private SerializedProperty _showGUIField;
 
         protected void OnEnable() {
 
@@ -168,15 +170,27 @@ namespace ZebugProject {
                 _channelRowStyleBottom.normal.background = backgroundTextureBottom;
 
                 s_StylesLoaded = _channelRowStyleInner != null;
-            } catch (NullReferenceException)
+            } 
+            catch (NullReferenceException)
             {
                 //  --- NOTE(dan): Shortly after recompiling, EditorStyles.helpBox doesn't exist.
                 //                 Not sure how to avoid this.
             }
         }
 
+        private void CheckInit()
+        {
+            if (_zebugPrefSO == null)
+            {
+                _zebugPrefSO = new SerializedObject(ZebugPreferences.Instance);
+                _showGUIField = _zebugPrefSO.FindProperty("_showDebugGUI");
+            }
+        }
+        
         private void OnGUI() {
 
+            CheckInit();
+            
             var lineColor = new Color(0.34f, 0.34f, 0.34f);
             
             /*
@@ -263,6 +277,12 @@ namespace ZebugProject {
                     {
                         ZebugPreferences.Instance.ChannelsEnabledByDefault = newValue;
                     }
+                }
+                
+                if (_showGUIField != null)
+                {
+                    EditorGUILayout.PropertyField(_showGUIField);
+                    _zebugPrefSO.ApplyModifiedProperties();
                 }
                 
                 _advOptionsExpanded = EditorGUILayout.Foldout(_advOptionsExpanded
@@ -448,6 +468,8 @@ namespace ZebugProject {
                 }
             }
         }
+
+        
 
         private static void ClearRedundantChannelData()
         {
