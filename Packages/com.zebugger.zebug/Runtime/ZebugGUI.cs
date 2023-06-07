@@ -3,7 +3,6 @@
 
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.iOS;
 
 namespace ZebugProject
 {
@@ -51,7 +50,7 @@ namespace ZebugProject
 
         // drawing stuff
         private ZebugGuiElement _currentElement;
-        private bool _showWindow = false;
+        //private bool _showWindow = false;
 
         public void RegisterAutoButton(string path, ZebugGuiElement.ButtonClickedHandler handler)
         {
