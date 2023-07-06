@@ -76,8 +76,8 @@ Making a Release
     * It must be able to be found on it's own line with the following regex
       `^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$`
 * Create new entry in CHANGELOG.md
-* Commit with new version number in the following format `v 0.7.0`
-* Tag that commit with the verion number. E.G. `0.7.0`.
+* Commit with new version number in the following format `v 0.8.0`
+* Tag that commit with the verion number. E.G. `0.8.0`.
 
 License
 -------

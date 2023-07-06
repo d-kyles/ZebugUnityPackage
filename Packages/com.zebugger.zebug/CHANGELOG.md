@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+...
+
+## [0.8.0] - 2023-07-06
+
 ### Breaking Changes
 * Upgraded miniumum supported Unity version to ` Unity 2021.3.17f1 ` 
 
