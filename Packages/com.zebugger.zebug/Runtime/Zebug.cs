@@ -477,6 +477,35 @@ namespace ZebugProject
 
         [Conditional("UNITY_ASSERTIONS")]
         public static void AssertOnce( bool condition
+            , string message
+            , [CallerFilePath] string filePath = ""
+            , [CallerLineNumber] int lineNumber = 0)
+        {
+            if (Instance.AllowWarningAndErrorMuting && !Instance.LogEnabled())
+            {
+                return;
+            }
+
+            //  --- TODO(dan): Check to see if it's guaranteed that CallerFilePath gives
+            //                 forward-slash style separators.
+            //  --- TODO(dan): can we use Span<char>? We could do hash of a smaller string:
+            //                 `int pastSep = filePath.LastIndexOf('/');`
+            AssertLocation location = new AssertLocation
+            {
+                file = filePath,
+                line = lineNumber,
+            };
+
+            bool asserted = _assertOnceLocations.Count != 0 && _assertOnceLocations.Contains(location);
+            if (!asserted && !condition)
+            {
+                _assertOnceLocations.Add(location);
+                Zebug.s_Logger.Log(LogType.Assert, Instance.m_ColorString + message);
+            }
+        }
+        
+        [Conditional("UNITY_ASSERTIONS")]
+        public static void AssertOnce( bool condition
                                      , [CallerFilePath] string filePath = ""
                                      , [CallerLineNumber] int lineNumber = 0)
         {
