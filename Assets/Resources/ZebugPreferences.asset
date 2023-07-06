@@ -19,6 +19,8 @@ MonoBehaviour:
     - ZebugBase/RedZebug
     - ZebugBase/RedZebug/ChildOfRedZebug
     - ZebugBase/Zebug Line Draw Test 2
+    - ZebugBase/Zebug Line Draw Test
+    - ZebugBase/Another Zebug Line Draw Test
     _values:
     - logEnabled: 1
       gizmoEnabled: 1
@@ -30,3 +32,10 @@ MonoBehaviour:
       gizmoEnabled: 1
     - logEnabled: 0
       gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+  _useAdditionalPrefixOnIos: 0
+  _additionalIosPrefix: '1-1 1 1 1 I '
+  _showDebugGUI: 1
