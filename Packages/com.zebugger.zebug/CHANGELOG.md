@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Breaking Changes
+* Upgraded miniumum supported Unity version to ` Unity 2021.3.17f1 ` 
+
+### Added
+ * A `AssertOnce` method which won't spam the log on subsequent calls.
+ * A `DrawRay` function as a convenience API for `DrawLine`
+ * A work in progress automatic debug/dev GUI
+
+### Fixed
+ * a compile error on PC
+
+
+
 ## [0.7.0] - 2023-03-22
 
 ### Added
