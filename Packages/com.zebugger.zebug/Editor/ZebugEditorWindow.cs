@@ -406,7 +406,7 @@ namespace ZebugProject {
                             var foldoutTextStyle = new GUIStyle();
                             foldoutTextStyle.normal.textColor = channel.GetColor();
                             foldoutTextStyle.onNormal.textColor = channel.GetColor();
-                            foldoutTextStyle.contentOffset = new Vector2(30 * EditorGUI.indentLevel,0);
+                            foldoutTextStyle.contentOffset = new Vector2(20 * EditorGUI.indentLevel,0);
                             GUILayout.Label(channel.Name(), foldoutTextStyle);
                         }
                         GUILayout.FlexibleSpace();
