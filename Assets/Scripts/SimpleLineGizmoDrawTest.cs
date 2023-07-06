@@ -116,6 +116,7 @@ namespace ZebugProject
             Zebug.AddDebugGuiButton("Parent1/P1_Child0", OnTestAutoButtonClicked);
             Zebug.AddDebugGuiButton("Parent2/P2_Child0", OnTestAutoButtonClicked);
             Zebug.AddDebugGuiButton("Parent2/P2_Child1", OnTestAutoButtonClicked);
+            Zebug.AddDebugGuiButton("Parent2/P2_Child1/P3_Child0", OnTestAutoButtonClicked);
         }
 
         //  ----------------------------------------------------------------------------------------
