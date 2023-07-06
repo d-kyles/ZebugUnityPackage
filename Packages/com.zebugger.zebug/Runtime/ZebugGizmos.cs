@@ -113,6 +113,22 @@ namespace ZebugProject
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [Conditional("DEVELOPMENT_BUILD")]
         [Conditional("UNITY_EDITOR")]
+        public static void DrawRay(Ray ray, float maxDist)
+        {
+            DrawRay(ray, maxDist, Instance.m_ChannelColor);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Conditional("DEVELOPMENT_BUILD")]
+        [Conditional("UNITY_EDITOR")]
+        public static void DrawRay(Ray ray, float maxDist, Color color, float duration = 0)
+        {
+            DrawLine(ray.origin, ray.origin + ray.direction * maxDist, Instance.m_ChannelColor);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Conditional("DEVELOPMENT_BUILD")]
+        [Conditional("UNITY_EDITOR")]
         public static void DrawLine(Vector3 startPosition, Vector3 endPosition)
         {
             DrawLine(startPosition, endPosition, Instance.m_ChannelColor);
