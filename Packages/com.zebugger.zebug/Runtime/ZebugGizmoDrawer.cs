@@ -7,14 +7,42 @@ using UnityEngine;
 
 namespace ZebugProject
 {
+    public class ZebugGizmoDrawerChannel : Channel<ZebugGizmoDrawerChannel>
+    {
+        public ZebugGizmoDrawerChannel() : base("ZebugGizmoDrawer", new Color(1f, 0.13f, 0.38f, 0.81f), Zebug.Instance)
+        {
+            m_LineDrawingType = ChannelLineData.Type.Runtime;
+            m_LineWidthType = WidthType.Adaptive;
+            m_LineDrawingWidth = 1.125f;
+        }
+
+        public void OverrideLineSettings(ChannelLineData.Type lineDrawingType, WidthType lineWidthType, float lineDrawingWidth)
+        {
+            m_LineDrawingType = lineDrawingType;
+            m_LineWidthType = lineWidthType;
+            m_LineDrawingWidth = lineDrawingWidth;
+
+            if (Zebug.s_ChannelLines.TryGetValue(Instance, out ChannelLineData data))
+            {
+                data.type = m_LineDrawingType;
+                data.widthType = m_LineWidthType;
+            }
+        }
+    }
+
     public class ZebugGizmoDrawer : MonoBehaviour
     {
-        [SerializeField] private DrawWhen _drawWhen = DrawWhen.Gizmo;
+        [SerializeField] private DrawMethodCallWhen _drawMethodCallWhen = DrawMethodCallWhen.Gizmo;
         [SerializeField] private Type _drawType = Type.Locator;
         [SerializeField] private Color _color = new Color(0.48f, 0.51f, 0.71f);
         [SerializeField] private float _duration = 0;
 
-        public enum DrawWhen
+        [Header("Line Drawing Settings - [STATIC!]")]
+        [SerializeField] private ChannelLineData.Type m_LineDrawingType = ChannelLineData.Type.Runtime;
+        [SerializeField] private WidthType m_LineWidthType = WidthType.Adaptive;
+        [SerializeField] private float m_LineDrawingWidth = 1.125f;
+
+        public enum DrawMethodCallWhen
         {
             None,
             Gizmo,
@@ -43,7 +71,7 @@ namespace ZebugProject
 
         protected void Update()
         {
-            if (_drawWhen == DrawWhen.Runtime)
+            if (_drawMethodCallWhen == DrawMethodCallWhen.Runtime)
             {
                 DrawGizmo();
             }
@@ -51,7 +79,7 @@ namespace ZebugProject
         
         protected void OnDrawGizmos()
         {
-            if (_drawWhen == DrawWhen.Gizmo)
+            if (_drawMethodCallWhen == DrawMethodCallWhen.Gizmo)
             {
                 DrawGizmo();
             }
@@ -59,7 +87,7 @@ namespace ZebugProject
 
         protected void OnDrawGizmosSelected()
         {
-            if (_drawWhen == DrawWhen.GizmoSelected)
+            if (_drawMethodCallWhen == DrawMethodCallWhen.GizmoSelected)
             {
                 DrawGizmo();
             }
@@ -72,21 +100,24 @@ namespace ZebugProject
                 _transform = transform;
                 _hasTransform = true;
             }
-            
+
+            //  --- Unfortunately this is static right now, so the last in order of update wins
+            (ZebugGizmoDrawerChannel.Instance as ZebugGizmoDrawerChannel).OverrideLineSettings(m_LineDrawingType, m_LineWidthType, m_LineDrawingWidth);
+
             switch (_drawType)
             {
                 case Type.LineX:
                 {
                     Vector3 vec = new Vector3(_transform.localScale.x, 0, 0);
                     Vector3 pos = _transform.position;
-                    Zebug.DrawLine(pos, pos + vec, _color, _duration);
+                    ZebugGizmoDrawerChannel.DrawLine(pos, pos + vec, _color, _duration);
                     break;
                 }
                 case Type.LineY:
                 {
                     Vector3 vec = new Vector3(0, _transform.localScale.y,0);
                     Vector3 pos = _transform.position;
-                    Zebug.DrawLine(pos, pos + vec, _color, _duration);
+                    ZebugGizmoDrawerChannel.DrawLine(pos, pos + vec, _color, _duration);
                     break;
                 }
 
@@ -94,12 +125,12 @@ namespace ZebugProject
                 {
                     Vector3 vec = new Vector3(0, 0, _transform.localScale.z);
                     Vector3 pos = _transform.position;
-                    Zebug.DrawLine(pos, pos + vec, _color, _duration);
+                    ZebugGizmoDrawerChannel.DrawLine(pos, pos + vec, _color, _duration);
                     break;
                 }
                 case Type.Box:
                 {
-                    Zebug.DrawBox( _transform.position
+                    ZebugGizmoDrawerChannel.DrawBox( _transform.position
                         , _transform.rotation
                         , _transform.lossyScale
                         , _color
@@ -109,13 +140,13 @@ namespace ZebugProject
                 case Type.Burst:
                 {
                     float size = _transform.localScale.magnitude;
-                    Zebug.DrawBurst(_transform.position, size, _color, _duration);
+                    ZebugGizmoDrawerChannel.DrawBurst(_transform.position, size, _color, _duration);
                     break;
                 }
                 case Type.Locator:
                 {
                     float size = _transform.localScale.magnitude;
-                    Zebug.DrawLocator(_transform.position, size, _transform.rotation, _duration);
+                    ZebugGizmoDrawerChannel.DrawLocator(_transform.position, size, _transform.rotation, _duration);
                     break;
                 }
                 default:
