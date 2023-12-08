@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ...
 
+## [0.8.5] - 2023-12-08
+
+### Added
+ * New DrawPlus method, and new DrawBox(bounds) api
+ * Jobbified line drawing to improve performance when drawing thousands of lines per frame
+
+
 ## [0.8.0] - 2023-07-06
 
 ### Breaking Changes
