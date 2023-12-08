@@ -220,11 +220,40 @@ namespace ZebugProject
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [Conditional("DEVELOPMENT_BUILD")]
         [Conditional("UNITY_EDITOR")]
+        public static void DrawPlus(Vector3 center, float size, Color color = default, float duration = 0f)
+        {
+            if (color == default)
+            {
+                color = Instance.m_ChannelColor;
+            }
+            
+            if (Instance.m_GizmosEnabled)
+            {
+                DrawLine(center + new Vector3(-size, 0, 0), center + new Vector3(size, 0, 0), color, duration);
+                DrawLine(center + new Vector3(0, 0, -size), center + new Vector3(0, 0, size), color, duration);
+            }
+        }
+        
+        //  ----------------------------------------------------------------------------------------
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Conditional("DEVELOPMENT_BUILD")]
+        [Conditional("UNITY_EDITOR")]
         public static void DrawBox(Vector3 center, Quaternion rotation, Vector3 size)
         {
             DrawBox(center, rotation, size, Instance.m_ChannelColor);
         }
 
+        //  ----------------------------------------------------------------------------------------
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Conditional("DEVELOPMENT_BUILD")]
+        [Conditional("UNITY_EDITOR")]
+        public static void DrawBox(Bounds sceneBounds, Color color, float duration)
+        {
+            DrawBox(sceneBounds.center, Quaternion.identity, sceneBounds.size, color, duration);
+        }
+        
         //  ----------------------------------------------------------------------------------------
 
         [Conditional("DEVELOPMENT_BUILD")]
