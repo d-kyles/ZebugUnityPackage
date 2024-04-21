@@ -123,7 +123,7 @@ namespace ZebugProject
         [Conditional("UNITY_EDITOR")]
         public static void DrawRay(Ray ray, float maxDist, Color color, float duration = 0)
         {
-            DrawLine(ray.origin, ray.origin + ray.direction * maxDist, Instance.m_ChannelColor);
+            DrawLine(ray.origin, ray.origin + ray.direction * maxDist, color);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
