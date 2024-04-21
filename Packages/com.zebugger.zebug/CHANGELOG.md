@@ -4,9 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.8.6] - 2024-04-22
 
-...
+### Improved
+* Perf: Found an unused matrix mult in a hot path
+* VCS: Ignore weird MacOS files
+
+### Fixed
+* Tracked down that crappy issue where changing channel prefs wouldn't be persisted!
+* Color parameter not being passed through correctly
 
 ## [0.8.5] - 2023-12-08
 
