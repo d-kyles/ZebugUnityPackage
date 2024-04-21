@@ -154,21 +154,31 @@ namespace ZebugProject
             
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 value = Create(key, defaultOn);
+      
+                SetDirty();
             }
             
             return value;
+        }
+        
+        private new static void SetDirty() {
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.SetDirty(Instance);
+#endif
         }
 
         public static void SetLog(string fullName, bool enabled)
         {
             ChannelPreference pref = Get(fullName);
             pref.logEnabled = enabled;
+            SetDirty();
         }
         
         public static void SetGizmo(string fullName, bool enabled)
         {
             ChannelPreference pref = Get(fullName);
             pref.gizmoEnabled = enabled;
+            SetDirty();
         }
 
         public static bool GetLog(string fullName)
