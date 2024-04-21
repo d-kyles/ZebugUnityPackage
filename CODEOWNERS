@@ -1,0 +1,20 @@
+##################################
+#
+# Automatically generated GitLab CODEOWNERS file
+# Created for: tiger-team-south/tools/zebug (3311)
+# Created at: 2024-03-14T15:21
+# Documentation available under: https://go/codeowners
+# Code available under: https://gitlab.nianticlabs.com/security/codeowners
+# CLI Command: python3 generate_codeowners.py --gitlab_url=https://gitlab.nianticlabs.com --cutoff_months=10 --max_depth=1 --write_file_directory=codeowners --skip_users_file=.skip-small --projects_csv=codeowners_round2.csv --submit
+# Skipped users: snyk-bot, buildbot, project_3110_bot_c417688f8cf0ce4bbd683e19a3567d79, project_4339_bot_7c448dbc72b2f92ab5cd587541a53e73
+#
+##################################
+
+[Global Codeowners]
+/ @danielkyles
+
+[Directory Codeowners]
+# Global owners get inherited here.
+# Add additional owners to specific (sub-)directories if desired.
+# /src/subdirectory @example_owner_goes_here
+# /docs @another_example_owner_goes_here
