@@ -687,9 +687,6 @@ namespace ZebugProject
         [MethodImpl(MethodImplOptions.AggressiveInlining)]    
         private float3 CamWorldToScreen(float3 targetPoint)                        
         {
-            float4 targetPointH = new float4(targetPoint, 1);
-            math.mul(viewProjMat, targetPointH);
-
             float4 clipPointH = math.mul(viewProjMat, new float4(targetPoint, 1));
             float4 clipPoint = clipPointH / clipPointH.w;
 
