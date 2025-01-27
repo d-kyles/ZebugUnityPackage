@@ -144,7 +144,8 @@ using ZebugProject;
             void _SetupZebugToggle(Toggle t,
                                    Action<bool> setValue,
                                    Action<Action<bool>> callbackSubscription = null,
-                                   bool initialValue = false) {
+                                   bool initialValue = false)
+            {
                 t.value = initialValue;
                 _SetZebugToggleClasses(t, initialValue);
                 t.RegisterValueChangedCallback(evt => {
@@ -195,34 +196,5 @@ using ZebugProject;
             }
         }
 
-        /// <summary>
-        ///   <para>Instantiates a Foldout using the data read from a UXML file.</para>
-        /// </summary>
-        public new class UxmlFactory : UxmlFactory<ZebugChannelFoldout, UxmlTraits> { }
-
-        public new class UxmlTraits : BindableElement.UxmlTraits {
-            private UxmlStringAttributeDescription m_Text;
-            private UxmlBoolAttributeDescription m_Value;
-
-            public override void Init(VisualElement ve, IUxmlAttributes bag, CreationContext cc) {
-                base.Init(ve, bag, cc);
-                if (!(ve is ZebugChannelFoldout foldout)) {
-                    return;
-                }
-
-                foldout.text = m_Text.GetValueFromBag(bag, cc);
-                foldout.SetValueWithoutNotify(m_Value.GetValueFromBag(bag, cc));
-            }
-
-            public UxmlTraits() {
-                UxmlStringAttributeDescription attributeDescription1 = new UxmlStringAttributeDescription();
-                attributeDescription1.name = "text";
-                m_Text = attributeDescription1;
-                UxmlBoolAttributeDescription attributeDescription2 = new UxmlBoolAttributeDescription();
-                attributeDescription2.name = "value";
-                attributeDescription2.defaultValue = true;
-                m_Value = attributeDescription2;
-            }
-        }
     }
 //}

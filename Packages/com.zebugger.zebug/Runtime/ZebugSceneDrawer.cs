@@ -30,13 +30,22 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.Serialization;
 
 namespace ZebugProject
 {
     public class ZebugSceneDrawer : MonoBehaviour
     {
-        [SerializeField] private bool _jobMode = true;
+        private enum Mode
+        {
+            Direct,
+            Job,
+            GPU,
+        }
+
+        [SerializeField] private Mode _drawMode = Mode.Job;
 
         private static ZebugSceneDrawer s_Instance;
         
@@ -46,6 +55,98 @@ namespace ZebugProject
         private static readonly int s_DstBlendId = Shader.PropertyToID("_DstBlend");
         private static readonly int s_CullId = Shader.PropertyToID("_Cull");
         private static readonly int s_OccludedAlphaId = Shader.PropertyToID("_OccludedAlpha");
+
+        private ZebugRenderPass _zebugRenderPass;
+
+
+        public class ZebugRenderPass : ScriptableRenderPass
+        {
+            private readonly Material _material;
+            private readonly MaterialPropertyBlock _mpb;
+            private readonly GraphicsBuffer _indices;
+
+            private int _lineBufferLength;
+            private readonly GraphicsBuffer _lineData;
+
+            public ZebugRenderPass()
+            {
+                _indices = new GraphicsBuffer(GraphicsBuffer.Target.Index, 6, sizeof(ushort));
+                _indices.SetData(new ushort[] { 0, 1, 2, 2, 1, 3, });
+
+                renderPassEvent = RenderPassEvent.AfterRenderingOpaques;
+
+                _mpb = new MaterialPropertyBlock();
+
+
+                Shader resourceShader = Resources.Load<Shader>("Simple-Colored");
+                _material = new Material(resourceShader);
+                _material.hideFlags = HideFlags.HideAndDontSave;
+                // Turn on alpha blending
+                _material.SetInt(s_SrcBlendId, (int)BlendMode.SrcAlpha);
+                _material.SetInt(s_DstBlendId, (int)BlendMode.OneMinusSrcAlpha);
+                // Turn backface culling off
+                _material.SetInt(s_CullId, (int)CullMode.Off);
+                _material.SetFloat(s_OccludedAlphaId, 0.125f);
+
+                _lineBufferLength = 1;
+
+                _lineData = new GraphicsBuffer(GraphicsBuffer.Target.Structured
+                                              , _lineBufferLength
+                                              , 32);
+                NativeArray<LineInstanceData> temp = new(1, Allocator.Temp);
+                temp[0] = new LineInstanceData
+                {
+                    startPosition = new float3(-1, 1, 0),
+                    endPosition = new float3(1, 1, 0),
+                    color = new Color32(245,225,0,255),
+                    width = 0.2f,
+                };
+                _lineData.SetData(temp);
+            }
+
+            private class PassData
+            {
+
+            }
+
+            struct LineInstanceData
+            {
+                // needs to align with float4?
+                public float3 startPosition;
+                public float3 endPosition;
+                public Color32 color;
+                public float width;
+            };
+
+            public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameContext)
+            {
+                using (var builder = renderGraph.AddRenderPass("Zebug Lines", out PassData passData))
+                {
+                    //UniversalResourceData resourceData = frameContext.Get<UniversalResourceData>();
+
+                    builder.SetRenderFunc<PassData>(ExecutePass);
+                }
+            }
+
+            private void ExecutePass(PassData data, RenderGraphContext context)
+            {
+                var cmd = context.cmd;
+
+                int instanceCount = 1;
+
+                _mpb.SetBuffer("_LineData", _lineData);
+
+                cmd.DrawProcedural(_indices
+                                  , Matrix4x4.identity
+                                  , _material
+                                  , 0
+                                  , MeshTopology.Triangles
+                                  , 6
+                                  , instanceCount
+                                  , _mpb);
+
+            }
+        }
 
         protected void Awake()
         {
@@ -60,6 +161,23 @@ namespace ZebugProject
             
             //  --- If URP / HDRP
             RenderPipelineManager.endCameraRendering += OnSrpEndCamRendering;
+
+            RenderPipelineManager.beginCameraRendering += OnSrpBeginCamRendering;
+        }
+
+        private void OnSrpBeginCamRendering(ScriptableRenderContext ctx, Camera cam)
+        {
+            // if (_drawMode != Mode.GPU)
+            // {
+            //     return;
+            // }
+
+            if (_zebugRenderPass == null)
+            {
+                _zebugRenderPass = new ZebugRenderPass();
+            }
+
+            cam.GetUniversalAdditionalCameraData().scriptableRenderer.EnqueuePass(_zebugRenderPass);
         }
 
         private void OnSrpEndCamRendering(ScriptableRenderContext context, Camera cam)
@@ -158,6 +276,11 @@ namespace ZebugProject
         
         private void OnCamPostRender(Camera cam)
         {
+            if (_drawMode == Mode.GPU)
+            {
+                return;
+            }
+
             if (cam.cameraType != CameraType.SceneView && cam.cameraType != CameraType.Game)
             {
                 return;
@@ -249,10 +372,10 @@ namespace ZebugProject
                         {
                             //  --- Draw quads
                             s_LineMaterial.SetPass(0);
-                            DrawLinesQuadsAdaptiveWidth(data, cam, _jobMode);
+                            DrawLinesQuadsAdaptiveWidth(data, cam, _drawMode == Mode.Job);
 
                             s_LineMaterial.SetPass(1);
-                            DrawLinesQuadsAdaptiveWidth(data, cam, _jobMode);
+                            DrawLinesQuadsAdaptiveWidth(data, cam, _drawMode == Mode.Job);
                             break;
                         }
 
