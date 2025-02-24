@@ -54,6 +54,15 @@ namespace ZebugProject
         public static Dictionary<IChannel, ChannelLineData> s_ChannelLines
             = new Dictionary<IChannel, ChannelLineData>();
 
+        public static Dictionary<IChannel, Dictionary<string, string>> 
+            s_ChannelWindowVariables = new ();
+        
+        public void RaiseEditorRepaint()
+        {
+            EditorNeedsRepaint?.Invoke();
+        }
+        public static Action EditorNeedsRepaint;
+        
         public Zebug() : base("ZebugBase", Color.white) { }
     }
 

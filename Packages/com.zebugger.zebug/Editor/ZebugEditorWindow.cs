@@ -29,8 +29,9 @@ namespace ZebugProject {
     public class ZebugEditorWindow : EditorWindow {
 
         private static ZebugEditorWindow s_Window;
+        public static ZebugEditorWindow Window => s_Window;
 
-        [MenuItem("Window/Zebug")]
+        [MenuItem("Tools/Zebug")]
         public static void ShowWindow() {
             ZebugEditorWindow wnd = GetWindow<ZebugEditorWindow>();
             wnd.titleContent = new GUIContent("Zebug");
@@ -185,6 +186,13 @@ namespace ZebugProject {
                 _zebugPrefSO = new SerializedObject(ZebugPreferences.Instance);
                 _showGUIField = _zebugPrefSO.FindProperty("_showDebugGUI");
             }
+
+            Zebug.EditorNeedsRepaint = OnEditorNeedsRepaint; 
+        }
+        
+        private void OnEditorNeedsRepaint()
+        {
+            Repaint();
         }
         
         private void OnGUI() {
@@ -351,6 +359,23 @@ namespace ZebugProject {
                                 ZebugPreferences.Instance.AdditionalIosPrefix = newPrefix;
                             }
                             GUI.enabled = wasEnabled;
+                        }
+                    }
+                }
+            }
+            
+            using (new GUILayout.VerticalScope())
+            {
+                GUILayout.Label("Variables");
+
+                foreach (var (channel, variables) in Zebug.s_ChannelWindowVariables)
+                {
+                    GUILayout.Label(channel.Name());
+                    using (new GUILayout.VerticalScope())
+                    {
+                        foreach (var (key, value) in variables)
+                        {
+                            GUILayout.Label($"{key}: {value}");
                         }
                     }
                 }

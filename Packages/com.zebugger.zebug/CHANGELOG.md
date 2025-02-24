@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 * Update to EditorVersion: 2022.3.39f1
+* Use 'Tools/Zebug', rather than 'Window/Zebug'
+* Added rudiemntary support for logging to the Zebug window
 
 ## [0.8.6] - 2024-04-22
 
