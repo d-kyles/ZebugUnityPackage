@@ -78,7 +78,6 @@ namespace ZebugProject
             current.buttonClicked += handler;
         }
 
-
         //  --- TODO(dan): Migrate to proper UI
         public void OnGUI()
         {

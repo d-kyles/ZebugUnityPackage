@@ -67,6 +67,11 @@ namespace ZebugProject
             OnCamPostRender(cam);
         }
 
+        protected void OnGUI()
+        {
+            ZebugDebugGuiLayout.Instance.OnGUI();
+        }
+
         protected void OnDestroy()
         {
             Camera.onPostRender -= OnCamPostRender;
@@ -619,6 +624,7 @@ namespace ZebugProject
 
             var go = new GameObject("ZebugSceneDrawer Helper GO");
             s_Instance = go.AddComponent<ZebugSceneDrawer>();
+            
             //go.hideFlags = HideFlags.HideAndDontSave;
             DontDestroyOnLoad(go);
 

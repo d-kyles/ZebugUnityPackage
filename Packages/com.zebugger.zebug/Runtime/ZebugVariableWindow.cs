@@ -11,10 +11,11 @@ namespace ZebugProject
     {
         public static void LogToWindow(string key, string value)
         {
-            if (!Application.isEditor)
+            if (!Instance.LogEnabled())
             {
                 return;
             }
+            
             
             if (!Zebug.s_ChannelWindowVariables.TryGetValue(Instance, out var list))
             {
@@ -31,7 +32,7 @@ namespace ZebugProject
             
             list[key] = value;
             
-            Zebug.EditorNeedsRepaint();
+            Zebug.RaiseEditorRepaint();
         }
     }
 

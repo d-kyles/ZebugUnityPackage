@@ -1,3 +1,13 @@
-﻿fileFormatVersion: 2
+fileFormatVersion: 2
 guid: 5e6db8c9ab6d4c66931cc9cf45d21bc5
-timeCreated: 1594762076
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - _debugGuiPrefab: {fileID: 3152298850289241183, guid: f298072245b1644a69d9b48e26bd32b9,
+      type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

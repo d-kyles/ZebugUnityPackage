@@ -18,6 +18,7 @@
 
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace ZebugProject
 {
@@ -57,6 +58,7 @@ namespace ZebugProject
         
         [SerializeField] private bool _showDebugGUI; 
 
+        [SerializeField] private GameObject _debugGuiPrefab;
 
         //  --- TODO(dan): Find a good way to auto find settings, as people probably want to
         //                 customise where it is and what it's called.
@@ -71,6 +73,8 @@ namespace ZebugProject
         }
 
         public ZebugPreferenceDictionary Data => _channelDict;
+        
+        public GameObject DebugGuiPrefab => _debugGuiPrefab;
         
         public bool ChannelsEnabledByDefault
         {

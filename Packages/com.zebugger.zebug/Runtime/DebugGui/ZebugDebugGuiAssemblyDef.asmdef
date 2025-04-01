@@ -1,0 +1,20 @@
+{
+    "name": "ZebugDebugGuiAssemblyDef",
+    "rootNamespace": "",
+    "references": [
+        "ZebugAssemblyDefinition",
+        "Unity.InputSystem",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "ENABLE_INPUT_SYSTEM"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

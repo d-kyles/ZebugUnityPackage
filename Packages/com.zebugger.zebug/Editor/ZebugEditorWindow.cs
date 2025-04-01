@@ -364,14 +364,14 @@ namespace ZebugProject {
                 }
             }
             
-            using (new GUILayout.VerticalScope())
+            using (new GUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 GUILayout.Label("Variables");
 
                 foreach (var (channel, variables) in Zebug.s_ChannelWindowVariables)
                 {
                     GUILayout.Label(channel.Name());
-                    using (new GUILayout.VerticalScope())
+                    using (new GUILayout.VerticalScope(EditorStyles.helpBox))
                     {
                         foreach (var (key, value) in variables)
                         {
