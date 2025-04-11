@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Breaking Changes
+* Upgraded miniumum supported Unity version to ` Unity 6000.0.38f1 `
+* Probably only supports Universal Render Pipeline, with RenderGraph right now.
+* LineDrawingType can only be Adaptive now.
+* LineType is now only "Runtime"
+
+### Improved
+* Perf: Line rendering is significantly faster, uses Procedural Instancing. Should easily render >10k dynamic lines per frame.
+
+
 ## [0.8.6] - 2024-04-22
 
 ### Improved

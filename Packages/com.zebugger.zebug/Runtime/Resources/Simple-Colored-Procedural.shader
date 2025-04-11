@@ -1,14 +1,9 @@
-﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
-// Simple "just colors" shader that's used for built-in debug visualizations,
-// in the editor etc. Just outputs _Color * vertex color; and blend/Z/cull/bias
-// controlled by material parameters.
-
+﻿
 Shader "Zebug/Simple-Colored-URP-Procedural"
 {
     Properties
     {
-        _Color ("Color", Color) = (1,1,1,1)
+        [MainColor] _Color ("Color", Color) = (1,1,1,1)
         _SrcBlend ("SrcBlend", Int) = 5.0 // SrcAlpha
         _DstBlend ("DstBlend", Int) = 10.0 // OneMinusSrcAlpha
         _ZWrite ("ZWrite", Int) = 1.0 // On
@@ -20,97 +15,85 @@ Shader "Zebug/Simple-Colored-URP-Procedural"
 
     SubShader
     {
-
         Tags {
             "Queue"           = "Transparent"
             "IgnoreProjector" = "True"
-            "RenderType"      = "Opaque"
+            "RenderType"      = "Transparent"
+            "RenderPipeline"  = "UniversalPipeline" 
         }
 
         Pass
         {
-            Name "Opaque"
+            Name "In Front"
 
             ZTest LEqual
 
-            Blend [_SrcBlend] [_DstBlend]
+            //Blend [_SrcBlend] [_DstBlend]
             Cull [_Cull]
-            Offset [_ZBias], [_ZBias]
+            //Offset [_ZBias], [_ZBias]
+            ZWrite On
+
+            HLSLPROGRAM
+
+            // --- This is mainly used for the purposes of debugging shader variants 
+            #if defined(SHADER_API_METAL)
+            #   define SHADER_TARGET 45
+            #endif
+
+            #pragma multi_compile PROCEDURAL_INSTANCING_ON
+            #define UNITY_INSTANCING_PROCEDURAL_FUNC unity_instancing_procedural_func
+            #pragma multi_compile _ STEREO_MULTIVIEW_ON STEREO_INSTANCING_ON
+
+            #include "./Simple-Colored-Procedural_inc.hlsl"
+
+            #pragma vertex vert
+            #pragma fragment frag
+
+
+            half4 frag (Varyings IN) : SV_Target
+            {
+                half4 color = IN.color;
+                return color;
+            }
+            
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Behind"
+
+            ZTest Greater
+
+            Blend One OneMinusSrcAlpha
+            Cull Off
+            //Offset [_ZBias], [_ZBias]
             ZWrite Off
 
             HLSLPROGRAM
 
-#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-#include "Library/PackageCache/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            // --- This is mainly used for the purposes of debugging shader variants 
+            #if defined(SHADER_API_METAL)
+            #   define SHADER_TARGET 45
+            #endif
 
+            #pragma multi_compile PROCEDURAL_INSTANCING_ON
+            #define UNITY_INSTANCING_PROCEDURAL_FUNC unity_instancing_procedural_func
+            #pragma multi_compile _ STEREO_MULTIVIEW_ON STEREO_INSTANCING_ON
 
-#include "Library/PackageCache/com.unity.render-pipelines.core/ShaderLibrary/UnityInstancing.hlsl"
+            #include "./Simple-Colored-Procedural_inc.hlsl"
 
-#include "Library/PackageCache/com.unity.render-pipelines.universal/Shaders/SimpleLitInput.hlsl"
+            #pragma vertex vert
+            #pragma fragment frag
 
-#pragma vertex vert
-#pragma fragment frag
-
-struct LineInstanceData
-{
-    // size must be multiple of 4
-    float3 startPosition;
-    float3 endPosition;
-    uint color;
-    float width;
-};
-StructuredBuffer<LineInstanceData> _LineData;
-
-struct Attributes
-{
-    uint vertexID : SV_VertexID;
-    UNITY_VERTEX_INPUT_INSTANCE_ID
-};
-
-
-struct Varyings
-{
-    float4 positionCS : SV_POSITION;
-    UNITY_VERTEX_OUTPUT_STEREO
-};
-
-half4 _Color;
-half _OccludedAlpha;
-
-Varyings vert (Attributes input)
-{
-    Varyings output = (Varyings)0;
-    UNITY_SETUP_INSTANCE_ID(input);
-    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
-
-    #if defined(UNITY_ANY_INSTANCING_ENABLED)
-    uint id = unity_InstanceID;
-    #else
-    uint id = 0;
-    #endif
-
-    float4 vertStartWorldPos = _LineData[id].startPosition;
-    float4 vertEndWorldPos = _LineData[id].startPosition;
-
-
-    float2 pixelSize =  output.positionCS.w;
-    pixelSize /= float2(1, 1) * abs(mul((float2x2)UNITY_MATRIX_P, _ScreenParams.xy));
-
-    float4 vertStartPosView =
-
-    //float4 vertPos = GetQuadVertexPosition(input.vertexID);
-
-    return output;
-}
-
-half4 frag (Varyings i) : SV_Target
-{
-    i.color.a *= _OccludedAlpha;
-    return i.color;
-}
-ENDHLSL
-
-
+            half4 frag (Varyings IN) : SV_Target
+            {
+                half4 color = IN.color;
+                color *= _OccludedAlpha;
+                return color;
+            }
+            
+            ENDHLSL
         }
 
     }

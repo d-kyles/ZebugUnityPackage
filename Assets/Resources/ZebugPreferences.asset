@@ -37,8 +37,8 @@ MonoBehaviour:
       gizmoEnabled: 1
     - logEnabled: 1
       gizmoEnabled: 1
-    - logEnabled: 0
-      gizmoEnabled: 0
+    - logEnabled: 1
+      gizmoEnabled: 1
   _useAdditionalPrefixOnIos: 0
   _additionalIosPrefix: '1-1 1 1 1 I '
   _showDebugGUI: 1
