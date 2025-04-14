@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Fix
+* Removed spurious profiling markers
+
 ## [0.9.0] - 2025-04-14
 
 ### Breaking Changes

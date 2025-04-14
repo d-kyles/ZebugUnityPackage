@@ -118,29 +118,18 @@ namespace ZebugProject
         {
             Channel<T> instance = Instance;
             
-            Profiler.BeginSample("DrawLine.GizmosEnabled");
             if (!instance.GizmosEnabled())
             {
-                Profiler.EndSample();
                 return;
             }
-            Profiler.EndSample();
 
-            Profiler.BeginSample("DrawLine.TryGetValue");
             if (!Zebug.s_ChannelLines.TryGetValue(instance, out ChannelLineData data))
             {
-                Profiler.EndSample();
-                
-                Profiler.BeginSample("DrawLine.AddChannel");
                 data = new ChannelLineData();
 
                 Zebug.s_ChannelLines.Add(instance, data);
-                Profiler.EndSample();
             }
-            Profiler.EndSample();
 
-            Profiler.BeginSample("DrawLine.AddLine");
-            
             var line = LineData.GetPooled();
             line.startPosition = startPosition;
             line.endPosition = endPosition;
@@ -149,8 +138,6 @@ namespace ZebugProject
             line.width = instance.m_LineDrawingWidth;
             
             data.lines.Add(line);
-            
-            Profiler.EndSample();
         }
 
         //  ----------------------------------------------------------------------------------------
