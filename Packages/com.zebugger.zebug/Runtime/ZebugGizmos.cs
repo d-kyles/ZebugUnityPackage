@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.Profiling;
 using ZebugProject.Util;
 
 namespace ZebugProject
@@ -31,34 +32,39 @@ namespace ZebugProject
     //  --------------------------------------------------------------------------------------------
     //  --------------------------------------------------------------------------------------------
     
-    public struct LineData
+    public class LineData
     {
         public Vector3 startPosition;
         public Vector3 endPosition;
         public Color color;
         public float endTime;
         public float width;
-    }
-    
-    //  --------------------------------------------------------------------------------------------
-    //  --------------------------------------------------------------------------------------------
-
-    public enum WidthType
-    {
-        // Default. Feels good, costs a bit more.
-        Adaptive,    
+        
+        private static List<LineData> s_Pool = new List<LineData>();
+        public static LineData GetPooled()
+        {
+            if (s_Pool.Count > 0)
+            {
+                LineData line = s_Pool[s_Pool.Count-1];
+                s_Pool.RemoveAt(s_Pool.Count-1);
+                return line;
+            }
+            else
+            {
+                return new LineData();
+            }
+        }
+        
+        public static void ReturnPooled(LineData line)
+        {
+            line.startPosition = Vector3.zero;
+            line.endPosition = Vector3.zero;
+            line.color = Color.clear;
+            line.endTime = 0f;
+            line.width = 0f;
             
-        //  --- Costs the same as Adaptive, good depth cues. Disappears in the distance.
-        World,
-            
-        //  --- Long distance lines may feel cluttered and odd. Hard to get a good
-        //      The way the width changes conflicts with expected depth cues, so doesn't feel great       
-        Pixels,
-            
-        //  --- Cheap, feels like it disappears up close, hard to see on high DPI screens
-        SinglePixel,
-            
-        Count,
+            s_Pool.Add(line);
+        }
     }
     
     //  --------------------------------------------------------------------------------------------
@@ -66,15 +72,7 @@ namespace ZebugProject
 
     public class ChannelLineData
     {
-        public enum Type
-        {
-            Editor,  //  --- default, uses gizmo
-            Runtime, //  --- uses line renderer 
-        }
-
         public List<LineData> lines = new List<LineData>();
-        public Type type = Type.Editor;
-        public WidthType widthType = WidthType.Adaptive;
     }
 
     //  --------------------------------------------------------------------------------------------
@@ -83,30 +81,7 @@ namespace ZebugProject
     public partial class Channel<T>
     {
         //  --- Your inheriting class can override this value to do all its drawing on device
-        //  --- TODO(dan): make this a part of the scriptable object 
-        protected ChannelLineData.Type m_LineDrawingType;
-        protected WidthType m_LineWidthType = WidthType.Adaptive;
         protected float m_LineDrawingWidth = 2f;
-        
-        //  ----------------------------------------------------------------------------------------
-        
-        public void SetLineRenderType(ChannelLineData.Type renderType)
-        {
-            m_LineDrawingType = renderType; 
-            if (Zebug.s_ChannelLines.TryGetValue(Instance, out ChannelLineData data))
-            {
-                data.type = m_LineDrawingType;
-            }
-        }
-        
-        public void SetLineRenderWidthType(WidthType widthType)
-        {
-            m_LineWidthType = widthType;
-            if (Zebug.s_ChannelLines.TryGetValue(Instance, out ChannelLineData data))
-            {
-                data.widthType = m_LineWidthType;
-            }
-        }
         
         //  ----------------------------------------------------------------------------------------
 
@@ -143,28 +118,39 @@ namespace ZebugProject
         {
             Channel<T> instance = Instance;
             
+            Profiler.BeginSample("DrawLine.GizmosEnabled");
             if (!instance.GizmosEnabled())
             {
+                Profiler.EndSample();
                 return;
             }
+            Profiler.EndSample();
 
+            Profiler.BeginSample("DrawLine.TryGetValue");
             if (!Zebug.s_ChannelLines.TryGetValue(instance, out ChannelLineData data))
             {
+                Profiler.EndSample();
+                
+                Profiler.BeginSample("DrawLine.AddChannel");
                 data = new ChannelLineData();
-                data.type = instance.m_LineDrawingType;
-                data.widthType = instance.m_LineWidthType;
 
                 Zebug.s_ChannelLines.Add(instance, data);
+                Profiler.EndSample();
             }
+            Profiler.EndSample();
 
-            data.lines.Add(new LineData
-            {
-                startPosition = startPosition,
-                endPosition = endPosition,
-                color = color,
-                endTime = Time.time + duration,
-                width = instance.m_LineDrawingWidth
-            });
+            Profiler.BeginSample("DrawLine.AddLine");
+            
+            var line = LineData.GetPooled();
+            line.startPosition = startPosition;
+            line.endPosition = endPosition;
+            line.color = color;
+            line.endTime = Time.time + duration;
+            line.width = instance.m_LineDrawingWidth;
+            
+            data.lines.Add(line);
+            
+            Profiler.EndSample();
         }
 
         //  ----------------------------------------------------------------------------------------

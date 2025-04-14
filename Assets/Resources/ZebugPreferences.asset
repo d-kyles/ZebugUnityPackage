@@ -21,6 +21,7 @@ MonoBehaviour:
     - ZebugBase/Zebug Line Draw Test 2
     - ZebugBase/Zebug Line Draw Test
     - ZebugBase/Another Zebug Line Draw Test
+    - ZebugBase/ZebugGizmoDrawer
     _values:
     - logEnabled: 1
       gizmoEnabled: 1
@@ -31,6 +32,8 @@ MonoBehaviour:
     - logEnabled: 1
       gizmoEnabled: 1
     - logEnabled: 0
+      gizmoEnabled: 1
+    - logEnabled: 1
       gizmoEnabled: 1
     - logEnabled: 1
       gizmoEnabled: 1

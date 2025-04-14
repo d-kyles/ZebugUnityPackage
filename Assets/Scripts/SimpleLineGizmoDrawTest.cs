@@ -43,7 +43,6 @@ namespace ZebugProject
                 , new Color(0.25f, 0.66f, 0.95f)
                 , ZebugProject.Zebug.Instance)
             {
-                m_LineDrawingType = ChannelLineData.Type.Runtime;
                 m_LineDrawingWidth = 3f;
             }
         }
@@ -63,9 +62,6 @@ namespace ZebugProject
 
         [SerializeField] private bool m_LogChannelsEnabled;
 
-        [SerializeField] private ChannelLineData.Type m_RenderType;
-        [SerializeField] private WidthType m_LineRenderWidthType;
-
         private float _thetaInc = 1f;
         private Transform _transform;
         private Vector3 _nextStartPos;
@@ -73,8 +69,6 @@ namespace ZebugProject
         private float _lastBurstTime;
         private float _burstDuration = 1f;
         private float _lastPeriodicLogTime;
-        private WidthType _lastLineRenderWidthType;
-        private ChannelLineData.Type _lastRenderType;
         private SimpleCameraController _simpleCameraController;
         private Camera _cam;
 
@@ -106,9 +100,6 @@ namespace ZebugProject
 
             Zebug.Log("Zebug.GizmosEnabled = " + Zebug.Instance.GizmosEnabled());
 
-            SetRenderType(m_RenderType);
-            SetLineWidth(m_LineRenderWidthType);
-            
             _cam = Camera.main;
             _simpleCameraController = _cam.GetComponent<SimpleCameraController>();
 
@@ -192,30 +183,7 @@ namespace ZebugProject
 
                 TestLogAll(ZebugProject.Zebug.Instance);
             }
-
-            if (_lastRenderType != m_RenderType)
-            {
-                SetRenderType(m_RenderType);
-            }
-            
-            if (_lastLineRenderWidthType != m_LineRenderWidthType)
-            {
-                SetLineWidth(m_LineRenderWidthType);
-            }
         }
-
-        private void SetRenderType(ChannelLineData.Type renderType)
-        {
-            Zebug.Instance.SetLineRenderType(renderType);
-            _lastRenderType = renderType;
-        }
-        
-        private void SetLineWidth(WidthType lineRenderWidthType)
-        {
-            Zebug.Instance.SetLineRenderWidthType(lineRenderWidthType);
-            _lastLineRenderWidthType = lineRenderWidthType;
-        }
-
 
         private Vector3 AddSpherical(Vector3 p, float r, float theta, float phi)
         {
@@ -234,54 +202,6 @@ namespace ZebugProject
         }
 
         //  ----------------------------------------------------------------------------------------
-
-        private void OnGUI()
-        {
-            Rect camRect = _cam.pixelRect;
-
-            float size = Application.isMobilePlatform ? Screen.dpi * 0.5f : 100;
-            float half = size * 0.5f;
-
-            float cMaxY = camRect.yMax; // bottom of screen
-            float cMinX = camRect.xMin;
-            float midX = camRect.center.x;
-
-            if (_simpleCameraController)
-            {
-                Rect upRect = new Rect(midX - half, cMaxY - size - size, size, size);
-                Rect leftRect = new Rect(midX - half - size, cMaxY - size, size, size);
-                Rect rightRect = new Rect(midX - half + size, cMaxY - size, size, size);
-                Rect downRect = new Rect(midX - half, cMaxY - size, size, size);
-
-                if (GUI.RepeatButton(upRect, "W"))
-                {
-                    _simpleCameraController.Forward();
-                }
-
-                if (GUI.RepeatButton(leftRect, "A"))
-                {
-                    _simpleCameraController.Left();
-                }
-
-                if (GUI.RepeatButton(downRect, "S"))
-                {
-                    _simpleCameraController.Back();
-                }
-
-                if (GUI.RepeatButton(rightRect, "D"))
-                {
-                    _simpleCameraController.Right();
-                }
-            }
-
-            Rect channelToggleBox = new Rect(cMinX, cMaxY - 3 * size, size, size);
-
-            if (GUI.Button(channelToggleBox, "Toggle channel"))
-            {
-                Zebug.Instance.SetGizmosEnabled(!Zebug.Instance.LocalGizmosEnabled());
-            }
-        }
-
     }
 
 }

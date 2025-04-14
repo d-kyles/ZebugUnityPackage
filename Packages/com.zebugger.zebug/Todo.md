@@ -22,6 +22,7 @@
    * outline shapes
    * Arrow etc.
     Possible integration with a SVG shapes library would be sweet, with GLLines fallback. 
+   * Make these render at edit-time too, if the ZebugGizmo component exists.
 
 3) ZebugGraph:
     * consider using closures to store the cached channel, that way you can avoid editor only fields and preprocessor directives cluttering up the filespace
@@ -51,6 +52,9 @@
 
     Static, or per last-selected object
 
+    Turns out OnGUI is terrible for performance. Absolutely horrendous, significant overhead even if nothing is donewithin
+    within it. 
+
     ```C#
     private void OnGUI() {
         if (channel.DebugGUIEnabled) {
@@ -72,7 +76,7 @@
     to. The feature I super love though, is that you can hit the pin button and select multiple 
     debug variables to appear on the screen during play. Just exceptionally useful.
      
-11) The 'additional prefix' on iOS could benefit from auto epansion of timestamp etc.
+11) The 'additional prefix' on iOS could benefit from auto expansion of timestamp etc.
 12) Maybe we could do Zebug.DrawHandle(something, handleResultDelegate) and get values out?
 
 ## Misc Tasks
