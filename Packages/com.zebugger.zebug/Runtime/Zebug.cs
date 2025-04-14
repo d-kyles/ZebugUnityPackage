@@ -46,14 +46,25 @@ namespace ZebugProject
     {
         public const bool ColorTagsOnlyInEditor = true;
 
-        public static List<IChannel> s_Channels = new List<IChannel>();
+        public static List<IChannel> s_Channels = new();
 
         public static ILogger s_Logger = Debug.unityLogger;
 
         //  --- Gizmo drawing API
-        public static Dictionary<IChannel, ChannelLineData> s_ChannelLines
-            = new Dictionary<IChannel, ChannelLineData>();
+        public static Dictionary<IChannel, ChannelLineData> s_ChannelLines = new();
 
+        public static Dictionary<IChannel, Dictionary<string, string>> 
+            s_ChannelWindowVariables = new ();
+        
+        public static Dictionary<IChannel, Dictionary<string, Action>> 
+            s_ChannelWindowButtons = new ();
+
+        public static void RaiseEditorRepaint()
+        {
+            EditorNeedsRepaint?.Invoke();
+        }
+        public static Action EditorNeedsRepaint;
+        
         public Zebug() : base("ZebugBase", Color.white) { }
     }
 

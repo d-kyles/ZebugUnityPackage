@@ -282,6 +282,11 @@ namespace ZebugProject
             cam.GetUniversalAdditionalCameraData().scriptableRenderer.EnqueuePass(_zebugRenderPass);
         }
 
+        // protected void OnGUI()
+        // {
+        //     ZebugDebugGuiLayout.Instance.OnGUI();
+        // }
+
         protected void OnDestroy()
         {
             RenderPipelineManager.beginCameraRendering -= OnSrpBeginCamRendering;
@@ -364,6 +369,7 @@ namespace ZebugProject
 
             var go = new GameObject("ZebugSceneDrawer Helper GO");
             s_Instance = go.AddComponent<ZebugSceneDrawer>();
+            
             //go.hideFlags = HideFlags.HideAndDontSave;
             DontDestroyOnLoad(go);
 

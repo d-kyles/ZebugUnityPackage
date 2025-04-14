@@ -1,0 +1,20 @@
+fileFormatVersion: 2
+guid: f9783d47636944b6da23b5c284e49aee
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - _tabButtonPrefab: {fileID: 7808200403904022271, guid: 93f879c7da7a94704bfd16ecf76e0b9a,
+      type: 3}
+  - _tabPanelPrefab: {fileID: 5682529132731258110, guid: f2e9be8eae868454f8cdba0747ea208b,
+      type: 3}
+  - _tabPanelVarElementPrefab: {fileID: 3673720650188526575, guid: e9d4ca6f534ee439baf20f4f72d8de6a,
+      type: 3}
+  - _tabButtonPanelRoot: {instanceID: 0}
+  - _tabPanelRoot: {instanceID: 0}
+  - _toggleZebugGui: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
