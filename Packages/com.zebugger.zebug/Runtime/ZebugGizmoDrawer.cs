@@ -11,22 +11,12 @@ namespace ZebugProject
     {
         public ZebugGizmoDrawerChannel() : base("ZebugGizmoDrawer", new Color(1f, 0.13f, 0.38f, 0.81f), Zebug.Instance)
         {
-            m_LineDrawingType = ChannelLineData.Type.Runtime;
-            m_LineWidthType = WidthType.Adaptive;
             m_LineDrawingWidth = 1.125f;
         }
 
-        public void OverrideLineSettings(ChannelLineData.Type lineDrawingType, WidthType lineWidthType, float lineDrawingWidth)
+        public void OverrideLineSettings(float lineDrawingWidth)
         {
-            m_LineDrawingType = lineDrawingType;
-            m_LineWidthType = lineWidthType;
             m_LineDrawingWidth = lineDrawingWidth;
-
-            if (Zebug.s_ChannelLines.TryGetValue(Instance, out ChannelLineData data))
-            {
-                data.type = m_LineDrawingType;
-                data.widthType = m_LineWidthType;
-            }
         }
     }
 
@@ -38,8 +28,6 @@ namespace ZebugProject
         [SerializeField] private float _duration = 0;
 
         [Header("Line Drawing Settings - [STATIC!]")]
-        [SerializeField] private ChannelLineData.Type m_LineDrawingType = ChannelLineData.Type.Runtime;
-        [SerializeField] private WidthType m_LineWidthType = WidthType.Adaptive;
         [SerializeField] private float m_LineDrawingWidth = 1.125f;
 
         public enum DrawMethodCallWhen
@@ -102,7 +90,7 @@ namespace ZebugProject
             }
 
             //  --- Unfortunately this is static right now, so the last in order of update wins
-            (ZebugGizmoDrawerChannel.Instance as ZebugGizmoDrawerChannel).OverrideLineSettings(m_LineDrawingType, m_LineWidthType, m_LineDrawingWidth);
+            (ZebugGizmoDrawerChannel.Instance as ZebugGizmoDrawerChannel).OverrideLineSettings(m_LineDrawingWidth);
 
             switch (_drawType)
             {

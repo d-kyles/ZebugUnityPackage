@@ -5,9 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
-* Update to EditorVersion: 2022.3.39f1
+
+### Breaking Changes
+* Upgraded Unity version to `Unity 6000.0.38f1`
+* Probably only supports Universal Render Pipeline, with RenderGraph right now.
+* LineDrawingType can only be Adaptive now.
+* LineType is now only "Runtime"
+
+### Improved
+* Perf: Line rendering is significantly faster, uses Procedural Instancing. Should easily render >10k dynamic lines per frame.
 * Use 'Tools/Zebug', rather than 'Window/Zebug'
-* Added rudiemntary support for logging to the Zebug window
+* Added rudimentary support for logging to the Zebug window
 
 ## [0.8.6] - 2024-04-22
 

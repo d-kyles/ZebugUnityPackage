@@ -108,6 +108,7 @@ namespace ZebugProject
 
         public static Channel<T> Instance
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if (s_Instance == null)

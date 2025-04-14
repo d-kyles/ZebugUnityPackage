@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEngine;
 
 namespace ZebugProject {
@@ -75,8 +76,8 @@ namespace ZebugProject {
             }
         }
 
-        private static HashSet<IChannel> s_TestChannels = new HashSet<IChannel>();
-        private static int s_ExpandedCount = 0; 
+        private static HashSet<IChannel> s_TestChannels = new();
+        private static int s_ExpandedCount;
         private GUIStyle _channelRowStyleTop;
         private GUIStyle _channelRowStyleInner;
         private GUIStyle _channelRowStyleBottom;
@@ -89,7 +90,7 @@ namespace ZebugProject {
         private string[] _symbols;
         private bool _advOptionsExpanded;
         private bool _showTestChannels;
-        private bool s_StylesLoaded = false;
+        private bool s_StylesLoaded;
         private SerializedObject _zebugPrefSO;
         private SerializedProperty _showGUIField;
 
@@ -229,9 +230,9 @@ namespace ZebugProject {
             GUILayout.Space(5);
             GUILayout.Label("Preprocessor Directives", EditorStyles.largeLabel);
             
-            bool oldValue = false;
-            bool newValue = false;
-            
+            bool oldValue;
+            bool newValue;
+
             using (new GUILayout.HorizontalScope())
             {
                 if (_symbols == null || Time.time - _lastFetchedPreprocessorTime > 2f)
@@ -532,7 +533,8 @@ namespace ZebugProject {
         {
             BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
             BuildTargetGroup buildTargetGroup = BuildPipeline.GetBuildTargetGroup(buildTarget);
-            string symbolString = PlayerSettings.GetScriptingDefineSymbolsForGroup(buildTargetGroup);
+            NamedBuildTarget namedBuildTarget = NamedBuildTarget.FromBuildTargetGroup(buildTargetGroup);
+            string symbolString = PlayerSettings.GetScriptingDefineSymbols(namedBuildTarget);
             string[] symbolArray = symbolString.Split(';');
             _symbols = symbolArray;
             _preprocessorAllOnSet = PreprocessorHasString(kAllOnPreprocessor);
@@ -568,7 +570,9 @@ namespace ZebugProject {
             }
             BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
             BuildTargetGroup buildTargetGroup = BuildPipeline.GetBuildTargetGroup(buildTarget);
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(buildTargetGroup, _symbols);
+            NamedBuildTarget namedBuildTarget = NamedBuildTarget.FromBuildTargetGroup(buildTargetGroup);
+            PlayerSettings.SetScriptingDefineSymbols(namedBuildTarget, _symbols);
+            //PlayerSettings.SetScriptingDefineSymbolsForGroup(buildTargetGroup, _symbols);
         }
     }
     
