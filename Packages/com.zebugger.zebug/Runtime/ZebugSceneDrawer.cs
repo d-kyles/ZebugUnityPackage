@@ -114,7 +114,12 @@ namespace ZebugProject
 
             private class PassData
             {
-
+                public Material              material;
+                public MaterialPropertyBlock mpb;
+                public GraphicsBuffer        indices;
+                public int                   lineBufferLength;
+                public GraphicsBuffer        lineData;
+                public int                   lineCount;
             }
 
             public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameContext)
@@ -124,6 +129,11 @@ namespace ZebugProject
                 using (var builder = renderGraph.AddRasterRenderPass(passNameString, out PassData passData))
                 {
                     UniversalResourceData resourceData = frameContext.Get<UniversalResourceData>();
+                    
+                    passData.lineCount = _lineCount;
+                    passData.indices = _indices;
+                    passData.material = _material;
+                    passData.mpb = _mpb;
                     
                     //  --- NOTE(dan): hack while figuring out how the rendergraph api actually works
                     builder.AllowPassCulling(false);
@@ -136,22 +146,22 @@ namespace ZebugProject
                 }
             }
 
-            private void ExecutePass(PassData data, RasterGraphContext context)
+            private static void ExecutePass(PassData data, RasterGraphContext context)
             {
                 var cmd = context.cmd;
 
-                int instanceCount = _lineCount;
+                int instanceCount = data.lineCount;
                 int everyPass = -1;
                 int indexCount = 6;
 
-                cmd.DrawProcedural(_indices
+                cmd.DrawProcedural(data.indices
                                   , Matrix4x4.identity
-                                  , _material
+                                  , data.material
                                   , everyPass
                                   , MeshTopology.Triangles
                                   , indexCount
                                   , instanceCount
-                                  , _mpb);
+                                  , data.mpb);
             }
             
             public void UpdateLineData()

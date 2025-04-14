@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Breaking Changes
-* Upgraded miniumum supported Unity version to ` Unity 6000.0.38f1 `
+* Upgraded Unity version to `Unity 6000.0.38f1`
 * Probably only supports Universal Render Pipeline, with RenderGraph right now.
 * LineDrawingType can only be Adaptive now.
 * LineType is now only "Runtime"
