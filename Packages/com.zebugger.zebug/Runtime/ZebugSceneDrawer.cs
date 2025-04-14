@@ -282,10 +282,10 @@ namespace ZebugProject
             cam.GetUniversalAdditionalCameraData().scriptableRenderer.EnqueuePass(_zebugRenderPass);
         }
 
-        protected void OnGUI()
-        {
-            ZebugDebugGuiLayout.Instance.OnGUI();
-        }
+        // protected void OnGUI()
+        // {
+        //     ZebugDebugGuiLayout.Instance.OnGUI();
+        // }
 
         protected void OnDestroy()
         {

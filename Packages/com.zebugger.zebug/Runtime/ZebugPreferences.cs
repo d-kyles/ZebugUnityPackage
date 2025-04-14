@@ -56,8 +56,6 @@ namespace ZebugProject
         [SerializeField] private bool _useAdditionalPrefixOnIos; 
         [SerializeField] private string _additionalIosPrefix = "1-1 1 1 1 I "; 
         
-        [SerializeField] private bool _showDebugGUI; 
-
         [SerializeField] private GameObject _debugGuiPrefab;
 
         //  --- TODO(dan): Find a good way to auto find settings, as people probably want to
@@ -109,13 +107,6 @@ namespace ZebugProject
             }
         } 
         
-        public bool ShowDebugGUI
-        {
-            get { return _showDebugGUI; }
-            private set => _showDebugGUI = value;
-        }
-
-
         private static ChannelPreference Create(string key, bool defaultOn)
         {
             //PlayerPrefs.SetInt(key, enabled ? 1 : 0);

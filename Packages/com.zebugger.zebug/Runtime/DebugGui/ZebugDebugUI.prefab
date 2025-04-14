@@ -340,6 +340,8 @@ MonoBehaviour:
     type: 3}
   _tabPanelVarElementPrefab: {fileID: 3673720650188526575, guid: e9d4ca6f534ee439baf20f4f72d8de6a,
     type: 3}
+  _tabPanelButtonElementPrefab: {fileID: 2712557217195174193, guid: e1903a3ebc60648a9a206a9780158a82,
+    type: 3}
   _tabButtonPanelRoot: {fileID: 5871125338687712759}
   _tabPanelRoot: {fileID: 3403915532965522334}
   _toggleZebugGui:
@@ -994,8 +996,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 8354093874944673797}
   m_HandleRect: {fileID: 8409334713761434252}
   m_Direction: 2
-  m_Value: 0.99999994
-  m_Size: 0.26438355
+  m_Value: 0.9999993
+  m_Size: 0.65760106
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1427,26 +1429,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4311518481932062882}
     m_Modifications:
-    - target: {fileID: 379776636583704567, guid: f2e9be8eae868454f8cdba0747ea208b,
-        type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 379776636583704567, guid: f2e9be8eae868454f8cdba0747ea208b,
-        type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 379776636583704567, guid: f2e9be8eae868454f8cdba0747ea208b,
-        type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 379776636583704567, guid: f2e9be8eae868454f8cdba0747ea208b,
-        type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 5682529132731258110, guid: f2e9be8eae868454f8cdba0747ea208b,
         type: 3}
       propertyPath: m_Name

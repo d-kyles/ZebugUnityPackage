@@ -3,8 +3,8 @@
     "rootNamespace": "",
     "references": [
         "ZebugAssemblyDefinition",
-        "Unity.InputSystem",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

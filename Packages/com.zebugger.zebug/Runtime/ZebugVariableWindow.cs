@@ -1,6 +1,7 @@
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -31,6 +32,24 @@ namespace ZebugProject
             } 
             
             list[key] = value;
+            
+            Zebug.RaiseEditorRepaint();
+        }
+        
+        public static void AddWindowButton(string key, Action action)
+        {
+            if (!Instance.LogEnabled())
+            {
+                return;
+            }
+            
+            if (!Zebug.s_ChannelWindowButtons.TryGetValue(Instance, out var list))
+            {
+                list = new Dictionary<string, Action>();
+                Zebug.s_ChannelWindowButtons.Add(Instance, list);
+            }
+            
+            list[key] = action;
             
             Zebug.RaiseEditorRepaint();
         }

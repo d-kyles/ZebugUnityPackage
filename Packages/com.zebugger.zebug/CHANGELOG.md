@@ -11,12 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 * Probably only supports Universal Render Pipeline, with RenderGraph right now.
 * LineDrawingType can only be Adaptive now.
 * LineType is now only "Runtime"
+* Deprecating old OnGUI based debug window.
 
 ### Improved
 * Perf: Line rendering is significantly faster, uses Procedural Instancing. Should easily render >10k dynamic lines per frame.
 * Use 'Tools/Zebug', rather than 'Window/Zebug'
 * Added rudimentary support for logging to the Zebug window
-
+* Add buttons to the zebug runtime window
+* 
 ## [0.8.6] - 2024-04-22
 
 ### Improved
