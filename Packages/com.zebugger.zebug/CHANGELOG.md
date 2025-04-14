@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+## [0.9.0] - 2025-04-14
+
 ### Breaking Changes
 * Upgraded Unity version to `Unity 6000.0.38f1`
 * Probably only supports Universal Render Pipeline, with RenderGraph right now.
@@ -18,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 * Use 'Tools/Zebug', rather than 'Window/Zebug'
 * Added rudimentary support for logging to the Zebug window
 * Add buttons to the zebug runtime window
-* 
+
 ## [0.8.6] - 2024-04-22
 
 ### Improved
