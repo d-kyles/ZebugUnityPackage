@@ -89,6 +89,7 @@ namespace ZebugProject {
         private float _lastFetchedPreprocessorTime;
         private string[] _symbols;
         private bool _advOptionsExpanded;
+        private bool _graphsExpanded;
         private bool _showTestChannels;
         private bool s_StylesLoaded;
         private SerializedObject _zebugPrefSO;
@@ -223,6 +224,19 @@ namespace ZebugProject {
             GUILayout.Label("Channels", EditorStyles.largeLabel);
             DrawChannel(Zebug.Instance);
             GUI.backgroundColor = oldColor;
+
+            GUILayout.Space(5);
+            ZebugGUIStyles.Line(lineColor, 2);
+
+            GUILayout.Space(5);
+            _graphsExpanded = EditorGUILayout.Foldout(_graphsExpanded
+                , "Graphs"
+                , toggleOnLabelClick: true);
+            if (_graphsExpanded)
+            {
+                DrawGraphs();
+            }
+
 
             GUILayout.Space(5);
             ZebugGUIStyles.Line(lineColor, 2);
@@ -495,7 +509,199 @@ namespace ZebugProject {
             }
         }
 
-        
+        private void DrawGraphs()
+        {
+            if (Event.current.type != EventType.Layout
+                 && Event.current.type != EventType.Repaint)
+            {
+                //  --- It doesn't have to be interactive... just layout and paint
+                return;
+            }
+
+            DrawTestGraph();
+
+
+            //  --- At some point will need to deal with points being added but never removed.
+            //      Choose a mechanism for dealing with bloat.
+            //  * Channel specific settings
+            //  * Does Zebug have a guaranteed update? SceneDrawer seems like the most likely...
+            //      EditorNeedsRepaint is a bit of a hack around this issue.
+            //      but this would need to function regardless of the Zebug editor being open.
+            //  * Display graphs in runtime window too.
+
+            DrawGraph(Zebug.Instance);
+        }
+
+        private void DrawTestGraph()
+        {
+            GUILayout.Label("TestGraph");
+
+            GUILayout.Box("", //EditorStyles.helpBox,
+                GUILayout.Height(100),
+                GUILayout.ExpandWidth(true));
+
+            if (Event.current.type == EventType.Repaint)
+            {
+                var rect = GUILayoutUtility.GetLastRect();
+                List<(float, (float, float))> points = new ()
+                {
+                    (0, (0, 0)),
+                    (1, (1, 1)),
+                };
+                int pointCount = points.Count;
+
+                var testPoints = new Vector3[]
+                {
+                    new Vector3(rect.x, rect.y + rect.height +1, 1),
+                    new Vector3(rect.x + rect.width, rect.y +1, 1),
+                };
+
+                //
+                Handles.DrawAAPolyLine(
+                    Texture2D.whiteTexture,
+                    1f,
+                    testPoints
+                );
+
+                //GUI.BeginClip(rect);
+                Handles.color = Color.yellow;
+                float startTime = points[0].Item2.Item1;
+                float startFrame = points[0].Item2.Item2;
+
+                float endTime = points[pointCount-1].Item2.Item1;
+                float endFrame = points[pointCount-1].Item2.Item2;
+
+                float timeToRectScale = rect.width / Math.Max(endTime - startTime, 0.0001f);
+
+                float xOffset = rect.x;
+                float yOffset = rect.y;
+
+                float valueMin = 0;
+                float valueMax = 2;
+                float yMin = rect.y + rect.height;
+                float yMax = rect.y;
+                float yRange = rect.height;
+
+
+                var pointArray = new Vector3[pointCount];
+                for (var i = 0; i < pointCount; i++)
+                {
+                    var pointTime = points[i].Item2.Item1;
+                    var pointValue = points[i].Item1;
+
+                    var yT = (pointValue - valueMin) / (valueMax - valueMin);
+                    var yVal = (1f - yT)*yRange + yMax;
+
+                    pointArray[i] = new Vector3(
+                        xOffset + pointTime * timeToRectScale,
+                        yVal,
+                        0);
+                }
+
+                Handles.DrawAAPolyLine(
+                    Texture2D.whiteTexture,
+                    1f,
+                    pointArray
+                    );
+
+                //GUI.EndClip();
+            }
+
+        }
+
+        private void DrawGraph(IChannel channel)
+        {
+            if (!channel.GizmosEnabled())
+            {
+                return;
+            }
+
+            if (!Zebug.s_ChannelGraphData.TryGetValue(channel, out GraphData graphData))
+            {
+                foreach (IChannel child in channel.Children())
+                {
+                    DrawGraph(child);
+                }
+                return;
+            }
+
+            GUILayout.Label(channel.Name());
+
+            GUILayout.Box("", EditorStyles.helpBox,
+                GUILayout.Height(100));
+
+            if (Event.current.type == EventType.Repaint)
+            {
+                var rect = GUILayoutUtility.GetLastRect();
+                List<GraphData.Sample> points = graphData.points;
+                int pointCount = points.Count;
+                if (pointCount < 2)
+                {
+                    return;
+                }
+
+                //GUI.BeginClip(rect);
+                Handles.color = channel.GetColor();
+                var firstSample = graphData.First();
+                var lastSample = graphData.Last();
+
+                float startTime = firstSample.time;
+                float startFrame = firstSample.frame;
+
+                float endTime = lastSample.time;
+                float endFrame = lastSample.frame;
+
+                const float sixtyFpsFrameTimeThousandth = 0.001f / 60f;
+
+                float invTimeScale = 1f / Math.Max(endTime - startTime, sixtyFpsFrameTimeThousandth);
+
+                float xMin = rect.x;
+                float xRange = rect.width;
+
+                float valueMin = graphData.minValue;
+                float valueMax = graphData.maxValue;
+
+                float yMin = rect.y;
+                float yRange = rect.height;
+
+                float invValueScale = 1f / Math.Max(valueMax - valueMin, sixtyFpsFrameTimeThousandth);
+
+                var pointArray = new Vector3[pointCount];
+                for (var i = 0; i < pointCount; i++)
+                {
+                    var idx = (graphData.nextIdx + i) % graphData.maxPoints;
+                    GraphData.Sample sample = points[idx];
+
+                    float xT = (sample.time - startTime) * invTimeScale;
+                    float xVal = xT * xRange + xMin;
+
+                    var yT = (sample.value - valueMin) * invValueScale;
+                    var yVal = (1f - yT)*yRange + yMin;
+
+                    pointArray[i] = new Vector3(
+                        xVal,
+                        yVal,
+                        0);
+                }
+
+                Handles.DrawAAPolyLine(
+                    Texture2D.whiteTexture,
+                    1f,
+                    pointArray
+                    );
+
+                //GUI.EndClip();
+            }
+
+
+
+
+            foreach (IChannel child in channel.Children())
+            {
+                DrawGraph(child);
+            }
+        }
+
 
         private static void ClearRedundantChannelData()
         {

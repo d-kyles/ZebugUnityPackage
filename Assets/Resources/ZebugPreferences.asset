@@ -23,6 +23,7 @@ MonoBehaviour:
     - ZebugBase/Another Zebug Line Draw Test
     - ZebugBase/ZebugGizmoDrawer
     - ZebugBase/Window Var Button Test
+    - ZebugBase/SimpleGraphValueTest
     _values:
     - logEnabled: 1
       gizmoEnabled: 1
@@ -33,6 +34,8 @@ MonoBehaviour:
     - logEnabled: 1
       gizmoEnabled: 1
     - logEnabled: 0
+      gizmoEnabled: 1
+    - logEnabled: 1
       gizmoEnabled: 1
     - logEnabled: 1
       gizmoEnabled: 1

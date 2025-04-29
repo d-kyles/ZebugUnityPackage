@@ -59,6 +59,8 @@ namespace ZebugProject
         public static Dictionary<IChannel, Dictionary<string, Action>> 
             s_ChannelWindowButtons = new ();
 
+        public static Dictionary<IChannel, GraphData> s_ChannelGraphData = new ();
+
         public static void RaiseEditorRepaint()
         {
             EditorNeedsRepaint?.Invoke();
