@@ -15,12 +15,11 @@ public class SimpleGraphValueTest : MonoBehaviour
         {
 
         }
-
     }
 
     private class GraphAxisDefaultsDebug : Channel<GraphAxisDefaultsDebug>
     {
-        public GraphAxisDefaultsDebug() : base(nameof(GraphAxisDefaultsDebug), Color.red)
+        public GraphAxisDefaultsDebug() : base(nameof(GraphAxisDefaultsDebug), Color.red, Zebug.Instance)
         {
             SetGraphValueMinMax(0, 2);
         }

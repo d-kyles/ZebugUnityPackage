@@ -7,11 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
- * **WIP** in-zebug window graph.
-   * E.G. `Zebug.GraphValue(Mathf.Sin(Time.time))`  
+* **WIP** in-zebug window graph.
+    * E.G. `Zebug.GraphValue(Mathf.Sin(Time.time))`  
 
 ### Fix
 * Removed spurious profiling markers
+
+### Improved
+* Refactored main editor window code 
 
 ## [0.9.0] - 2025-04-14
 

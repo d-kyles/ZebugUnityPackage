@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEngine;
@@ -84,7 +85,9 @@ namespace ZebugProject {
 
         private Vector2 _scrollPosition;
         
-        private const string kAllOnPreprocessor = "ZEBUG_ALL_ON"; 
+        private const string kAllOnPreprocessor = "ZEBUG_ALL_ON";
+        private const string kShowTestChannelsPref = "ZebugShowTestChannels";
+        
         private bool _preprocessorAllOnSet;
         private float _lastFetchedPreprocessorTime;
         private string[] _symbols;
@@ -189,7 +192,12 @@ namespace ZebugProject {
                 _showGUIField = _zebugPrefSO.FindProperty("_showDebugGUI");
             }
 
-            Zebug.EditorNeedsRepaint = OnEditorNeedsRepaint; 
+            Zebug.EditorNeedsRepaint = OnEditorNeedsRepaint;
+            
+            if (!PlayerPrefs.HasKey(kShowTestChannelsPref))
+            {
+                PlayerPrefs.SetInt(kShowTestChannelsPref, 0);
+            }
         }
         
         private void OnEditorNeedsRepaint()
@@ -214,7 +222,6 @@ namespace ZebugProject {
 
             int currentChannel = 0;
             int visibleChannelCount = s_ExpandedCount;
-            
             s_ExpandedCount = 0;
             
             var oldColor = GUI.backgroundColor;
@@ -222,30 +229,26 @@ namespace ZebugProject {
             GUI.backgroundColor = Color.white;
             GUILayout.Space(5);
             GUILayout.Label("Channels", EditorStyles.largeLabel);
-            DrawChannel(Zebug.Instance);
+            DrawChannel(Zebug.Instance, visibleChannelCount, ref currentChannel);
             GUI.backgroundColor = oldColor;
 
             GUILayout.Space(5);
             ZebugGUIStyles.Line(lineColor, 2);
 
             GUILayout.Space(5);
-            _graphsExpanded = EditorGUILayout.Foldout(_graphsExpanded
-                , "Graphs"
-                , toggleOnLabelClick: true);
+            _graphsExpanded = EditorGUILayout.Foldout( _graphsExpanded
+                                                     , "Graphs"
+                                                     , toggleOnLabelClick: true);
             if (_graphsExpanded)
             {
                 DrawGraphs();
             }
-
 
             GUILayout.Space(5);
             ZebugGUIStyles.Line(lineColor, 2);
             
             GUILayout.Space(5);
             GUILayout.Label("Preprocessor Directives", EditorStyles.largeLabel);
-            
-            bool oldValue;
-            bool newValue;
 
             using (new GUILayout.HorizontalScope())
             {
@@ -256,8 +259,8 @@ namespace ZebugProject {
                 
                 using (new GUILayout.VerticalScope())
                 {
-                    oldValue = _preprocessorAllOnSet; 
-                    newValue = GUILayout.Toggle(_preprocessorAllOnSet, "Force All On");
+                    bool oldValue = _preprocessorAllOnSet; 
+                    bool newValue = GUILayout.Toggle(_preprocessorAllOnSet, "Force All On");
                     if (newValue != oldValue)
                     {
                         PreprocessorSetString(kAllOnPreprocessor, newValue);
@@ -294,8 +297,8 @@ namespace ZebugProject {
                 {
                     GUILayout.Label("New channels enabled by default?");
                     
-                    oldValue = ZebugPreferences.Instance.ChannelsEnabledByDefault; 
-                    newValue = EditorGUILayout.Toggle("", oldValue);
+                    bool oldValue = ZebugPreferences.Instance.ChannelsEnabledByDefault; 
+                    bool newValue = EditorGUILayout.Toggle("", oldValue);
                     if (newValue != oldValue)
                     {
                         ZebugPreferences.Instance.ChannelsEnabledByDefault = newValue;
@@ -313,69 +316,7 @@ namespace ZebugProject {
                                                              , toggleOnLabelClick: true);
                 if (_advOptionsExpanded)
                 {
-                    using (new GUILayout.VerticalScope(EditorStyles.helpBox))
-                    {
-                        using (new GUILayout.HorizontalScope())
-                        {
-                            GUILayout.Label("Clear unused channel data");
-                            if (GUILayout.Button("Clear"))
-                            {
-
-                                ClearRedundantChannelData();
-                            }
-                        }
-                        
-                        using (new GUILayout.HorizontalScope())
-                        {
-                            GUILayout.Label("Show test channels");
-                            const string kShowTestChannels = "ZebugShowTestChannels";
-                            if (!PlayerPrefs.HasKey(kShowTestChannels))
-                            {
-                                PlayerPrefs.SetInt(kShowTestChannels, 0);
-                            }
-                            
-                            _showTestChannels = PlayerPrefs.GetInt(kShowTestChannels) > 0;
-                            bool newShowTestValue = GUILayout.Toggle(_showTestChannels, ""); 
-                            if (_showTestChannels != newShowTestValue)
-                            {
-                                _showTestChannels = newShowTestValue;
-                                PlayerPrefs.SetInt(kShowTestChannels, newShowTestValue ? 1 : 0);
-                            }
-                        }
-                        
-                        using (new GUILayout.HorizontalScope())
-                        {
-                            GUILayout.Label("Add an additional prefix on iOS?");
-                            oldValue = ZebugPreferences.Instance.UseAdditionalPrefixOnIos; 
-                            newValue = EditorGUILayout.Toggle("", oldValue);
-                            if (newValue != oldValue)
-                            {
-                                ZebugPreferences.Instance.UseAdditionalPrefixOnIos = newValue;
-                            }
-                        }
-                        
-                        ///
-                        /// iOS devices logging back into XCode have no formatting to facilitate
-                        /// syntax highlighting, which makes the logs much harder to read. This
-                        /// enables a dev to spoof a format like ADB logs (for example) in the case
-                        /// that they want to look at the logs of an android device next to ones
-                        /// that have been captured on an iOS device.   
-                        /// 
-                        
-                        using (new GUILayout.HorizontalScope())
-                        {
-                            GUILayout.Label("iOS additional prefix:");
-                            bool wasEnabled = GUI.enabled;
-                            GUI.enabled = ZebugPreferences.Instance.UseAdditionalPrefixOnIos;
-                            string oldPrefix = ZebugPreferences.Instance.AdditionalIosPrefix;
-                            string newPrefix = EditorGUILayout.DelayedTextField("",oldPrefix);
-                            if (newPrefix != oldPrefix)
-                            {
-                                ZebugPreferences.Instance.AdditionalIosPrefix = newPrefix;
-                            }
-                            GUI.enabled = wasEnabled;
-                        }
-                    }
+                    DrawAdvancedOptions();
                 }
             }
             
@@ -398,117 +339,127 @@ namespace ZebugProject {
             
             GUILayout.EndScrollView();
 
-            //   -----------------------------------------------------------------------------------
-            //   -----------------------------------------------------------------------------------
+        }
+
+        //   ---------------------------------------------------------------------------------------
+        
+        #region Draw Channel
+
+        
+        void DrawChannel(IChannel channel, int visibleChannelCount, ref int currentChannel) {
             
-            void DrawChannel(IChannel channel) {
-                
+            currentChannel++;
+            string channelName = channel.Name();
+            string channelPath = channel.FullName();
+            Color color = channel.GetColor();
+            
+            if (!s_StylesLoaded)
+            {
+                LoadStyles();
+            }
+            
+            var style = _channelRowStyleInner;
+            if (currentChannel == 0)
+            {
+                style = _channelRowStyleTop;
+            } 
+            else if (currentChannel == visibleChannelCount-1)
+            {
+                style = _channelRowStyleBottom;
+            }
+            
+            bool channelExpanded = false;
+            
+            using (new GUILayout.HorizontalScope(style)) {
+
+                IList<IChannel> children = channel.Children();
+                if (children.Count > 0) {
+                    GUIStyle foldoutTextStyle = new GUIStyle(EditorStyles.foldout);
+                    {
+                        foldoutTextStyle.normal.textColor = color;
+                        foldoutTextStyle.onNormal.textColor = color;
+                        foldoutTextStyle.focused.textColor = color;
+                        foldoutTextStyle.onFocused.textColor = color;
+                    }
+
+                    _channelExpandedSet.TryGetValue(channelPath, out bool expanded);
+
+                    channelExpanded = EditorGUILayout.Foldout(expanded, channelName, true, foldoutTextStyle);
+                    _channelExpandedSet[channelPath] = channelExpanded;
+                    
+                } else {
+                    var foldoutTextStyle = new GUIStyle();
+                    foldoutTextStyle.normal.textColor = channel.GetColor();
+                    foldoutTextStyle.onNormal.textColor = channel.GetColor();
+                    foldoutTextStyle.contentOffset = new Vector2(20 * EditorGUI.indentLevel,0);
+                    GUILayout.Label(channel.Name(), foldoutTextStyle);
+                }
+                GUILayout.FlexibleSpace();
+
+                const float disabledColorVal = 1f/255f;
+                Color disabledTextColor = new Color(disabledColorVal, disabledColorVal,disabledColorVal);
+
+                const float togglesWidth = 150f;
+                using (new EditorGUI.IndentLevelScope(-EditorGUI.indentLevel))
+                using (new GUILayout.HorizontalScope()) {
+
+                    var toggleTextStyle = new GUIStyle();
+                    var normalTextColor = toggleTextStyle.normal.textColor; 
+                    if (!channel.ParentLogEnabled()) {
+                        toggleTextStyle.normal.textColor = disabledTextColor;
+                        toggleTextStyle.onNormal.textColor = disabledTextColor;
+                    }
+
+                    using (new EditorGUI.DisabledScope(!channel.ParentLogEnabled())) {
+                        bool logEnabled = channel.LocalLogEnabled();
+                        bool newLogEnabled = EditorGUILayout.ToggleLeft("Log", logEnabled, GUILayout.Width(togglesWidth/2));
+                        if (newLogEnabled != logEnabled) {
+                            channel.SetLogEnabled(newLogEnabled);
+                        }
+                    }
+
+                    if (!channel.ParentGizmosEnabled()) {
+                        toggleTextStyle.normal.textColor = disabledTextColor;
+                        toggleTextStyle.onNormal.textColor = disabledTextColor;
+                    } else {
+                        toggleTextStyle.normal.textColor = normalTextColor;
+                        toggleTextStyle.onNormal.textColor = normalTextColor;
+                    }
+
+                    using (new EditorGUI.DisabledScope(!channel.ParentGizmosEnabled())) {
+                        bool gizmosEnabled = channel.LocalGizmosEnabled();
+                        bool newGizmosEnabled = EditorGUILayout.ToggleLeft("Gizmos", gizmosEnabled, GUILayout.Width(togglesWidth/2));
+                        if (newGizmosEnabled != gizmosEnabled) {
+                            channel.SetGizmosEnabled(newGizmosEnabled);
+                        }
+                    }
+                }
+            }
+
+            if (channelExpanded) {
                 s_ExpandedCount++;
-                
-                if (!s_StylesLoaded)
+
+                using (new EditorGUI.IndentLevelScope(1))
                 {
-                    LoadStyles();
-                }
-                
-                var style = _channelRowStyleInner;
-                if (currentChannel == 0)
-                {
-                    style = _channelRowStyleTop;
-                } 
-                else if (currentChannel == visibleChannelCount-1)
-                {
-                    style = _channelRowStyleBottom;
-                }
-                currentChannel++;
-                
-                using (new GUILayout.VerticalScope()) {
-                    bool channelExpanded = false;
-                    
-                    using (new GUILayout.HorizontalScope(style)) {
-
-                        IList<IChannel> children = channel.Children();
-                        if (children.Count > 0) {
-                            GUIStyle foldoutTextStyle = new GUIStyle(EditorStyles.foldout);
-                            {
-                                foldoutTextStyle.normal.textColor =
-                                foldoutTextStyle.onNormal.textColor = channel.GetColor();
-                            }
-
-                            if (!_channelExpandedSet.TryGetValue(channel.FullName(), out bool expanded)) {
-                                _channelExpandedSet.Add(channel.FullName(), false);
-                            }
-
-                            channelExpanded = EditorGUILayout.Foldout(expanded, channel.Name(), true, foldoutTextStyle);
-                            if (channelExpanded != expanded) {
-                                _channelExpandedSet[channel.FullName()] = channelExpanded;
-                            }
-                        } else {
-                            var foldoutTextStyle = new GUIStyle();
-                            foldoutTextStyle.normal.textColor = channel.GetColor();
-                            foldoutTextStyle.onNormal.textColor = channel.GetColor();
-                            foldoutTextStyle.contentOffset = new Vector2(20 * EditorGUI.indentLevel,0);
-                            GUILayout.Label(channel.Name(), foldoutTextStyle);
-                        }
-                        GUILayout.FlexibleSpace();
-
-                        const float disabledColorVal = 1f/255f;
-                        Color disabledTextColor = new Color(disabledColorVal, disabledColorVal,disabledColorVal);
-
-                        const float togglesWidth = 150f;
-                        using (new EditorGUI.IndentLevelScope(-EditorGUI.indentLevel))
-                        using (new GUILayout.HorizontalScope()) {
-
-                            var toggleTextStyle = new GUIStyle();
-                            var normalTextColor = toggleTextStyle.normal.textColor; 
-                            if (!channel.ParentLogEnabled()) {
-                                toggleTextStyle.normal.textColor =
-                                    toggleTextStyle.onNormal.textColor = disabledTextColor;
-                            }
-
-                            using (new EditorGUI.DisabledScope(!channel.ParentLogEnabled())) {
-                                bool logEnabled = channel.LocalLogEnabled();
-                                bool newLogEnabled = EditorGUILayout.ToggleLeft("Log", logEnabled, GUILayout.Width(togglesWidth/2));
-                                if (newLogEnabled != logEnabled) {
-                                    channel.SetLogEnabled(newLogEnabled);
-                                }
-                            }
-
-                            if (!channel.ParentGizmosEnabled()) {
-                                toggleTextStyle.normal.textColor =
-                                    toggleTextStyle.onNormal.textColor = disabledTextColor;
-                            } else {
-                                toggleTextStyle.normal.textColor
-                                    = toggleTextStyle.onNormal.textColor
-                                    = normalTextColor;
-                            }
-
-                            using (new EditorGUI.DisabledScope(!channel.ParentGizmosEnabled())) {
-                                bool gizmosEnabled = channel.LocalGizmosEnabled();
-                                bool newGizmosEnabled = EditorGUILayout.ToggleLeft("Gizmos", gizmosEnabled, GUILayout.Width(togglesWidth/2));
-                                if (newGizmosEnabled != gizmosEnabled) {
-                                    channel.SetGizmosEnabled(newGizmosEnabled);
-                                }
-                            }
-                        }
+                    foreach (IChannel child in channel.Children())
+                    {
+                        if (_showTestChannels || !s_TestChannels.Contains(child))
+                        {
+                            DrawChannel(child, visibleChannelCount, ref currentChannel);
+                        } 
                     }
-
-                    if (channelExpanded) {
-                        using (new EditorGUI.IndentLevelScope(1))
-                        using (new GUILayout.VerticalScope()) {
-                            foreach (IChannel child in channel.Children())
-                            {
-                                if (_showTestChannels || !s_TestChannels.Contains(child))
-                                {
-                                    DrawChannel(child);
-                                } 
-                            }
-                        }
-                    }
-                    
                 }
             }
         }
-
+        
+        #endregion Draw Channel
+        
+        //  ----------------------------------------------------------------------------------------
+        
+        #region Draw Graphs
+        
+        //  ----------------------------------------------------------------------------------------
+        
         private void DrawGraphs()
         {
             if (Event.current.type != EventType.Layout
@@ -517,9 +468,6 @@ namespace ZebugProject {
                 //  --- It doesn't have to be interactive... just layout and paint
                 return;
             }
-
-            DrawTestGraph();
-
 
             //  --- At some point will need to deal with points being added but never removed.
             //      Choose a mechanism for dealing with bloat.
@@ -532,83 +480,6 @@ namespace ZebugProject {
             DrawGraph(Zebug.Instance);
         }
 
-        private void DrawTestGraph()
-        {
-            GUILayout.Label("TestGraph");
-
-            GUILayout.Box("", //EditorStyles.helpBox,
-                GUILayout.Height(100),
-                GUILayout.ExpandWidth(true));
-
-            if (Event.current.type == EventType.Repaint)
-            {
-                var rect = GUILayoutUtility.GetLastRect();
-                List<(float, (float, float))> points = new ()
-                {
-                    (0, (0, 0)),
-                    (1, (1, 1)),
-                };
-                int pointCount = points.Count;
-
-                var testPoints = new Vector3[]
-                {
-                    new Vector3(rect.x, rect.y + rect.height +1, 1),
-                    new Vector3(rect.x + rect.width, rect.y +1, 1),
-                };
-
-                //
-                Handles.DrawAAPolyLine(
-                    Texture2D.whiteTexture,
-                    1f,
-                    testPoints
-                );
-
-                //GUI.BeginClip(rect);
-                Handles.color = Color.yellow;
-                float startTime = points[0].Item2.Item1;
-                float startFrame = points[0].Item2.Item2;
-
-                float endTime = points[pointCount-1].Item2.Item1;
-                float endFrame = points[pointCount-1].Item2.Item2;
-
-                float timeToRectScale = rect.width / Math.Max(endTime - startTime, 0.0001f);
-
-                float xOffset = rect.x;
-                float yOffset = rect.y;
-
-                float valueMin = 0;
-                float valueMax = 2;
-                float yMin = rect.y + rect.height;
-                float yMax = rect.y;
-                float yRange = rect.height;
-
-
-                var pointArray = new Vector3[pointCount];
-                for (var i = 0; i < pointCount; i++)
-                {
-                    var pointTime = points[i].Item2.Item1;
-                    var pointValue = points[i].Item1;
-
-                    var yT = (pointValue - valueMin) / (valueMax - valueMin);
-                    var yVal = (1f - yT)*yRange + yMax;
-
-                    pointArray[i] = new Vector3(
-                        xOffset + pointTime * timeToRectScale,
-                        yVal,
-                        0);
-                }
-
-                Handles.DrawAAPolyLine(
-                    Texture2D.whiteTexture,
-                    1f,
-                    pointArray
-                    );
-
-                //GUI.EndClip();
-            }
-
-        }
-
         private void DrawGraph(IChannel channel)
         {
             if (!channel.GizmosEnabled())
@@ -616,85 +487,21 @@ namespace ZebugProject {
                 return;
             }
 
-            if (!Zebug.s_ChannelGraphData.TryGetValue(channel, out GraphData graphData))
+            if (Zebug.s_ChannelGraphData.TryGetValue(channel, out GraphData graphData))
             {
-                foreach (IChannel child in channel.Children())
+                GUILayout.Label(channel.Name());
+
+                GUILayout.Box("", EditorStyles.helpBox,
+                    GUILayout.Height(100));
+
+                if (Event.current.type == EventType.Repaint)
                 {
-                    DrawGraph(child);
+                    var rect = GUILayoutUtility.GetLastRect();
+                    var color = channel.GetColor();
+
+                    DrawGraphPointsIntoRect(rect, graphData, color);
                 }
-                return;
             }
-
-            GUILayout.Label(channel.Name());
-
-            GUILayout.Box("", EditorStyles.helpBox,
-                GUILayout.Height(100));
-
-            if (Event.current.type == EventType.Repaint)
-            {
-                var rect = GUILayoutUtility.GetLastRect();
-                List<GraphData.Sample> points = graphData.points;
-                int pointCount = points.Count;
-                if (pointCount < 2)
-                {
-                    return;
-                }
-
-                //GUI.BeginClip(rect);
-                Handles.color = channel.GetColor();
-                var firstSample = graphData.First();
-                var lastSample = graphData.Last();
-
-                float startTime = firstSample.time;
-                float startFrame = firstSample.frame;
-
-                float endTime = lastSample.time;
-                float endFrame = lastSample.frame;
-
-                const float sixtyFpsFrameTimeThousandth = 0.001f / 60f;
-
-                float invTimeScale = 1f / Math.Max(endTime - startTime, sixtyFpsFrameTimeThousandth);
-
-                float xMin = rect.x;
-                float xRange = rect.width;
-
-                float valueMin = graphData.minValue;
-                float valueMax = graphData.maxValue;
-
-                float yMin = rect.y;
-                float yRange = rect.height;
-
-                float invValueScale = 1f / Math.Max(valueMax - valueMin, sixtyFpsFrameTimeThousandth);
-
-                var pointArray = new Vector3[pointCount];
-                for (var i = 0; i < pointCount; i++)
-                {
-                    var idx = (graphData.nextIdx + i) % graphData.maxPoints;
-                    GraphData.Sample sample = points[idx];
-
-                    float xT = (sample.time - startTime) * invTimeScale;
-                    float xVal = xT * xRange + xMin;
-
-                    var yT = (sample.value - valueMin) * invValueScale;
-                    var yVal = (1f - yT)*yRange + yMin;
-
-                    pointArray[i] = new Vector3(
-                        xVal,
-                        yVal,
-                        0);
-                }
-
-                Handles.DrawAAPolyLine(
-                    Texture2D.whiteTexture,
-                    1f,
-                    pointArray
-                    );
-
-                //GUI.EndClip();
-            }
-
-
-
 
             foreach (IChannel child in channel.Children())
             {
@@ -702,7 +509,145 @@ namespace ZebugProject {
             }
         }
 
+        private void DrawGraphPointsIntoRect(Rect rect, GraphData graphData, Color color)
+        {
+            List<GraphData.Sample> points = graphData.points;
+            
+            int pointCount = points.Count;
+            if (pointCount < 2)
+            {
+                return;
+            }
 
+            Handles.color = color;
+            var firstSample = graphData.First();
+            var lastSample = graphData.Last();
+
+            float startTime = firstSample.time;
+            float startFrame = firstSample.frame;
+
+            float endTime = lastSample.time;
+            float endFrame = lastSample.frame;
+
+            const float sixtyFpsFrameTimeThousandth = 0.001f / 60f;
+
+            float invTimeScale = 1f / Math.Max(endTime - startTime, sixtyFpsFrameTimeThousandth);
+
+            float xMin = rect.x;
+            float xRange = rect.width;
+
+            float valueMin = graphData.minValue;
+            float valueMax = graphData.maxValue;
+
+            float yMin = rect.y;
+            float yRange = rect.height;
+
+            float invValueScale = 1f / Math.Max(valueMax - valueMin, sixtyFpsFrameTimeThousandth);
+
+            var pointArray = new Vector3[pointCount];
+            for (var i = 0; i < pointCount; i++)
+            {
+                var idx = (graphData.nextIdx + i) % graphData.maxPoints;
+                GraphData.Sample sample = points[idx];
+
+                float xT = (sample.time - startTime) * invTimeScale;
+                float xVal = xT * xRange + xMin;
+
+                var yT = (sample.value - valueMin) * invValueScale;
+                var yVal = (1f - yT)*yRange + yMin;
+
+                pointArray[i] = new Vector3(
+                    xVal,
+                    yVal,
+                    0);
+            }
+
+            Handles.DrawAAPolyLine(
+                Texture2D.whiteTexture,
+                1f,
+                pointArray
+            );
+        }
+        
+        #endregion  Draw Graphs
+
+        //  ----------------------------------------------------------------------------------------
+
+        #region Advanced Options
+        
+        private void DrawAdvancedOptions()
+        {
+            using (new GUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                //  --- Clear unused ------------------------------------------
+                
+                using (new GUILayout.HorizontalScope())
+                {
+                    GUILayout.Label("Clear unused channel data");
+                    if (GUILayout.Button("Clear"))
+                    {
+
+                        ClearRedundantChannelData();
+                    }
+                }
+                
+                //  --- Show Test-only channels -------------------------------
+
+                using (new GUILayout.HorizontalScope())
+                {
+                    GUILayout.Label("Show test channels");
+                    
+                    _showTestChannels = PlayerPrefs.GetInt(kShowTestChannelsPref) > 0;
+                    bool newShowTestValue = GUILayout.Toggle(_showTestChannels, ""); 
+                    if (_showTestChannels != newShowTestValue)
+                    {
+                        _showTestChannels = newShowTestValue;
+                        PlayerPrefs.SetInt(kShowTestChannelsPref, newShowTestValue ? 1 : 0);
+                    }
+                }
+
+                //  --- iOS logging prefix ------------------------------------
+
+                using (new GUILayout.HorizontalScope())
+                {
+                    GUILayout.Label("Add an additional prefix on iOS?");
+                    bool oldValue = ZebugPreferences.Instance.UseAdditionalPrefixOnIos; 
+                    bool newValue = EditorGUILayout.Toggle("", oldValue);
+                    if (newValue != oldValue)
+                    {
+                        ZebugPreferences.Instance.UseAdditionalPrefixOnIos = newValue;
+                    }
+                }
+                
+                ///
+                /// iOS devices logging back into XCode have no formatting to facilitate
+                /// syntax highlighting, which makes the logs much harder to read. This
+                /// enables a dev to spoof a format like ADB logs (for example) in the case
+                /// that they want to look at the logs of an android device next to ones
+                /// that have been captured on an iOS device.   
+                /// 
+                
+                using (new GUILayout.HorizontalScope())
+                {
+                    GUILayout.Label("iOS additional prefix:");
+                    bool wasEnabled = GUI.enabled;
+                    GUI.enabled = ZebugPreferences.Instance.UseAdditionalPrefixOnIos;
+                    string oldPrefix = ZebugPreferences.Instance.AdditionalIosPrefix;
+                    string newPrefix = EditorGUILayout.DelayedTextField("",oldPrefix);
+                    if (newPrefix != oldPrefix)
+                    {
+                        ZebugPreferences.Instance.AdditionalIosPrefix = newPrefix;
+                    }
+                    GUI.enabled = wasEnabled;
+                }
+            }
+        }
+
+        // --- End Advanced Options -------------------------------------------------------------
+        
+        #endregion Advanced Options
+
+        
         private static void ClearRedundantChannelData()
         {
             HashSet<string> channels = new HashSet<string>();
