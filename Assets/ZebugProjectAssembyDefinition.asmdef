@@ -1,7 +1,9 @@
 {
     "name": "ZebugProjectAssembyDefinition",
+    "rootNamespace": "",
     "references": [
-        "GUID:08a0f0c6f0196474a80cdab5bce8ebd1"
+        "GUID:08a0f0c6f0196474a80cdab5bce8ebd1",
+        "GUID:75469ad4d38634e559750d17036d5f7c"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

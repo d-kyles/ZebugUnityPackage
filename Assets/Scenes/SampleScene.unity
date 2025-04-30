@@ -860,23 +860,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be76e5f14cfee674cb30b491fb72b09b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  boost: 3.5
+  boost: 2
   positionLerpTime: 0.2
   mouseSensitivityCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.5
-      inSlope: 0
-      outSlope: 5
+      value: 0.2240414
+      inSlope: 2.3582115
+      outSlope: 2.3582115
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
-      outWeight: 0
+      outWeight: 0.12696013
     - serializedVersion: 3
       time: 1
-      value: 2.5
+      value: 1.4827089
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -888,6 +888,97 @@ MonoBehaviour:
     m_RotationOrder: 4
   rotationLerpTime: 0.01
   invertY: 0
+  _moveXzAxesProp:
+    m_UseReference: 1
+    m_Action:
+      m_Name: Move Xz Axes Prop
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: ce81847e-ab9e-41af-beae-281be6c6eb40
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: -1680190386980627800, guid: 170b7460155954c8084451540383660b,
+      type: 3}
+  _moveYAxisProp:
+    m_UseReference: 1
+    m_Action:
+      m_Name: Move Y Axis Prop
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 849f6ee2-9d81-411e-adb8-99d36bc9d804
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: -7253064439302431217, guid: 170b7460155954c8084451540383660b,
+      type: 3}
+  _boostProp:
+    m_UseReference: 1
+    m_Action:
+      m_Name: Boost Prop
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 1e9e457d-f02d-45b0-91da-bc072e9ee39a
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: -7471211009204490832, guid: 170b7460155954c8084451540383660b,
+      type: 3}
+  _rotateWhilePressedProp:
+    m_UseReference: 1
+    m_Action:
+      m_Name: Rotate While Pressed Prop
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 17e88556-de54-479f-a474-abfba7a0d870
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: -4090225696740746782, guid: 170b7460155954c8084451540383660b,
+      type: 3}
+  _rotateAxisProp:
+    m_UseReference: 1
+    m_Action:
+      m_Name: Rotate Axis Prop
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 00d65b17-a207-457b-bd54-5c6abde8bc21
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: -5630151704836100654, guid: 170b7460155954c8084451540383660b,
+      type: 3}
+  _quitProp:
+    m_UseReference: 1
+    m_Action:
+      m_Name: Quit Prop
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: d35216cf-ffea-4e3c-80ac-656e9d8c2fea
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 8041381384418036683, guid: 170b7460155954c8084451540383660b,
+      type: 3}
+  _boostMoifierAxisProp:
+    m_UseReference: 1
+    m_Action:
+      m_Name: Boost Moifier Axis Prop
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 524a47d5-5658-4bf3-9cf8-f70f02c4bbff
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 6240969308177333660, guid: 170b7460155954c8084451540383660b,
+      type: 3}
 --- !u!20 &1687258584
 Camera:
   m_ObjectHideFlags: 0

@@ -1,7 +1,7 @@
 Zebug
 ========
 
-MIT open source Unity debug library.
+MIT open source Unity debug helper library.
 
 1. [Usage](#Usage)
 1. [Installation](#Installation)

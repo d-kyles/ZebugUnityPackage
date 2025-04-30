@@ -17,13 +17,9 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //  ------------------------------------------------------------------------------------------------
 
-#if ENABLE_INPUT_SYSTEM && ENABLE_INPUT_SYSTEM_PACKAGE
-#define USE_INPUT_SYSTEM
-    using UnityEngine.InputSystem;
-    using UnityEngine.InputSystem.Controls;
-#endif
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 
-using UnityEditor;
 using UnityEngine;
 
 namespace UnityTemplateProjects {
@@ -87,73 +83,104 @@ namespace UnityTemplateProjects {
         [Tooltip("Whether or not to invert our Y axis for mouse input to rotation.")]
         public bool invertY;
 
-        private Vector3 _externalDir;
-
+        [SerializeField] private InputActionProperty _moveXzAxesProp;
+        [SerializeField] private InputActionProperty _moveYAxisProp;
+        [SerializeField] private InputActionProperty _boostProp;
+        [SerializeField] private InputActionProperty _rotateWhilePressedProp;
+        [SerializeField] private InputActionProperty _rotateAxisProp;
+        [SerializeField] private InputActionProperty _quitProp;
+        [SerializeField] private InputActionProperty _boostMoifierAxisProp;
+        
+        
+        
+        private InputAction _moveXzAxes;
+        private InputAction _moveYAxis;
+        private InputAction _boost;
+        private InputAction _rotateWhilePressed;
+        private InputAction _rotateAxis;
+        private InputAction _quit;
+        private InputAction _boostModifierAxis;
+        
+        
+        public static bool EnableAndGetAction(InputActionProperty prop, out InputAction action)
+        {
+            action = null;
+        
+            if (prop.action != null)
+            {
+                prop.action.Enable();
+                action = prop.action;
+                return true;
+            }
+            else if (prop.reference != null)
+            {
+                prop.reference.asset.Enable();
+                prop.reference.action.Enable();
+                action = prop.reference.action;
+                return true;
+            }
+            return false;
+        }
+        
         private void OnEnable() {
             m_TargetCameraState.SetFromTransform(transform);
             m_InterpolatingCameraState.SetFromTransform(transform);
+            
+            EnableAndGetAction(_moveXzAxesProp,         out _moveXzAxes);
+            EnableAndGetAction(_moveYAxisProp,          out _moveYAxis);
+            EnableAndGetAction(_boostProp,              out _boost);
+            EnableAndGetAction(_rotateWhilePressedProp, out _rotateWhilePressed);
+            EnableAndGetAction(_rotateAxisProp,         out _rotateAxis);
+            EnableAndGetAction(_quitProp,               out _quit);
+            EnableAndGetAction(_boostMoifierAxisProp,   out _boostModifierAxis);
         }
 
         private Vector3 GetInputTranslationDirection() {
             Vector3 direction = new Vector3();
-            if (Input.GetKey(KeyCode.W)) {
-                direction += Vector3.forward;
+
+            if (_moveXzAxes.IsPressed()){
+                var delta = _moveXzAxes.ReadValue<Vector2>();
+                direction += new Vector3(delta.x, 0, delta.y);
             }
 
-            if (Input.GetKey(KeyCode.S)) {
-                direction += Vector3.back;
+            if (_moveYAxis.IsPressed())
+            {
+                direction += Vector3.up * _moveYAxis.ReadValue<float>();
             }
 
-            if (Input.GetKey(KeyCode.A)) {
-                direction += Vector3.left;
-            }
-
-            if (Input.GetKey(KeyCode.D)) {
-                direction += Vector3.right;
-            }
-
-            if (Input.GetKey(KeyCode.Q)) {
-                direction += Vector3.down;
-            }
-
-            if (Input.GetKey(KeyCode.E)) {
-                direction += Vector3.up;
-            }
-
-            direction += _externalDir;
-            _externalDir = default;
-            
             return direction;
         }
 
         private void Update() {
             Vector3 translation = Vector3.zero;
 
-#if ENABLE_LEGACY_INPUT_MANAGER
-
             // Exit Sample
-            if (Input.GetKey(KeyCode.Escape)) {
-                Application.Quit();
+            if (_quit.WasPerformedThisFrame()) {
 #if UNITY_EDITOR
-                EditorApplication.isPlaying = false;
+                UnityEditor.EditorApplication.isPlaying = false;
 #endif
             }
 
             // Hide and lock cursor when right mouse button pressed
-            if (Input.GetMouseButtonDown(1)) {
+            if (_rotateWhilePressed.WasPressedThisFrame()) {
                 Cursor.lockState = CursorLockMode.Locked;
             }
 
             // Unlock and show cursor when right mouse button released
-            if (Input.GetMouseButtonUp(1)) {
+            if (_rotateWhilePressed.WasPressedThisFrame()) {
                 Cursor.visible = true;
                 Cursor.lockState = CursorLockMode.None;
             }
 
             // Rotation
-            if (Input.GetMouseButton(1)) {
-                Vector2 mouseMovement = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y")*(invertY ? 1 : -1));
-
+            if (_rotateWhilePressed.IsPressed()) {
+                Vector2 mouseMovement = _rotateAxis.ReadValue<Vector2>();
+                
+                if (!invertY)
+                {
+                    mouseMovement.y = -mouseMovement.y;
+                }
+                
                 float mouseSensitivityFactor = mouseSensitivityCurve.Evaluate(mouseMovement.magnitude);
 
                 m_TargetCameraState.yaw += mouseMovement.x*mouseSensitivityFactor;
@@ -164,17 +191,22 @@ namespace UnityTemplateProjects {
             translation = GetInputTranslationDirection()*Time.deltaTime;
 
             // Speed up movement when shift key held
-            if (Input.GetKey(KeyCode.LeftShift)) {
+            if (_boost.IsPressed()) {
                 translation *= 10.0f;
             }
 
             // Modify movement by a boost factor (defined in Inspector and modified in play mode through the mouse scroll wheel)
-            boost += Input.mouseScrollDelta.y*0.2f;
+            float mouseBoostModifer = _boostModifierAxis.ReadValue<Vector2>().y*0.025f;
+            
+            if (mouseBoostModifer != 0)
+            {
+                Debug.Log("Mouse boost modifier: " + mouseBoostModifer);
+                boost += mouseBoostModifer;
+            }
+            
+            boost = Mathf.Clamp(boost, 0.25f, 4.0f);
+            
             translation *= Mathf.Pow(2.0f, boost);
-
-#elif USE_INPUT_SYSTEM
-            // TODO: make the new input system work
-#endif
 
             m_TargetCameraState.Translate(translation);
 
@@ -185,26 +217,6 @@ namespace UnityTemplateProjects {
             m_InterpolatingCameraState.LerpTowards(m_TargetCameraState, positionLerpPct, rotationLerpPct);
 
             m_InterpolatingCameraState.UpdateTransform(transform);
-        }
-
-        public void Forward()
-        {
-            _externalDir += Vector3.forward;
-        }
-
-        public void Left()
-        {
-            _externalDir += Vector3.left;
-        }
-
-        public void Back()
-        {
-            _externalDir += Vector3.back;
-        }
-
-        public void Right()
-        {
-            _externalDir += Vector3.right;
         }
     }
 }
