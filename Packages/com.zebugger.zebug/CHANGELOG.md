@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 * **WIP** in-zebug window graph.
     * E.G. `Zebug.GraphValue(Mathf.Sin(Time.time))`  
 
+### Removed
+* Removed preprocessor list functionality, wasn't really used.
+
 ### Fix
 * Removed spurious profiling markers
 
