@@ -532,12 +532,65 @@ namespace ZebugProject {
                 
                 GUILayout.Box(cache.channelNameContent, _graphStyle);
 
+                var currentEventType = Event.current.type;
+                
+                Rect graphRect = default;
+                
+                if (currentEventType == EventType.Repaint ||
+                    currentEventType == EventType.MouseMove)
+                {
+                    graphRect = GUILayoutUtility.GetLastRect();
+                
+                    // If the mouse cursor is inside our Unity IMGUI rect
+                    var mousePos = Event.current.mousePosition;
+                    if (graphRect.Contains(mousePos) && graphData.points.Count > 1)
+                    {
+                        Zebug.RaiseEditorRepaint();
+                        
+                        float mouseXT = (mousePos.x - graphRect.x) / graphRect.width;
+                        float mouseYT = (mousePos.y - graphRect.y) / graphRect.height;
+                        
+                        float firstTime = graphData.First().time;
+                        float lastTime = graphData.Last().time;
+                        float minValue = graphData.minValue;
+                        float maxValue = graphData.maxValue;
+                        
+                        float mouseXTime = mouseXT * (lastTime - firstTime) + firstTime;
+                        float mouseYValue = (1f - mouseYT) * (maxValue - minValue) + minValue;
+                        
+                        Vector2 mousePosSampleSpace = new Vector2(mouseXTime, mouseYValue);
+                        
+                        var closest = default(GraphData.Sample);
+                        float closestDistance = float.MaxValue;
+                        
+                        foreach (var sample in graphData.points)
+                        {
+                            Vector2 samplePos = new Vector2(sample.time, sample.value);
+                            float distance = Vector2.Distance(mousePosSampleSpace, samplePos);
+                            if (distance < closestDistance)
+                            {
+                                closestDistance = distance;
+                                closest = sample;
+                            }
+                        }
+                        
+                        if (closestDistance < 0.1f)
+                        {
+                            Handles.Label(mousePos, 
+                                $"Time: {closest.time:F2}\n" +
+                                $"Value: {closest.value:F2}\n" +
+                                $"Frame: {closest.frame}",
+                                EditorStyles.miniLabel);
+                        }
+                    }
+                }
+                
                 if (Event.current.type == EventType.Repaint)
                 {
-                    var rect = GUILayoutUtility.GetLastRect();
+                    
                     var color = channel.GetColor();
 
-                    DrawGraphPointsIntoRect(rect, graphData, color);
+                    DrawGraphPointsIntoRect(graphRect, graphData, color);
                 }
             }
 
