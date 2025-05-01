@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Improved
 * Refactored main editor window code 
+* Perf: Removed some unnecessary allocations. But many remain... IMGUI doesn't care :(.
 
 ## [0.9.0] - 2025-04-14
 

@@ -77,14 +77,13 @@ namespace ZebugProject {
         }
 
         private static HashSet<IChannel> s_TestChannels = new();
-        private static Dictionary<IChannel, ChannelCacheData> s_ChannelCacheData = new();
+        
+        private Dictionary<IChannel, ChannelCacheData> _channelCacheData = new();
         
         private class ChannelCacheData
         {
             public GUIStyle togglesLineStyle;
-            public GUIContent labelContent;
-            public GUIContent logLabelContent;
-            public GUIContent gizmosLabelContent;
+            public GUIContent channelNameContent;
             public GUILayoutOption[] toggleWidthOptions;
             public Rect logLabelRect;
             public Rect gizmoLabelRect;
@@ -98,7 +97,8 @@ namespace ZebugProject {
         private Vector2 _scrollPosition;
         
         private const string kShowTestChannelsPref = "ZebugShowTestChannels";
-        
+        private const float channelLineHeight = 23f;
+
         private bool _advOptionsExpanded;
         private bool _graphsExpanded;
         private bool _windowVarsExpanded;
@@ -106,6 +106,21 @@ namespace ZebugProject {
         private bool _showTestChannels;
         
         private bool s_StylesLoaded;
+        private GUIStyle _graphStyle;
+        private GUILayoutOption[] _graphLayoutOptions;
+        
+        private GUIContent _channelsTxt;
+        private GUIContent _channelsDefaultTxtContent;
+        private GUIContent _graphsLabelTxtContent;
+        private GUIContent _advOptionsLabelTxtContent;
+        private GUIContent _windowVarsLabelTxtContent;
+        private GUIContent _logLabelTxtContent;
+        private GUIContent _gizmosLabelTxtContent;
+        private GUIContent _clearUnusedTxtContent;
+        private GUIContent _clearTextContent;
+        private GUIContent _showTestChannelsTxtContent;
+        private GUIContent _iosTogglePrefixLabelTxtContent;
+        private GUIContent _iosPrefixLabelTxtContent;
 
         protected void OnEnable() {
 
@@ -193,6 +208,22 @@ namespace ZebugProject {
                 Texture2D backgroundTextureBottom = Resources.Load<Texture2D>("ZebugBackgroundBox_Bottom");
                 _channelRowStyleBottom.normal.background = backgroundTextureBottom;
 
+                _graphStyle = new GUIStyle(EditorStyles.helpBox);
+                _graphStyle.fixedHeight = 100f;
+                _graphStyle.alignment = TextAnchor.UpperLeft;
+                
+                _channelsTxt = new GUIContent("Channels");
+                _channelsDefaultTxtContent = new GUIContent("New channels enabled by default?");
+                _graphsLabelTxtContent = new GUIContent("Graphs");
+                _advOptionsLabelTxtContent = new GUIContent("Advanced Options");
+                _windowVarsLabelTxtContent = new GUIContent("Variables");
+                _logLabelTxtContent = new GUIContent("Log");
+                _gizmosLabelTxtContent = new GUIContent("Gizmos");
+                _clearUnusedTxtContent = new GUIContent("Clear unused channel data");
+                _clearTextContent = new GUIContent("Clear");
+                _showTestChannelsTxtContent = new GUIContent("Show test channels");
+                _iosTogglePrefixLabelTxtContent = new GUIContent("Add an additional prefix on iOS?");
+                _iosPrefixLabelTxtContent = new GUIContent("iOS log prefix:");
                 
                 s_StylesLoaded = _channelRowStyleTop != null;
             } 
@@ -239,7 +270,7 @@ namespace ZebugProject {
             
             //  --- Channel Toggle List ---------------------------------------
             
-            GUILayout.Label("Channels", EditorStyles.largeLabel);
+            GUILayout.Label(_channelsTxt, EditorStyles.largeLabel);
             
             DrawChannel(Zebug.Instance, visibleChannelCount, ref currentChannel);
             GUI.backgroundColor = oldColor;
@@ -250,10 +281,10 @@ namespace ZebugProject {
             
             using (new GUILayout.HorizontalScope())
             {
-                GUILayout.Label("New channels enabled by default?");
+                GUILayout.Label(_channelsDefaultTxtContent);
                     
                 bool oldValue = ZebugPreferences.Instance.ChannelsEnabledByDefault; 
-                bool newValue = EditorGUILayout.Toggle("", oldValue);
+                bool newValue = EditorGUILayout.Toggle(GUIContent.none, oldValue);
                 if (newValue != oldValue)
                 {
                     ZebugPreferences.Instance.ChannelsEnabledByDefault = newValue;
@@ -265,7 +296,7 @@ namespace ZebugProject {
             ZebugGUIStyles.Line();
 
             _graphsExpanded = EditorGUILayout.Foldout( _graphsExpanded
-                                                     , "Graphs"
+                                                     , _graphsLabelTxtContent
                                                      , toggleOnLabelClick: true);
             if (_graphsExpanded)
             {
@@ -278,7 +309,7 @@ namespace ZebugProject {
             ZebugGUIStyles.Line();
                         
             _advOptionsExpanded = EditorGUILayout.Foldout(_advOptionsExpanded
-                                                         , "Advanced Options"
+                                                         , _advOptionsLabelTxtContent
                                                          , toggleOnLabelClick: true);
             if (_advOptionsExpanded)
             {
@@ -286,7 +317,7 @@ namespace ZebugProject {
             }
             
             _windowVarsExpanded = EditorGUILayout.Foldout(_windowVarsExpanded
-                                                         , "Variables"
+                                                         , _windowVarsLabelTxtContent
                                                          , toggleOnLabelClick: true);
             if (_windowVarsExpanded) {
                 DrawWindowVars();
@@ -307,14 +338,8 @@ namespace ZebugProject {
             
             string channelName = channel.Name();
             string channelPath = channel.FullName();
-            IList<IChannel> children = channel.Children();
+            List<IChannel> children = channel.Children();
             bool isFoldoutLine = children.Count > 0;
-            
-            const float togglesWidth = 150f;
-            const float channelLineHeight = 23f;
-            const int indentPaddingSize = 16;
-            
-            Color color = channel.GetColor();
             
             if (!s_StylesLoaded)
             {
@@ -337,34 +362,7 @@ namespace ZebugProject {
             
             using (new GUILayout.HorizontalScope(style)) {
 
-                if (!s_ChannelCacheData.TryGetValue(channel, out ChannelCacheData cache))
-                {
-                    cache = new ChannelCacheData();
-                    
-                    if (isFoldoutLine) {
-                        cache.togglesLineStyle = new GUIStyle(EditorStyles.foldout);
-                    } else {
-                        cache.togglesLineStyle = new GUIStyle();
-                        cache.togglesLineStyle.padding = new RectOffset(indentPaddingSize * EditorGUI.indentLevel, 0, 0, 0);
-                        cache.togglesLineStyle.fontSize = 12;
-                        cache.togglesLineStyle.alignment = TextAnchor.MiddleLeft;
-                        cache.togglesLineStyle.fixedHeight = channelLineHeight - 5;
-                    }
-                    cache.togglesLineStyle.normal.textColor = color;
-                    cache.togglesLineStyle.onNormal.textColor = color;
-                    cache.togglesLineStyle.focused.textColor = color;
-                    cache.togglesLineStyle.onFocused.textColor = color;
-                    
-                    cache.labelContent = new GUIContent(channelName);
-                    
-                    cache.logLabelContent = new GUIContent("Log");
-                    cache.gizmosLabelContent = new GUIContent("Gizmos");
-                    
-                    cache.toggleWidthOptions = new GUILayoutOption[1];
-                    cache.toggleWidthOptions[0] = GUILayout.Width(togglesWidth/2);
-                    
-                    s_ChannelCacheData.Add(channel, cache);
-                }
+                CachedChannelData(channel, out ChannelCacheData cache);
                 
                 if (isFoldoutLine) {
                    
@@ -377,7 +375,7 @@ namespace ZebugProject {
                     _channelExpandedSet[channelPath] = channelExpanded;
                     
                 } else {
-                    GUILayout.Label(cache.labelContent, cache.togglesLineStyle);
+                    GUILayout.Label(cache.channelNameContent, cache.togglesLineStyle);
                 }
                 
                 if (currentChannel == 0)
@@ -396,16 +394,16 @@ namespace ZebugProject {
                         //                 passing the rect position that we want.
                         if (currentChannel == 0)
                         {
-                            newLogEnabled = EditorGUILayout.ToggleLeft(cache.logLabelContent,
+                            newLogEnabled = EditorGUILayout.ToggleLeft(_logLabelTxtContent,
                                                                         logEnabled,
                                                                         cache.toggleWidthOptions);
                             cache.logLabelRect = GUILayoutUtility.GetLastRect();
                         }
                         else
                         {
-                            var rect = s_ChannelCacheData[Zebug.Instance].logLabelRect;
+                            var rect = _channelCacheData[Zebug.Instance].logLabelRect;
                             rect.y += channelLineHeight * currentChannel;
-                            newLogEnabled = GUI.Toggle(rect, logEnabled, cache.logLabelContent);
+                            newLogEnabled = GUI.Toggle(rect, logEnabled, _logLabelTxtContent);
                         }
                         
                         if (newLogEnabled != logEnabled) {
@@ -419,16 +417,16 @@ namespace ZebugProject {
                         bool newGizmosEnabled = false;
                         if (currentChannel == 0)
                         {
-                            newGizmosEnabled = EditorGUILayout.ToggleLeft(cache.gizmosLabelContent,
+                            newGizmosEnabled = EditorGUILayout.ToggleLeft(_gizmosLabelTxtContent,
                                                                           gizmosEnabled,
                                                                           cache.toggleWidthOptions);
                             cache.gizmoLabelRect = GUILayoutUtility.GetLastRect();
                         }
                         else
                         {
-                            var rect = s_ChannelCacheData[Zebug.Instance].gizmoLabelRect;
+                            var rect = _channelCacheData[Zebug.Instance].gizmoLabelRect;
                             rect.y += channelLineHeight * currentChannel;
-                            newGizmosEnabled = GUI.Toggle(rect, gizmosEnabled, cache.gizmosLabelContent);
+                            newGizmosEnabled = GUI.Toggle(rect, gizmosEnabled, _gizmosLabelTxtContent);
                         }
                         
                         if (newGizmosEnabled != gizmosEnabled) {
@@ -454,7 +452,44 @@ namespace ZebugProject {
                 }
             }
         }
-        
+
+        private void CachedChannelData(IChannel channel, out ChannelCacheData cache)
+        {
+            const float togglesWidth = 150f;
+            const int indentPaddingSize = 16;
+            
+            _channelCacheData.TryGetValue(channel, out cache);
+            if (cache == null)
+            {
+                cache = new ChannelCacheData();
+                
+                var color = channel.GetColor();
+                var channelName = channel.Name();
+                bool isFoldoutLine = channel.Children().Count > 0;
+                
+                if (isFoldoutLine) {
+                    cache.togglesLineStyle = new GUIStyle(EditorStyles.foldout);
+                } else {
+                    cache.togglesLineStyle = new GUIStyle();
+                    cache.togglesLineStyle.padding = new RectOffset(indentPaddingSize * EditorGUI.indentLevel, 0, 0, 0);
+                    cache.togglesLineStyle.fontSize = 12;
+                    cache.togglesLineStyle.alignment = TextAnchor.MiddleLeft;
+                    cache.togglesLineStyle.fixedHeight = channelLineHeight - 5;
+                }
+                cache.togglesLineStyle.normal.textColor = color;
+                cache.togglesLineStyle.onNormal.textColor = color;
+                cache.togglesLineStyle.focused.textColor = color;
+                cache.togglesLineStyle.onFocused.textColor = color;
+                
+                cache.channelNameContent = new GUIContent(channelName);
+                
+                cache.toggleWidthOptions = new GUILayoutOption[1];
+                cache.toggleWidthOptions[0] = GUILayout.Width(togglesWidth/2);
+                
+                _channelCacheData[channel] = cache;
+            }
+        }
+
         #endregion Draw Channel
         
         //  ----------------------------------------------------------------------------------------
@@ -485,10 +520,12 @@ namespace ZebugProject {
 
             if (Zebug.s_ChannelGraphData.TryGetValue(channel, out GraphData graphData))
             {
-                GUILayout.Label(channel.Name());
-
-                GUILayout.Box("", EditorStyles.helpBox,
-                    GUILayout.Height(100));
+                //GUILayout.Label();
+                //GUILayout.Box(channel.Name(), _graphStyle);
+                
+                CachedChannelData(channel, out ChannelCacheData cache);
+                
+                GUILayout.Box(cache.channelNameContent, _graphStyle);
 
                 if (Event.current.type == EventType.Repaint)
                 {
@@ -540,7 +577,10 @@ namespace ZebugProject {
 
             float invValueScale = 1f / Math.Max(valueMax - valueMin, sixtyFpsFrameTimeThousandth);
 
-            var pointArray = new Vector3[pointCount];
+            var pooledArray = ArrayPool<Vector3>.CheckOut(pointCount);
+            
+            //var pointArray = new Vector3[pointCount];
+            
             for (var i = 0; i < pointCount; i++)
             {
                 var idx = (graphData.nextIdx + i) % graphData.maxPoints;
@@ -552,17 +592,17 @@ namespace ZebugProject {
                 var yT = (sample.value - valueMin) * invValueScale;
                 var yVal = (1f - yT)*yRange + yMin;
 
-                pointArray[i] = new Vector3(
+                pooledArray[i] = new Vector3(
                     xVal,
                     yVal,
                     0);
             }
 
-            Handles.DrawAAPolyLine(
-                Texture2D.whiteTexture,
-                1f,
-                pointArray
-            );
+            //  --- When not specifying a texture, this is about the same as 1px... not sure why
+            const float lineWidth = 2.5f;
+            
+            Handles.DrawAAPolyLine(lineWidth, pointCount, pooledArray);
+            ArrayPool<Vector3>.Return(pooledArray);
         }
         
         #endregion  Draw Graphs
@@ -579,8 +619,8 @@ namespace ZebugProject {
                 
                 using (new GUILayout.HorizontalScope())
                 {
-                    GUILayout.Label("Clear unused channel data");
-                    if (GUILayout.Button("Clear"))
+                    GUILayout.Label(_clearUnusedTxtContent);
+                    if (GUILayout.Button(_clearTextContent))
                     {
 
                         ClearRedundantChannelData();
@@ -591,10 +631,10 @@ namespace ZebugProject {
 
                 using (new GUILayout.HorizontalScope())
                 {
-                    GUILayout.Label("Show test channels");
+                    GUILayout.Label(_showTestChannelsTxtContent);
                     
                     _showTestChannels = PlayerPrefs.GetInt(kShowTestChannelsPref) > 0;
-                    bool newShowTestValue = GUILayout.Toggle(_showTestChannels, ""); 
+                    bool newShowTestValue = GUILayout.Toggle(_showTestChannels, GUIContent.none); 
                     if (_showTestChannels != newShowTestValue)
                     {
                         _showTestChannels = newShowTestValue;
@@ -606,9 +646,10 @@ namespace ZebugProject {
 
                 using (new GUILayout.HorizontalScope())
                 {
-                    GUILayout.Label("Add an additional prefix on iOS?");
+                    // GUILayout.Label(_iosTogglePrefixLabelTxtContent);
+                    
                     bool oldValue = ZebugPreferences.Instance.UseAdditionalPrefixOnIos; 
-                    bool newValue = EditorGUILayout.Toggle("", oldValue);
+                    bool newValue = EditorGUILayout.Toggle(_iosTogglePrefixLabelTxtContent, oldValue);
                     if (newValue != oldValue)
                     {
                         ZebugPreferences.Instance.UseAdditionalPrefixOnIos = newValue;
@@ -625,11 +666,10 @@ namespace ZebugProject {
                 
                 using (new GUILayout.HorizontalScope())
                 {
-                    GUILayout.Label("iOS additional prefix:");
                     bool wasEnabled = GUI.enabled;
                     GUI.enabled = ZebugPreferences.Instance.UseAdditionalPrefixOnIos;
                     string oldPrefix = ZebugPreferences.Instance.AdditionalIosPrefix;
-                    string newPrefix = EditorGUILayout.DelayedTextField("",oldPrefix);
+                    string newPrefix = EditorGUILayout.DelayedTextField(_iosPrefixLabelTxtContent, oldPrefix);
                     if (newPrefix != oldPrefix)
                     {
                         ZebugPreferences.Instance.AdditionalIosPrefix = newPrefix;
@@ -651,11 +691,12 @@ namespace ZebugProject {
         {
             using (new GUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                GUILayout.Label("Variables");
-
                 foreach (var (channel, variables) in Zebug.s_ChannelWindowVariables)
                 {
-                    GUILayout.Label(channel.Name());
+                    CachedChannelData(channel, out ChannelCacheData cache);
+                    
+                    GUILayout.Label(cache.channelNameContent);
+                    
                     using (new GUILayout.VerticalScope(EditorStyles.helpBox))
                     {
                         foreach (var (key, value) in variables)
@@ -679,10 +720,9 @@ namespace ZebugProject {
             static void AddChannels(IChannel channel, HashSet<string> list)
             {
                 list.Add(channel.FullName());
-                IList<IChannel> children = channel.Children();
-                for (int idx = 0; idx < children.Count; idx++)
+                foreach (var child in channel.Children())
                 {
-                    AddChannels(children[idx], list);
+                    AddChannels(child, list);
                 }
             }
 
@@ -744,6 +784,61 @@ namespace ZebugProject {
             GUI.color = oldColor;
         }
         
+    }
+    
+    public static class ArrayPool<T> where T: struct
+    {
+        private static List<T[]> s_Pool = new();
+
+        public static T[] CheckOut(int minLength)
+        {
+            const int minArraySize = 4;
+            
+            if (minLength < minArraySize)
+            {
+                minLength = minArraySize;
+            }
+            
+            int tooLong = minLength * 3;
+            
+            var foundItem = default(T[]);
+            var foundIdx = -1;
+            
+            for (var idx = 0; idx < s_Pool.Count; idx++)
+            {
+                var item = s_Pool[idx];
+                if (item.Length >= minLength && item.Length < tooLong)
+                {
+                    foundItem = item;
+                    foundIdx = idx;
+                    break;
+                }
+            }
+
+            if (foundIdx > 0)
+            {
+                // swap with last element, so that removal is cheap
+                int count = s_Pool.Count -1;
+                s_Pool[foundIdx] = s_Pool[count];
+                s_Pool.RemoveAt(count);
+                
+                return foundItem;
+            }
+            else
+            {
+                if (minLength > minArraySize)
+                {
+                    minLength = Mathf.NextPowerOfTwo(minLength);
+                }
+                
+                return new T[minLength];
+            }
+        }
+
+        public static void Return(T[] pooledArray)
+        {
+            s_Pool.Add(pooledArray);
+        }
     }
     
     

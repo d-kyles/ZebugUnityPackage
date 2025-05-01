@@ -88,7 +88,7 @@ namespace ZebugProject
         int Depth();
 
         //  --- should really be pseudo non-public
-        IList<IChannel> Children();
+        List<IChannel> Children();
         void AddChild(IChannel channel);
         event Action<bool> OnLocalLogEnabled;
         event Action<bool> OnLocalGizmosEnabled;
@@ -147,7 +147,7 @@ namespace ZebugProject
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IList<IChannel> Children()
+        public List<IChannel> Children()
         {
             return m_Children;
         }
