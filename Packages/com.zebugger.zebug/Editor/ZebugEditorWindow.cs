@@ -90,6 +90,8 @@ namespace ZebugProject {
         }
         
         private static int s_ExpandedCount;
+        private bool _realtimeElementVisible;
+        
         private GUIStyle _channelRowStyleTop;
         private GUIStyle _channelRowStyleInner;
         private GUIStyle _channelRowStyleBottom;
@@ -246,7 +248,10 @@ namespace ZebugProject {
         
         private void OnEditorNeedsRepaint()
         {
-            Repaint();
+            if (_realtimeElementVisible)
+            {
+                Repaint();
+            }
         }
         
         //  ----------------------------------------------------------------------------------------
@@ -261,6 +266,7 @@ namespace ZebugProject {
             
             _scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
 
+            _realtimeElementVisible = false;
             int currentChannel = 0;
             int visibleChannelCount = s_ExpandedCount;
             
@@ -520,8 +526,7 @@ namespace ZebugProject {
 
             if (Zebug.s_ChannelGraphData.TryGetValue(channel, out GraphData graphData))
             {
-                //GUILayout.Label();
-                //GUILayout.Box(channel.Name(), _graphStyle);
+                _realtimeElementVisible = true;
                 
                 CachedChannelData(channel, out ChannelCacheData cache);
                 
@@ -701,6 +706,7 @@ namespace ZebugProject {
                     {
                         foreach (var (key, value) in variables)
                         {
+                            _realtimeElementVisible = true;
                             GUILayout.Label($"{key}: {value}");
                         }
                     }
