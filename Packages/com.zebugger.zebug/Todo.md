@@ -1,6 +1,5 @@
-﻿# Todo
-
--------------------------------------------------------------------------------------
+﻿Todo
+======================================================
 
 ## Ideas
 
@@ -25,11 +24,11 @@
    * Make these render at edit-time too, if the ZebugGizmo component exists.
 
 3) ZebugGraph:
-    * consider using closures to store the cached channel, that way you can avoid editor only fields and preprocessor directives cluttering up the filespace
+    * Currently graph-per-channel.
+      * Consider multipe graphs per channel?
+      * Might just be easier to simplify channel creation syntax.
     * "Triggering" for graphs? Stop when it gets to a value (etc?)
     * Collapse channels between trigger values? (compare all graphs at time dt, based on channel X exceeding value)
-    * The api for the underlying UI for ShaderGraph etc should be publicly available by now. (maybe experimental still?)
-        * yup, still experimental even as of 2021.2 UnityEditor.Experimental.GraphView. Good grief.
 
     ```C#
     Zebug.GraphValue("Graph Name", currentDt);
@@ -88,7 +87,7 @@ Channel name is Method.DeclaringType.name if IsSubclassOf(MonoBehaviour)
 * if logFrameNumbers: <color={0}>{1}</color> 〚{2}〛: 
 * channel calls static formatmessage with static stringbuilder
 * Dictionary<MethodBase, HashSet<ILOffset>> assertOnceLocations
-* [DebuggerStepThrough] [DebuggerNonUserCode] annotations
+* `[DebuggerStepThrough]` `[DebuggerNonUserCode]` annotations
 * Make sure the public API is sane and appropriately limited.
 * DebugAssert in ARFoundations is interesting, it uses DebugAssert.That(...)?.Message($"{expensive}")
   to avoid the GC in string interpolation in cases where your assert won't fire. Works nicely with aggressive

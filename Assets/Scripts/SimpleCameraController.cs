@@ -200,7 +200,6 @@ namespace UnityTemplateProjects {
             
             if (mouseBoostModifer != 0)
             {
-                Debug.Log("Mouse boost modifier: " + mouseBoostModifer);
                 boost += mouseBoostModifer;
             }
             

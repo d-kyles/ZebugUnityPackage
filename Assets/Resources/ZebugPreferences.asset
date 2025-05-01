@@ -24,11 +24,77 @@ MonoBehaviour:
     - ZebugBase/Window Var Button Test
     - ZebugBase/SimpleGraphValueTest
     - ZebugBase/SimpleGraphValueTest/GraphAxisDefaultsDebug
+    - ZebugBase/SimpleGraphValueTest/TestManyChannels
+    - ZebugBase/SimpleGraphValueTest/TestManyChannels/ManyChannel1
+    - ZebugBase/SimpleGraphValueTest/TestManyChannels/ManyChannel6
+    - ZebugBase/SimpleGraphValueTest/TestManyChannels/ManyChannel7
+    - ZebugBase/SimpleGraphValueTest/TestManyChannels/ManyChannel9
+    - ZebugBase/SimpleGraphValueTest/TestManyChannels/ManyChannel3
+    - ZebugBase/SimpleGraphValueTest/TestManyChannels/ManyChannel2
+    - ZebugBase/SimpleGraphValueTest/TestManyChannels/ManyChannel4
+    - ZebugBase/SimpleGraphValueTest/TestManyChannels/ManyChannel5
+    - ZebugBase/SimpleGraphValueTest/TestManyChannels/ManyChannel0
+    - ZebugBase/SimpleGraphValueTest/TestManyChannels/ManyChannel8
+    - ZebugBase/TestManyChannels
+    - ZebugBase/TestManyChannels/ManyChannel1
+    - ZebugBase/TestManyChannels/ManyChannel6
+    - ZebugBase/TestManyChannels/ManyChannel7
+    - ZebugBase/TestManyChannels/ManyChannel9
+    - ZebugBase/TestManyChannels/ManyChannel3
+    - ZebugBase/TestManyChannels/ManyChannel2
+    - ZebugBase/TestManyChannels/ManyChannel4
+    - ZebugBase/TestManyChannels/ManyChannel5
+    - ZebugBase/TestManyChannels/ManyChannel0
+    - ZebugBase/TestManyChannels/ManyChannel8
     _values:
     - logEnabled: 1
       gizmoEnabled: 1
     - logEnabled: 0
       gizmoEnabled: 0
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
     - logEnabled: 1
       gizmoEnabled: 1
     - logEnabled: 1

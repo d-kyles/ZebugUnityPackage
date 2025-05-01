@@ -107,6 +107,7 @@ namespace ZebugProject
         private Color m_ChannelColor;
         private string m_ColorString;
         private string m_ChannelName;
+        private string m_CachedFullName;
         private IChannel m_Parent;
         private int m_Depth;
 
@@ -127,21 +128,25 @@ namespace ZebugProject
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string Name()
         {
             return m_ChannelName;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Color GetColor()
         {
             return m_ChannelColor;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Depth()
         {
             return m_Depth;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IList<IChannel> Children()
         {
             return m_Children;
@@ -285,8 +290,16 @@ namespace ZebugProject
             {
                 return Name();
             }
-
-            return m_Parent.FullName() + "/" + Name();
+            
+            if (m_CachedFullName != null)
+            {
+                return m_CachedFullName;
+            } 
+            else
+            {
+                m_CachedFullName = m_Parent.FullName() + "/" + Name();
+                return m_CachedFullName;
+            }
         }
 
         //  ----------------------------------------------------------------------------------------

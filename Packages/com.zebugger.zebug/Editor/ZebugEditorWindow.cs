@@ -23,6 +23,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace ZebugProject {
 
@@ -76,18 +77,34 @@ namespace ZebugProject {
         }
 
         private static HashSet<IChannel> s_TestChannels = new();
+        private static Dictionary<IChannel, ChannelCacheData> s_ChannelCacheData = new();
+        
+        private class ChannelCacheData
+        {
+            public GUIStyle togglesLineStyle;
+            public GUIContent labelContent;
+            public GUIContent logLabelContent;
+            public GUIContent gizmosLabelContent;
+            public GUILayoutOption[] toggleWidthOptions;
+            public Rect logLabelRect;
+            public Rect gizmoLabelRect;
+        }
+        
         private static int s_ExpandedCount;
         private GUIStyle _channelRowStyleTop;
         private GUIStyle _channelRowStyleInner;
         private GUIStyle _channelRowStyleBottom;
-
+        
         private Vector2 _scrollPosition;
         
         private const string kShowTestChannelsPref = "ZebugShowTestChannels";
         
         private bool _advOptionsExpanded;
         private bool _graphsExpanded;
+        private bool _windowVarsExpanded;
+        
         private bool _showTestChannels;
+        
         private bool s_StylesLoaded;
 
         protected void OnEnable() {
@@ -176,7 +193,8 @@ namespace ZebugProject {
                 Texture2D backgroundTextureBottom = Resources.Load<Texture2D>("ZebugBackgroundBox_Bottom");
                 _channelRowStyleBottom.normal.background = backgroundTextureBottom;
 
-                s_StylesLoaded = _channelRowStyleInner != null;
+                
+                s_StylesLoaded = _channelRowStyleTop != null;
             } 
             catch (NullReferenceException)
             {
@@ -206,13 +224,14 @@ namespace ZebugProject {
         
         private void OnGUI() 
         {
+            Profiler.BeginSample("Zebug IMGUI - Perf Tip: Fold away all the things.");
+            
             CheckInit();
             
             _scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
 
             int currentChannel = 0;
             int visibleChannelCount = s_ExpandedCount;
-            s_ExpandedCount = 0;
             
             var oldColor = GUI.backgroundColor;
             GUI.backgroundColor = Color.grey;
@@ -220,14 +239,14 @@ namespace ZebugProject {
             
             //  --- Channel Toggle List ---------------------------------------
             
-            GUILayout.Space(5);
             GUILayout.Label("Channels", EditorStyles.largeLabel);
             
             DrawChannel(Zebug.Instance, visibleChannelCount, ref currentChannel);
             GUI.backgroundColor = oldColor;
 
-            GUILayout.Space(5);
-            ZebugGUIStyles.Line(2);
+            s_ExpandedCount = currentChannel;
+            
+            ZebugGUIStyles.Line();
             
             using (new GUILayout.HorizontalScope())
             {
@@ -243,10 +262,8 @@ namespace ZebugProject {
             
             //  --- Graphs ----------------------------------------------------
             
-            GUILayout.Space(5);
-            ZebugGUIStyles.Line(2);
+            ZebugGUIStyles.Line();
 
-            GUILayout.Space(5);
             _graphsExpanded = EditorGUILayout.Foldout( _graphsExpanded
                                                      , "Graphs"
                                                      , toggleOnLabelClick: true);
@@ -254,11 +271,11 @@ namespace ZebugProject {
             {
                 DrawGraphs();
             }
-
+            
             //  --- Adv Options -----------------------------------------------
             
-            GUILayout.Space(5);
-            ZebugGUIStyles.Line(2);
+            
+            ZebugGUIStyles.Line();
                         
             _advOptionsExpanded = EditorGUILayout.Foldout(_advOptionsExpanded
                                                          , "Advanced Options"
@@ -268,24 +285,16 @@ namespace ZebugProject {
                 DrawAdvancedOptions();
             }
             
-            using (new GUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                GUILayout.Label("Variables");
-
-                foreach (var (channel, variables) in Zebug.s_ChannelWindowVariables)
-                {
-                    GUILayout.Label(channel.Name());
-                    using (new GUILayout.VerticalScope(EditorStyles.helpBox))
-                    {
-                        foreach (var (key, value) in variables)
-                        {
-                            GUILayout.Label($"{key}: {value}");
-                        }
-                    }
-                }
+            _windowVarsExpanded = EditorGUILayout.Foldout(_windowVarsExpanded
+                                                         , "Variables"
+                                                         , toggleOnLabelClick: true);
+            if (_windowVarsExpanded) {
+                DrawWindowVars();
             }
             
             GUILayout.EndScrollView();
+            
+            Profiler.EndSample();
         }
 
         #endregion OnGUI
@@ -293,13 +302,18 @@ namespace ZebugProject {
         //   ---------------------------------------------------------------------------------------
         
         #region Draw Channel
-
         
         void DrawChannel(IChannel channel, int visibleChannelCount, ref int currentChannel) {
             
-            currentChannel++;
             string channelName = channel.Name();
             string channelPath = channel.FullName();
+            IList<IChannel> children = channel.Children();
+            bool isFoldoutLine = children.Count > 0;
+            
+            const float togglesWidth = 150f;
+            const float channelLineHeight = 23f;
+            const int indentPaddingSize = 16;
+            
             Color color = channel.GetColor();
             
             if (!s_StylesLoaded)
@@ -319,65 +333,104 @@ namespace ZebugProject {
             
             bool channelExpanded = false;
             
+            // creating a horizontal scope with a style is allocating 900 bytes each time :(
+            
             using (new GUILayout.HorizontalScope(style)) {
 
-                IList<IChannel> children = channel.Children();
-                if (children.Count > 0) {
-                    GUIStyle foldoutTextStyle = new GUIStyle(EditorStyles.foldout);
-                    {
-                        foldoutTextStyle.normal.textColor = color;
-                        foldoutTextStyle.onNormal.textColor = color;
-                        foldoutTextStyle.focused.textColor = color;
-                        foldoutTextStyle.onFocused.textColor = color;
+                if (!s_ChannelCacheData.TryGetValue(channel, out ChannelCacheData cache))
+                {
+                    cache = new ChannelCacheData();
+                    
+                    if (isFoldoutLine) {
+                        cache.togglesLineStyle = new GUIStyle(EditorStyles.foldout);
+                    } else {
+                        cache.togglesLineStyle = new GUIStyle();
+                        cache.togglesLineStyle.padding = new RectOffset(indentPaddingSize * EditorGUI.indentLevel, 0, 0, 0);
+                        cache.togglesLineStyle.fontSize = 12;
+                        cache.togglesLineStyle.alignment = TextAnchor.MiddleLeft;
+                        cache.togglesLineStyle.fixedHeight = channelLineHeight - 5;
                     }
-
+                    cache.togglesLineStyle.normal.textColor = color;
+                    cache.togglesLineStyle.onNormal.textColor = color;
+                    cache.togglesLineStyle.focused.textColor = color;
+                    cache.togglesLineStyle.onFocused.textColor = color;
+                    
+                    cache.labelContent = new GUIContent(channelName);
+                    
+                    cache.logLabelContent = new GUIContent("Log");
+                    cache.gizmosLabelContent = new GUIContent("Gizmos");
+                    
+                    cache.toggleWidthOptions = new GUILayoutOption[1];
+                    cache.toggleWidthOptions[0] = GUILayout.Width(togglesWidth/2);
+                    
+                    s_ChannelCacheData.Add(channel, cache);
+                }
+                
+                if (isFoldoutLine) {
+                   
                     _channelExpandedSet.TryGetValue(channelPath, out bool expanded);
 
-                    channelExpanded = EditorGUILayout.Foldout(expanded, channelName, true, foldoutTextStyle);
+                    channelExpanded = EditorGUILayout.Foldout(expanded,
+                                                              channelName,
+                                                              true,
+                                                              cache.togglesLineStyle);
                     _channelExpandedSet[channelPath] = channelExpanded;
                     
                 } else {
-                    var foldoutTextStyle = new GUIStyle();
-                    foldoutTextStyle.normal.textColor = channel.GetColor();
-                    foldoutTextStyle.onNormal.textColor = channel.GetColor();
-                    foldoutTextStyle.contentOffset = new Vector2(20 * EditorGUI.indentLevel,0);
-                    GUILayout.Label(channel.Name(), foldoutTextStyle);
+                    GUILayout.Label(cache.labelContent, cache.togglesLineStyle);
                 }
-                GUILayout.FlexibleSpace();
-
-                const float disabledColorVal = 1f/255f;
-                Color disabledTextColor = new Color(disabledColorVal, disabledColorVal,disabledColorVal);
-
-                const float togglesWidth = 150f;
-                using (new EditorGUI.IndentLevelScope(-EditorGUI.indentLevel))
-                using (new GUILayout.HorizontalScope()) {
-
-                    var toggleTextStyle = new GUIStyle();
-                    var normalTextColor = toggleTextStyle.normal.textColor; 
-                    if (!channel.ParentLogEnabled()) {
-                        toggleTextStyle.normal.textColor = disabledTextColor;
-                        toggleTextStyle.onNormal.textColor = disabledTextColor;
-                    }
-
+                
+                if (currentChannel == 0)
+                {
+                    GUILayout.FlexibleSpace();
+                }
+                
+                using (new GUILayout.HorizontalScope()) 
+                {
                     using (new EditorGUI.DisabledScope(!channel.ParentLogEnabled())) {
                         bool logEnabled = channel.LocalLogEnabled();
-                        bool newLogEnabled = EditorGUILayout.ToggleLeft("Log", logEnabled, GUILayout.Width(togglesWidth/2));
+                        bool newLogEnabled = false;
+                        
+                        //  --- NOTE(dan): We only use auto layout for the first channel's line,
+                        //                 after that we claw back a little perf by explicitly
+                        //                 passing the rect position that we want.
+                        if (currentChannel == 0)
+                        {
+                            newLogEnabled = EditorGUILayout.ToggleLeft(cache.logLabelContent,
+                                                                        logEnabled,
+                                                                        cache.toggleWidthOptions);
+                            cache.logLabelRect = GUILayoutUtility.GetLastRect();
+                        }
+                        else
+                        {
+                            var rect = s_ChannelCacheData[Zebug.Instance].logLabelRect;
+                            rect.y += channelLineHeight * currentChannel;
+                            newLogEnabled = GUI.Toggle(rect, logEnabled, cache.logLabelContent);
+                        }
+                        
                         if (newLogEnabled != logEnabled) {
                             channel.SetLogEnabled(newLogEnabled);
                         }
                     }
 
-                    if (!channel.ParentGizmosEnabled()) {
-                        toggleTextStyle.normal.textColor = disabledTextColor;
-                        toggleTextStyle.onNormal.textColor = disabledTextColor;
-                    } else {
-                        toggleTextStyle.normal.textColor = normalTextColor;
-                        toggleTextStyle.onNormal.textColor = normalTextColor;
-                    }
-
                     using (new EditorGUI.DisabledScope(!channel.ParentGizmosEnabled())) {
                         bool gizmosEnabled = channel.LocalGizmosEnabled();
-                        bool newGizmosEnabled = EditorGUILayout.ToggleLeft("Gizmos", gizmosEnabled, GUILayout.Width(togglesWidth/2));
+                        
+                        bool newGizmosEnabled = false;
+                        if (currentChannel == 0)
+                        {
+                            newGizmosEnabled = EditorGUILayout.ToggleLeft(cache.gizmosLabelContent,
+                                                                          gizmosEnabled,
+                                                                          cache.toggleWidthOptions);
+                            cache.gizmoLabelRect = GUILayoutUtility.GetLastRect();
+                        }
+                        else
+                        {
+                            var rect = s_ChannelCacheData[Zebug.Instance].gizmoLabelRect;
+                            rect.y += channelLineHeight * currentChannel;
+                            newGizmosEnabled = GUI.Toggle(rect, gizmosEnabled, cache.gizmosLabelContent);
+                        }
+                        
                         if (newGizmosEnabled != gizmosEnabled) {
                             channel.SetGizmosEnabled(newGizmosEnabled);
                         }
@@ -385,8 +438,9 @@ namespace ZebugProject {
                 }
             }
 
+            currentChannel++;
+            
             if (channelExpanded) {
-                s_ExpandedCount++;
 
                 using (new EditorGUI.IndentLevelScope(1))
                 {
@@ -585,10 +639,37 @@ namespace ZebugProject {
             }
         }
 
-        // --- End Advanced Options -------------------------------------------------------------
+        // -----------------------------------------------------------------------------------------
         
         #endregion Advanced Options
 
+        // -----------------------------------------------------------------------------------------
+        
+        #region Window Vars
+        
+        private void DrawWindowVars()
+        {
+            using (new GUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                GUILayout.Label("Variables");
+
+                foreach (var (channel, variables) in Zebug.s_ChannelWindowVariables)
+                {
+                    GUILayout.Label(channel.Name());
+                    using (new GUILayout.VerticalScope(EditorStyles.helpBox))
+                    {
+                        foreach (var (key, value) in variables)
+                        {
+                            GUILayout.Label($"{key}: {value}");
+                        }
+                    }
+                }
+            }
+        }
+
+        #endregion Window Vars
+        
+        //  ----------------------------------------------------------------------------------------
         
         private static void ClearRedundantChannelData()
         {
@@ -627,40 +708,39 @@ namespace ZebugProject {
     //Class to hold custom gui styles
     public static class ZebugGUIStyles
     {
-        private static GUIStyle _lineStyle;
-        private static Color _lineColor;
+        private static readonly GUILayoutOption[] _lineDefaultOptions;
+        private static readonly GUIStyle _boxStyle;
+        private static readonly Color _lineColor;
+        private static readonly Texture2D _separatorTex;
  
         //constructor
         static ZebugGUIStyles()
         {
-            _lineStyle = new GUIStyle("box");
-            _lineStyle.border.top = _lineStyle.border.bottom = 1;
-            _lineStyle.margin.top = _lineStyle.margin.bottom = 1;
-            _lineStyle.padding.top = _lineStyle.padding.bottom = 1;
-            _lineStyle.border.left = _lineStyle.border.right = 0;
-            _lineStyle.margin.left = _lineStyle.margin.right = 0;
-            _lineStyle.padding.left = _lineStyle.padding.right = 0;
-            _lineStyle.normal.background = EditorGUIUtility.whiteTexture;
+            _boxStyle = new GUIStyle("box");
+            _boxStyle.margin.top = _boxStyle.margin.bottom = 5;
+            _boxStyle.border.left = _boxStyle.border.right = 0;
+            _boxStyle.margin.left = _boxStyle.margin.right = 0;
+            _boxStyle.padding.left = _boxStyle.padding.right = 0;
+            _boxStyle.normal.background = EditorGUIUtility.whiteTexture;
             
             _lineColor = new Color(0.34f, 0.34f, 0.34f);
+            
+            _lineDefaultOptions = new GUILayoutOption[2];
+            _lineDefaultOptions[0] = GUILayout.ExpandWidth(true);
+            _lineDefaultOptions[1] = GUILayout.Height(2f);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Line(float height = 1f)
+        public static void Line()
         {
-            Line(_lineColor, height);
+            Line(_lineColor);
         }
      
-        public static void Line(Color color, float height = 1f)
+        public static void Line(Color color)
         {
             var oldColor = GUI.color;
             GUI.color = color;
-            GUILayout.Space(3);
-            GUILayout.Box( GUIContent.none
-                         , _lineStyle
-                         , GUILayout.ExpandWidth(true)
-                         , GUILayout.Height(height));
-            GUILayout.Space(3);
+            GUILayout.Box( GUIContent.none, _boxStyle, _lineDefaultOptions);
             GUI.color = oldColor;
         }
         
