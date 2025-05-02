@@ -104,7 +104,8 @@ namespace ZebugProject {
         private bool _advOptionsExpanded;
         private bool _graphsExpanded;
         private bool _windowVarsExpanded;
-        
+        private static bool s_addingValueBreakpoint;
+
         private bool _showTestChannels;
         
         private bool s_StylesLoaded;
@@ -123,6 +124,7 @@ namespace ZebugProject {
         private GUIContent _showTestChannelsTxtContent;
         private GUIContent _iosTogglePrefixLabelTxtContent;
         private GUIContent _iosPrefixLabelTxtContent;
+        private GUIContent _addBreakLabelTxtContent;
 
         protected void OnEnable() {
 
@@ -226,6 +228,7 @@ namespace ZebugProject {
                 _showTestChannelsTxtContent = new GUIContent("Show test channels");
                 _iosTogglePrefixLabelTxtContent = new GUIContent("Add an additional prefix on iOS?");
                 _iosPrefixLabelTxtContent = new GUIContent("iOS log prefix:");
+                _addBreakLabelTxtContent = new GUIContent("Add value breakpoint");
                 
                 s_StylesLoaded = _channelRowStyleTop != null;
             } 
@@ -514,6 +517,15 @@ namespace ZebugProject {
             //      but this would need to function regardless of the Zebug editor being open.
             //  * Display graphs in runtime window too.
 
+            //  --- TODO(dan): Data breakpoints are still a little bit WIP.
+            //                 Might want to be able to add multiple, change whether they
+            //                 auto-toggle off etc.
+            //                 Also need a way to remove them without hitting the breakpoint.
+            // if (GUILayout.Button(_addBreakLabelTxtContent))
+            // {
+            //     s_addingValueBreakpoint = !s_addingValueBreakpoint;
+            // }
+            
             DrawGraph(Zebug.Instance);
         }
 
@@ -537,7 +549,8 @@ namespace ZebugProject {
                 Rect graphRect = default;
                 
                 if (currentEventType == EventType.Repaint ||
-                    currentEventType == EventType.MouseMove)
+                    currentEventType == EventType.MouseMove || 
+                    currentEventType == EventType.MouseDown)
                 {
                     graphRect = GUILayoutUtility.GetLastRect();
                 
@@ -579,81 +592,116 @@ namespace ZebugProject {
                         
             float cursorTime = mouseXT * (lastTime - firstTime) + firstTime;
             float cursorValue = (1f - mouseYT) * (maxValue - minValue) + minValue;
-                        
-            Vector2 mousePosSampleSpace = new Vector2(cursorTime, cursorValue);
-                        
-            var closest = default(GraphData.Sample);
-            float closestDistance = float.MaxValue;
 
-            for (var i = 0; i < graphData.points.Count; i++)
+            if (!s_addingValueBreakpoint)
             {
-                var idx = (graphData.nextIdx + i) % graphData.maxPoints;
-                
-                var sample = graphData.points[idx];
-                float distance = MathF.Abs(sample.time - cursorTime);
-                if (distance < closestDistance)
+                var closest = default(GraphData.Sample);
+                float closestDistance = float.MaxValue;
+
+                for (var i = 0; i < graphData.points.Count; i++)
                 {
-                    closestDistance = distance;
-                    closest = sample;
-                } else
-                {
-                    //  --- Assumes monotonically increasing values. Could do a binary search?
-                    break;
+                    var idx = (graphData.nextIdx + i) % graphData.maxPoints;
+                    
+                    var sample = graphData.points[idx];
+                    float distance = MathF.Abs(sample.time - cursorTime);
+                    if (distance < closestDistance)
+                    {
+                        closestDistance = distance;
+                        closest = sample;
+                    } else
+                    {
+                        //  --- Assumes monotonically increasing values. Could do a binary search?
+                        break;
+                    }
                 }
-            }
 
-            Handles.color = new Color(0.47f, 0.47f, 0.47f, 0.46f);
-            Handles.DrawLine(new Vector3(mousePos.x, graphRect.y, 0),
-                             new Vector3(mousePos.x, graphRect.y + graphRect.height, 0));
-            
-            var labelPos = mousePos;
-            labelPos.x += 10f;
-            labelPos.y -= 20f;
-            
-            if (labelPos.x > graphRect.x + graphRect.width - 60f)
+                Handles.color = new Color(0.47f, 0.47f, 0.47f, 0.46f);
+                Handles.DrawLine(new Vector3(mousePos.x, graphRect.y, 0),
+                                 new Vector3(mousePos.x, graphRect.y + graphRect.height, 0));
+                
+                var labelPos = mousePos;
+                labelPos.x += 10f;
+                labelPos.y -= 20f;
+                
+                if (labelPos.x > graphRect.x + graphRect.width - 60f)
+                {
+                    labelPos.x = graphRect.x + graphRect.width - 60f;
+                }
+                
+                Handles.Label(labelPos, 
+                        $"Time: {closest.time:F2}\n" +
+                        $"Value: {closest.value:F2}\n" +
+                        $"Frame: {closest.frame}",
+                        EditorStyles.miniLabel);
+            }
+            else
             {
-                labelPos.x = graphRect.x + graphRect.width - 60f;
+                Handles.color = new Color(0.84f, 0f, 0f, 0.78f);
+                Handles.DrawLine(new Vector3(graphRect.x, mousePos.y, 0),
+                                 new Vector3(graphRect.x + graphRect.width, mousePos.y, 0));
+                
+                var labelPos = mousePos;
+                labelPos.x += 10f;
+                labelPos.y -= 20f;
+                
+                if (labelPos.x > graphRect.x + graphRect.width - 60f)
+                {
+                    labelPos.x = graphRect.x + graphRect.width - 60f;
+                }
+                
+                Handles.Label(labelPos, $"Value: {cursorValue:F2}\n" + EditorStyles.miniLabel);
+                
+                if (Event.current.type == EventType.MouseDown)
+                {
+                    graphData.AddBreakpoint(cursorValue);
+                    Zebug.Log($"Added value breakpoint: {cursorValue}");
+                    s_addingValueBreakpoint = false;
+                }
+                
             }
             
-            Handles.Label(labelPos, 
-                    $"Time: {closest.time:F2}\n" +
-                    $"Value: {closest.value:F2}\n" +
-                    $"Frame: {closest.frame}",
-                    EditorStyles.miniLabel);
         }
 
         private void DrawGridLines(GraphData graphData, Rect graphRect)
         {
+            //  --- When not specifying a texture, this is about the same as 1px... not sure why
+            const float lineWidth = 2.5f;
+            
             float valueMin = graphData.minValue;
             float valueMax = graphData.maxValue;
-                    
-            foreach (var (value, gridColor, dotted) in graphData.gridLines)
+            
+            void DrawGridline(float value, Color color, bool dotted)
             {
-                Handles.color = gridColor;
-
+                Handles.color = color;
+                
                 float gridLineY = RemapRange(value, 
-                    valueMin, 
-                    valueMax, 
-                    graphRect.y + graphRect.height,
-                    graphRect.y);
-                        
-                //  --- When not specifying a texture, this is about the same as 1px... not sure why
-                const float lineWidth = 2.5f;
-
+                                    valueMin, 
+                                    valueMax, 
+                                    graphRect.y + graphRect.height,
+                                    graphRect.y);
+                
                 var start = new Vector3(graphRect.x, gridLineY, 0);
                 var end = new Vector3(graphRect.x + graphRect.width, gridLineY, 0);
                 if (!dotted)
                 {
-                    var pooledArray = ArrayPool<Vector3>.CheckOut(minLength: 2);
-                    pooledArray[0] = start;
-                    pooledArray[1] = end;
-                    Handles.DrawAAPolyLine(lineWidth, actualNumberOfPoints: 2, pooledArray);
-                    ArrayPool<Vector3>.Return(pooledArray);    
+                    Handles.DrawLine(start, end, lineWidth);
                 } 
                 else
                 {
                     Handles.DrawDottedLine(start, end, lineWidth);
                 }
+            }
+                    
+            foreach (var (value, gridColor, dotted) in graphData.gridLines)
+            {
+                DrawGridline(value, gridColor, dotted);
+            }
+            
+            if (graphData.hasBreakValue)
+            {
+                DrawGridline(graphData.breakValue,  
+                    new Color(1f, 0f, 0f, 0.85f), 
+                    dotted: true);
             }
         }
 

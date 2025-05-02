@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 * Zebug editor window graph for visualizing value-over-time data.
     * Usage: `Zebug.GraphValue(Mathf.Sin(Time.time))`  
     * Added Mouse hover for nearest-data-sample data inspection.
+    * `[WIP]` Added graph value data breakpoints.
 
 ### Removed
 * Removed preprocessor list functionality, wasn't really used.

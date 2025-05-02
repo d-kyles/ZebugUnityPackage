@@ -19,7 +19,7 @@ public class SimpleGraphValueTest : MonoBehaviour
 
     private class GraphAxisDefaultsDebug : Channel<GraphAxisDefaultsDebug>
     {
-        public GraphAxisDefaultsDebug() : base(nameof(GraphAxisDefaultsDebug), Color.red, Zebug.Instance)
+        public GraphAxisDefaultsDebug() : base(nameof(GraphAxisDefaultsDebug), Color.red, ZebugProject.Zebug.Instance)
         {
             SetGraphValueMinMax(0, 2);
             SetGraphGridLine(0, Color.grey);
@@ -59,7 +59,8 @@ public class SimpleGraphValueTest : MonoBehaviour
     {
         Zebug.GraphValue(Mathf.Sin(Time.time % 2f));
 
-        GraphAxisDefaultsDebug.GraphValue(Mathf.Sin(Time.time * 15));
+        float value = Mathf.Sin(Time.time * 15);
+        GraphAxisDefaultsDebug.GraphValue(value);
     }
 
 }

@@ -37,9 +37,26 @@ namespace ZebugProject
         public int maxPoints = 200;
         public float minValue = float.MaxValue;
         public float maxValue = float.MinValue;
+        private float _breakValue;
+        public float breakValue => _breakValue;
+        private bool _hasBreakValue;
+        public bool hasBreakValue => _hasBreakValue;
 
         public void Add(float value)
         {
+            if (_hasBreakValue) {
+                if (value > _breakValue)
+                {
+                    #if DEBUG
+                    if(System.Diagnostics.Debugger.IsAttached)
+                    {
+                        System.Diagnostics.Debugger.Break();
+                        _hasBreakValue = false;
+                    }
+                    #endif
+                }
+            }
+            
             var sample = new Sample(value);
             if (value < minValue)
             {
@@ -97,6 +114,12 @@ namespace ZebugProject
                 }
             }
             else return new Sample(0);
+        }
+
+        public void AddBreakpoint(float breakValue)
+        {
+            _breakValue = breakValue;
+            _hasBreakValue = true;
         }
     }
     
