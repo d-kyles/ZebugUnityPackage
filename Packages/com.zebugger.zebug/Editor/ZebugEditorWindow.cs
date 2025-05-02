@@ -546,51 +546,18 @@ namespace ZebugProject {
                     if (graphRect.Contains(mousePos) && graphData.points.Count > 1)
                     {
                         Zebug.RaiseEditorRepaint();
-                        
-                        float mouseXT = (mousePos.x - graphRect.x) / graphRect.width;
-                        float mouseYT = (mousePos.y - graphRect.y) / graphRect.height;
-                        
-                        float firstTime = graphData.First().time;
-                        float lastTime = graphData.Last().time;
-                        float minValue = graphData.minValue;
-                        float maxValue = graphData.maxValue;
-                        
-                        float mouseXTime = mouseXT * (lastTime - firstTime) + firstTime;
-                        float mouseYValue = (1f - mouseYT) * (maxValue - minValue) + minValue;
-                        
-                        Vector2 mousePosSampleSpace = new Vector2(mouseXTime, mouseYValue);
-                        
-                        var closest = default(GraphData.Sample);
-                        float closestDistance = float.MaxValue;
-                        
-                        foreach (var sample in graphData.points)
-                        {
-                            Vector2 samplePos = new Vector2(sample.time, sample.value);
-                            float distance = Vector2.Distance(mousePosSampleSpace, samplePos);
-                            if (distance < closestDistance)
-                            {
-                                closestDistance = distance;
-                                closest = sample;
-                            }
-                        }
-                        
-                        if (closestDistance < 0.1f)
-                        {
-                            Handles.Label(mousePos, 
-                                $"Time: {closest.time:F2}\n" +
-                                $"Value: {closest.value:F2}\n" +
-                                $"Frame: {closest.frame}",
-                                EditorStyles.miniLabel);
-                        }
+
+                        DrawGraphMouseInspection(mousePos, graphRect, graphData);
                     }
                 }
                 
                 if (Event.current.type == EventType.Repaint)
                 {
+                    var channelColor = channel.GetColor();
                     
-                    var color = channel.GetColor();
+                    DrawGridLines(graphData, graphRect);
 
-                    DrawGraphPointsIntoRect(graphRect, graphData, color);
+                    DrawGraphPointsIntoRect(graphRect, graphData, channelColor);
                 }
             }
 
@@ -599,6 +566,102 @@ namespace ZebugProject {
                 DrawGraph(child);
             }
         }
+        
+        private static void DrawGraphMouseInspection(Vector2 mousePos, Rect graphRect, GraphData graphData)
+        {
+            float mouseXT = (mousePos.x - graphRect.x) / graphRect.width;
+            float mouseYT = (mousePos.y - graphRect.y) / graphRect.height;
+                        
+            float firstTime = graphData.First().time;
+            float lastTime = graphData.Last().time;
+            float minValue = graphData.minValue;
+            float maxValue = graphData.maxValue;
+                        
+            float cursorTime = mouseXT * (lastTime - firstTime) + firstTime;
+            float cursorValue = (1f - mouseYT) * (maxValue - minValue) + minValue;
+                        
+            Vector2 mousePosSampleSpace = new Vector2(cursorTime, cursorValue);
+                        
+            var closest = default(GraphData.Sample);
+            float closestDistance = float.MaxValue;
+
+            for (var i = 0; i < graphData.points.Count; i++)
+            {
+                var idx = (graphData.nextIdx + i) % graphData.maxPoints;
+                
+                var sample = graphData.points[idx];
+                float distance = MathF.Abs(sample.time - cursorTime);
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    closest = sample;
+                } else
+                {
+                    //  --- Assumes monotonically increasing values. Could do a binary search?
+                    break;
+                }
+            }
+
+            Handles.color = new Color(0.47f, 0.47f, 0.47f, 0.46f);
+            Handles.DrawLine(new Vector3(mousePos.x, graphRect.y, 0),
+                             new Vector3(mousePos.x, graphRect.y + graphRect.height, 0));
+            
+            var labelPos = mousePos;
+            labelPos.x += 10f;
+            labelPos.y -= 20f;
+            
+            if (labelPos.x > graphRect.x + graphRect.width - 60f)
+            {
+                labelPos.x = graphRect.x + graphRect.width - 60f;
+            }
+            
+            Handles.Label(labelPos, 
+                    $"Time: {closest.time:F2}\n" +
+                    $"Value: {closest.value:F2}\n" +
+                    $"Frame: {closest.frame}",
+                    EditorStyles.miniLabel);
+        }
+
+        private void DrawGridLines(GraphData graphData, Rect graphRect)
+        {
+            float valueMin = graphData.minValue;
+            float valueMax = graphData.maxValue;
+                    
+            foreach (var (value, gridColor, dotted) in graphData.gridLines)
+            {
+                Handles.color = gridColor;
+
+                float gridLineY = RemapRange(value, 
+                    valueMin, 
+                    valueMax, 
+                    graphRect.y + graphRect.height,
+                    graphRect.y);
+                        
+                //  --- When not specifying a texture, this is about the same as 1px... not sure why
+                const float lineWidth = 2.5f;
+
+                var start = new Vector3(graphRect.x, gridLineY, 0);
+                var end = new Vector3(graphRect.x + graphRect.width, gridLineY, 0);
+                if (!dotted)
+                {
+                    var pooledArray = ArrayPool<Vector3>.CheckOut(minLength: 2);
+                    pooledArray[0] = start;
+                    pooledArray[1] = end;
+                    Handles.DrawAAPolyLine(lineWidth, actualNumberOfPoints: 2, pooledArray);
+                    ArrayPool<Vector3>.Return(pooledArray);    
+                } 
+                else
+                {
+                    Handles.DrawDottedLine(start, end, lineWidth);
+                }
+            }
+        }
+
+        private float RemapRange(float t, float fromMin, float fromMax, float toMin, float toMax)
+        {
+            return (t - fromMin) / (fromMax - fromMin) * (toMax - toMin) + toMin;
+        }
+
 
         private void DrawGraphPointsIntoRect(Rect rect, GraphData graphData, Color color)
         {
@@ -863,7 +926,9 @@ namespace ZebugProject {
             var foundItem = default(T[]);
             var foundIdx = -1;
             
-            for (var idx = 0; idx < s_Pool.Count; idx++)
+            //  --- Checking from the back first is better for cases where the arraysize is
+            //      correlated between CheckOut calls. It is the most efficient for repeated calls. 
+            for (var idx = s_Pool.Count - 1; idx >= 0; idx--)
             {
                 var item = s_Pool[idx];
                 if (item.Length >= minLength && item.Length < tooLong)

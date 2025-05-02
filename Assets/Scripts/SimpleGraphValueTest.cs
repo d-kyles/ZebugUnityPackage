@@ -22,6 +22,8 @@ public class SimpleGraphValueTest : MonoBehaviour
         public GraphAxisDefaultsDebug() : base(nameof(GraphAxisDefaultsDebug), Color.red, Zebug.Instance)
         {
             SetGraphValueMinMax(0, 2);
+            SetGraphGridLine(0, Color.grey);
+            SetGraphGridLine(1, new Color(0f, 0.47f, 0.47f, 0.55f), true);
         }
     }
     

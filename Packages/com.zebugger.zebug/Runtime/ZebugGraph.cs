@@ -13,7 +13,7 @@ namespace ZebugProject
             public float time;
             public int frame;
             public float value;
-
+            
             public Sample(float value, float time, int frame)
             {
                 this.time = time;
@@ -30,6 +30,7 @@ namespace ZebugProject
         }
 
         public List<Sample> points = new();
+        public List<(float, Color, bool dotted)> gridLines = new();
 
         public int startIdx;
         public int nextIdx;
@@ -98,7 +99,8 @@ namespace ZebugProject
             else return new Sample(0);
         }
     }
-
+    
+    
     public partial class Channel<T>
     {
         public static void GraphValue(float value)
@@ -108,33 +110,40 @@ namespace ZebugProject
             {
                 return;
             }
-
-            if (!Zebug.s_ChannelGraphData.TryGetValue(instance, out GraphData data))
-            {
-                data = new GraphData();
-                Zebug.s_ChannelGraphData.Add(instance, data);
-            }
-
+            
+            var data = ChannelGraphData();
             // hack
             data.Add(value);
         }
 
+        
         public void SetGraphValueMinMax(float min, float max)
         {
+            var data = ChannelGraphData();
+            
             if (max < min)
             {
                 (min, max) = (max, min);
             }
 
+            data.minValue = min;
+            data.maxValue = max;
+        }
+        
+        public void SetGraphGridLine(float value, Color color, bool dotted = false)
+        {
+            ChannelGraphData().gridLines.Add((value, color, dotted));
+        }
+        
+        private static GraphData ChannelGraphData()
+        {
             if (!Zebug.s_ChannelGraphData.TryGetValue(Instance, out GraphData data))
             {
                 data = new GraphData();
                 Zebug.s_ChannelGraphData.Add(Instance, data);
             }
-            data.minValue = min;
-            data.maxValue = max;
+            return data;
         }
-
     }
 
 }
