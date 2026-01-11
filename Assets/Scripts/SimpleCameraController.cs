@@ -17,92 +17,95 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //  ------------------------------------------------------------------------------------------------
 
+using Unity.Mathematics;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.Controls;
 
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace UnityTemplateProjects {
     public class SimpleCameraController : MonoBehaviour {
         private class CameraState {
-            public float yaw;
-            public float pitch;
-            public float roll;
-            public float x;
-            public float y;
-            public float z;
+            private float _yaw;
+            private float _pitch;
+            private float _roll;
+            private float3 _pos;
 
             public void SetFromTransform(Transform t) {
-                pitch = t.eulerAngles.x;
-                yaw = t.eulerAngles.y;
-                roll = t.eulerAngles.z;
-                x = t.position.x;
-                y = t.position.y;
-                z = t.position.z;
+                _pitch = t.eulerAngles.x;
+                _yaw = t.eulerAngles.y;
+                _roll = t.eulerAngles.z;
+                _pos = t.position;
             }
 
             public void Translate(Vector3 translation) {
-                Vector3 rotatedTranslation = Quaternion.Euler(pitch, yaw, roll)*translation;
-
-                x += rotatedTranslation.x;
-                y += rotatedTranslation.y;
-                z += rotatedTranslation.z;
+                Vector3 rotatedTranslation = Quaternion.Euler(_pitch, _yaw, _roll)*translation;
+                _pos += (float3)rotatedTranslation;
+            }
+            
+            public void Rotate(float yawDelta, float pitchDelta)
+            {
+                _yaw += yawDelta;
+                _pitch += pitchDelta;
             }
 
             public void LerpTowards(CameraState target, float positionLerpPct, float rotationLerpPct) {
-                yaw = Mathf.Lerp(yaw, target.yaw, rotationLerpPct);
-                pitch = Mathf.Lerp(pitch, target.pitch, rotationLerpPct);
-                roll = Mathf.Lerp(roll, target.roll, rotationLerpPct);
+                _yaw = Mathf.Lerp(_yaw, target._yaw, rotationLerpPct);
+                _pitch = Mathf.Lerp(_pitch, target._pitch, rotationLerpPct);
+                _roll = Mathf.Lerp(_roll, target._roll, rotationLerpPct);
 
-                x = Mathf.Lerp(x, target.x, positionLerpPct);
-                y = Mathf.Lerp(y, target.y, positionLerpPct);
-                z = Mathf.Lerp(z, target.z, positionLerpPct);
+                _pos = math.lerp(_pos, target._pos, positionLerpPct);
             }
 
             public void UpdateTransform(Transform t) {
-                t.eulerAngles = new Vector3(pitch, yaw, roll);
-                t.position = new Vector3(x, y, z);
+                t.eulerAngles = new Vector3(_pitch, _yaw, _roll);
+                t.position = _pos;
             }
         }
 
-        private CameraState m_TargetCameraState = new CameraState();
-        private CameraState m_InterpolatingCameraState = new CameraState();
+        private CameraState m_TargetCameraState = new();
+        private CameraState m_InterpolatingCameraState = new();
 
         [Header("Movement Settings"), Tooltip("Exponential boost factor on translation, controllable by mouse wheel.")]
-        public float boost = 3.5f;
+        [SerializeField] private float _baseSpeed = 2f;
+
+        [Tooltip("How much faster the camera moves during boostAction")]
+        [SerializeField] private float _shiftBoostAmount = 5f;
+        
+        [Tooltip("Move vertically at a different rate than horizontally")]
+        [SerializeField] private float _verticalSpeedRatio = 0.5f;
 
         [Tooltip("Time it takes to interpolate camera position 99% of the way to the target."), Range(0.001f, 1f)]
-        public float positionLerpTime = 0.2f;
+        [SerializeField] 
+        private float _positionLerpTime = 0.2f;
 
         [Header("Rotation Settings"), Tooltip("X = Change in mouse position.\nY = Multiplicative factor for camera rotation.")]
-        public AnimationCurve mouseSensitivityCurve = new AnimationCurve(new Keyframe(0f, 0.5f, 0f, 5f), new Keyframe(1f, 2.5f, 0f, 0f));
+        [SerializeField] private AnimationCurve _mouseSensitivityCurve = new(new Keyframe(0f, 0.5f, 0f, 5f), new Keyframe(1f, 2.5f, 0f, 0f));
 
         [Tooltip("Time it takes to interpolate camera rotation 99% of the way to the target."), Range(0.001f, 1f)]
-        public float rotationLerpTime = 0.01f;
+        [SerializeField] private float _rotationLerpTime = 0.01f;
 
         [Tooltip("Whether or not to invert our Y axis for mouse input to rotation.")]
-        public bool invertY;
-
+        [SerializeField] private bool _invertY;
+        
         [SerializeField] private InputActionProperty _moveXzAxesProp;
         [SerializeField] private InputActionProperty _moveYAxisProp;
         [SerializeField] private InputActionProperty _boostProp;
         [SerializeField] private InputActionProperty _rotateWhilePressedProp;
         [SerializeField] private InputActionProperty _rotateAxisProp;
         [SerializeField] private InputActionProperty _quitProp;
-        [SerializeField] private InputActionProperty _boostMoifierAxisProp;
-        
+        [SerializeField] private InputActionProperty _boostModifierAxisProp;
         
         
         private InputAction _moveXzAxes;
         private InputAction _moveYAxis;
-        private InputAction _boost;
+        private InputAction _boostAction;
         private InputAction _rotateWhilePressed;
         private InputAction _rotateAxis;
         private InputAction _quit;
         private InputAction _boostModifierAxis;
         
-        
-        public static bool EnableAndGetAction(InputActionProperty prop, out InputAction action)
+        private static void EnableAndGetAction(InputActionProperty prop, out InputAction action)
         {
             action = null;
         
@@ -110,16 +113,13 @@ namespace UnityTemplateProjects {
             {
                 prop.action.Enable();
                 action = prop.action;
-                return true;
             }
             else if (prop.reference != null)
             {
                 prop.reference.asset.Enable();
                 prop.reference.action.Enable();
                 action = prop.reference.action;
-                return true;
             }
-            return false;
         }
         
         private void OnEnable() {
@@ -128,11 +128,11 @@ namespace UnityTemplateProjects {
             
             EnableAndGetAction(_moveXzAxesProp,         out _moveXzAxes);
             EnableAndGetAction(_moveYAxisProp,          out _moveYAxis);
-            EnableAndGetAction(_boostProp,              out _boost);
+            EnableAndGetAction(_boostProp,              out _boostAction);
             EnableAndGetAction(_rotateWhilePressedProp, out _rotateWhilePressed);
             EnableAndGetAction(_rotateAxisProp,         out _rotateAxis);
             EnableAndGetAction(_quitProp,               out _quit);
-            EnableAndGetAction(_boostMoifierAxisProp,   out _boostModifierAxis);
+            EnableAndGetAction(_boostModifierAxisProp,   out _boostModifierAxis);
         }
 
         private Vector3 GetInputTranslationDirection() {
@@ -152,8 +152,9 @@ namespace UnityTemplateProjects {
         }
 
         private void Update() {
-            Vector3 translation = Vector3.zero;
-
+            
+            float dt = Time.deltaTime;
+            
             // Exit Sample
             if (_quit.WasPerformedThisFrame()) {
 #if UNITY_EDITOR
@@ -176,43 +177,44 @@ namespace UnityTemplateProjects {
             if (_rotateWhilePressed.IsPressed()) {
                 Vector2 mouseMovement = _rotateAxis.ReadValue<Vector2>();
                 
-                if (!invertY)
+                if (!_invertY)
                 {
                     mouseMovement.y = -mouseMovement.y;
                 }
                 
-                float mouseSensitivityFactor = mouseSensitivityCurve.Evaluate(mouseMovement.magnitude);
+                float mouseSensitivityFactor = _mouseSensitivityCurve.Evaluate(mouseMovement.magnitude);
 
-                m_TargetCameraState.yaw += mouseMovement.x*mouseSensitivityFactor;
-                m_TargetCameraState.pitch += mouseMovement.y*mouseSensitivityFactor;
+                m_TargetCameraState.Rotate(yawDelta: mouseMovement.x*mouseSensitivityFactor,
+                                           pitchDelta: mouseMovement.y*mouseSensitivityFactor); 
             }
 
             // Translation
-            translation = GetInputTranslationDirection()*Time.deltaTime;
-
-            // Speed up movement when shift key held
-            if (_boost.IsPressed()) {
-                translation *= 10.0f;
-            }
+            Vector3 translation = GetInputTranslationDirection()*dt;
 
             // Modify movement by a boost factor (defined in Inspector and modified in play mode through the mouse scroll wheel)
             float mouseBoostModifer = _boostModifierAxis.ReadValue<Vector2>().y*0.025f;
-            
             if (mouseBoostModifer != 0)
             {
-                boost += mouseBoostModifer;
+                _baseSpeed += mouseBoostModifer;
+            }
+            _baseSpeed = Mathf.Clamp(_baseSpeed, _baseSpeed*0.25f, _baseSpeed*4.0f);
+            
+            translation *= Mathf.Pow(2.0f, _baseSpeed);
+
+            // Speed-up movement when shift key is held
+            if (_boostAction.IsPressed()) {
+                translation *= _shiftBoostAmount;
             }
             
-            boost = Mathf.Clamp(boost, 0.25f, 4.0f);
+            //  --- Generally don't want to move up and down at the same speed as horizontal movement
+            translation.y *= _verticalSpeedRatio;
             
-            translation *= Mathf.Pow(2.0f, boost);
-
             m_TargetCameraState.Translate(translation);
 
             // Framerate-independent interpolation
             // Calculate the lerp amount, such that we get 99% of the way to our target in the specified time
-            float positionLerpPct = 1f - Mathf.Exp(Mathf.Log(1f - 0.99f)/positionLerpTime*Time.deltaTime);
-            float rotationLerpPct = 1f - Mathf.Exp(Mathf.Log(1f - 0.99f)/rotationLerpTime*Time.deltaTime);
+            float positionLerpPct = 1f - Mathf.Exp(Mathf.Log(1f - 0.99f)/_positionLerpTime*dt);
+            float rotationLerpPct = 1f - Mathf.Exp(Mathf.Log(1f - 0.99f)/_rotationLerpTime*dt);
             m_InterpolatingCameraState.LerpTowards(m_TargetCameraState, positionLerpPct, rotationLerpPct);
 
             m_InterpolatingCameraState.UpdateTransform(transform);
