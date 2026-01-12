@@ -21,10 +21,26 @@ using Unity.Mathematics;
 using UnityEngine.InputSystem;
 
 using UnityEngine;
-using UnityEngine.Serialization;
+using ZebugProject;
 
 namespace UnityTemplateProjects {
     public class SimpleCameraController : MonoBehaviour {
+        
+        public class Zebug : Channel<SimpleCameraController.Zebug> {
+            public Zebug() : base(nameof(SimpleCameraController), new Color(0.74f, 1f, 0.72f))
+            {}    
+        }
+
+        public class DampValueGraph : Channel<SimpleCameraController.DampValueGraph> {
+            public DampValueGraph() : base(nameof(DampValueGraph), new Color(0.74f, 1f, 0.72f))
+            {}    
+        }
+
+        public class DiffToValueGraph : Channel<SimpleCameraController.DiffToValueGraph> {
+            public DiffToValueGraph() : base(nameof(DiffToValueGraph), new Color(0.74f, 1f, 0.72f))
+            {}    
+        }
+        
         private class CameraState {
             private float _yaw;
             private float _pitch;
@@ -104,7 +120,11 @@ namespace UnityTemplateProjects {
         private InputAction _rotateAxis;
         private InputAction _quit;
         private InputAction _boostModifierAxis;
-        
+
+        private float _prevMouseMag;
+        private float _dampMouseMag;
+        private float _lastDampTime;
+
         private static void EnableAndGetAction(InputActionProperty prop, out InputAction action)
         {
             action = null;
@@ -150,6 +170,18 @@ namespace UnityTemplateProjects {
 
             return direction;
         }
+        
+        /// Smoothing rate dictates the proportion of source remaining after one second
+        /// ref: https://www.rorydriscoll.com/2016/03/07/frame-rate-independent-damping-using-lerp/
+        ///
+        // private static float Damp(float source, float target, float smoothing, float dt)
+        // {
+        //     return Mathf.Lerp(source, target, 1 - Mathf.Pow(smoothing, dt));
+        // }
+        public static float Damp(float a, float b, float lambda, float dt)
+        {
+            return Mathf.Lerp(a, b, 1 - Mathf.Exp(-lambda * dt));
+        }
 
         private void Update() {
             
@@ -167,25 +199,49 @@ namespace UnityTemplateProjects {
                 Cursor.lockState = CursorLockMode.Locked;
             }
 
-            // Unlock and show cursor when right mouse button released
-            if (_rotateWhilePressed.WasPressedThisFrame()) {
-                Cursor.visible = true;
-                Cursor.lockState = CursorLockMode.None;
-            }
-
             // Rotation
             if (_rotateWhilePressed.IsPressed()) {
                 Vector2 mouseMovement = _rotateAxis.ReadValue<Vector2>();
                 
-                if (!_invertY)
-                {
-                    mouseMovement.y = -mouseMovement.y;
-                }
+                float mouseMag = mouseMovement.magnitude;
                 
-                float mouseSensitivityFactor = _mouseSensitivityCurve.Evaluate(mouseMovement.magnitude);
+                
+                if (mouseMag > 0.001f || _prevMouseMag < 0.001f)
+                {
+                    //  --- If mag is a decent value, or prev was _also_ zero
+                    _dampMouseMag = Damp(_dampMouseMag, mouseMag, 10f, Time.time - _lastDampTime);
+                    _lastDampTime = Time.time;
+                    Zebug.GraphValue(mouseMag);
+                    DampValueGraph.GraphValue(_dampMouseMag);
+                }
+                _prevMouseMag = mouseMag;
+                
+                float difToDampMag = mouseMag - _dampMouseMag;
+                
+                DiffToValueGraph.GraphValue(difToDampMag);
+                
+                if (difToDampMag < 2f && mouseMag > 0.001f)
+                {
+                    if (!_invertY)
+                    {
+                        mouseMovement.y = -mouseMovement.y;
+                    }
+                    
+                    float mouseSensitivityFactor = _mouseSensitivityCurve.Evaluate(mouseMovement.magnitude);
 
-                m_TargetCameraState.Rotate(yawDelta: mouseMovement.x*mouseSensitivityFactor,
-                                           pitchDelta: mouseMovement.y*mouseSensitivityFactor); 
+                    m_TargetCameraState.Rotate(yawDelta: mouseMovement.x*mouseSensitivityFactor,
+                                               pitchDelta: mouseMovement.y*mouseSensitivityFactor); 
+                }
+                else if (difToDampMag >= 2f && mouseMag >= 0.001f)
+                {
+                    Zebug.Log($"Jump detected: {mouseMovement}; mouse mag: {mouseMag}; difToDampMag: {difToDampMag}");
+                }
+            }
+            else
+            {
+                // Unlock and show cursor when right mouse button released
+                Cursor.visible = true;
+                Cursor.lockState = CursorLockMode.None;
             }
 
             // Translation
