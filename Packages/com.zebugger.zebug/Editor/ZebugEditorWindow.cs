@@ -25,6 +25,8 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Profiling;
 
+using static ZebugProject.ZebugUtils;
+
 namespace ZebugProject {
 
     public class ZebugEditorWindow : EditorWindow {
@@ -509,15 +511,16 @@ namespace ZebugProject {
         
         private void DrawGraphs()
         {
-            //  --- At some point will need to deal with points being added but never removed.
-            //      Choose a mechanism for dealing with bloat.
             //  * Channel specific settings
             //  * Does Zebug have a guaranteed update? SceneDrawer seems like the most likely...
             //      EditorNeedsRepaint is a bit of a hack around this issue.
             //      but this would need to function regardless of the Zebug editor being open.
             //  * Display graphs in runtime window too.
 
-            //  --- TODO(dan): Data breakpoints are still a little bit WIP.
+            //  --- TODO(dan): Data breakpoints are still very WIP.
+            //                 * Not sure they add enough value... much more performant than a
+            //                   conditional breakpoint though, and if you're graphing a value
+            //                   over time you tend to be very interested in outlier cases.
             //                 Might want to be able to add multiple, change whether they
             //                 auto-toggle off etc.
             //                 Also need a way to remove them without hitting the breakpoint.
@@ -529,6 +532,8 @@ namespace ZebugProject {
             DrawGraph(Zebug.Instance);
         }
 
+        //  ----------------------------------------------------------------------------------------
+        
         private void DrawGraph(IChannel channel)
         {
             if (!channel.GizmosEnabled())
@@ -567,15 +572,18 @@ namespace ZebugProject {
                 if (Event.current.type == EventType.Repaint)
                 {
                     var channelColor = channel.GetColor();
+                    Color lineColor = VisibleColorOrDefault(graphData.lineColor, channelColor);
                     
                     DrawGridLines(graphData, graphRect);
 
-                    DrawGraphPointsIntoRect(graphRect, graphData, graphData, channelColor);
+                    DrawGraphPointsIntoRect(graphRect, graphData, graphData, lineColor);
                     
                     // testing!
                     foreach (var (subGraphName, subGraphData) in graphData.subGraphs)
                     {
-                        DrawGraphPointsIntoRect(graphRect, graphData, subGraphData, Color.red);
+                        lineColor = VisibleColorOrDefault(subGraphData.lineColor, channelColor);
+                        
+                        DrawGraphPointsIntoRect(graphRect, graphData, subGraphData, lineColor);
                     }
                 }
             }
@@ -585,6 +593,8 @@ namespace ZebugProject {
                 DrawGraph(child);
             }
         }
+        
+        //  ----------------------------------------------------------------------------------------
         
         private static void DrawGraphMouseInspection(Vector2 mousePos, Rect graphRect, GraphData graphData)
         {
@@ -604,17 +614,21 @@ namespace ZebugProject {
                 var closest = default(GraphData.Sample);
                 float closestDistance = float.MaxValue;
 
-                for (var i = 0; i < graphData.points.Count; i++)
+                var points = graphData.points;
+                int pointCount = points.Count;
+                
+                for (var i = 0; i < pointCount; i++)
                 {
                     var idx = (graphData.nextIdx + i) % graphData.maxPoints;
                     
-                    var sample = graphData.points[idx];
+                    var sample = points[idx];
                     float distance = MathF.Abs(sample.time - cursorTime);
                     if (distance < closestDistance)
                     {
                         closestDistance = distance;
                         closest = sample;
-                    } else
+                    } 
+                    else
                     {
                         //  --- Assumes monotonically increasing values. Could do a binary search?
                         break;
@@ -668,6 +682,8 @@ namespace ZebugProject {
             
         }
 
+        //  ----------------------------------------------------------------------------------------
+        
         private void DrawGridLines(GraphData graphData, Rect graphRect)
         {
             //  --- When not specifying a texture, this is about the same as 1px... not sure why
@@ -700,7 +716,10 @@ namespace ZebugProject {
                     
             foreach (var (value, gridColor, dotted) in graphData.gridLines)
             {
-                DrawGridline(value, gridColor, dotted);
+                if (value < graphData.maxValue && value > graphData.minValue)
+                {
+                    DrawGridline(value, gridColor, dotted);
+                }
             }
             
             if (graphData.hasBreakValue)
@@ -711,12 +730,8 @@ namespace ZebugProject {
             }
         }
 
-        private float RemapRange(float t, float fromMin, float fromMax, float toMin, float toMax)
-        {
-            return (t - fromMin) / (fromMax - fromMin) * (toMax - toMin) + toMin;
-        }
-
-
+        //  ----------------------------------------------------------------------------------------
+        
         private void DrawGraphPointsIntoRect(Rect rect, GraphData referenceData, GraphData graphData, Color color)
         {
             List<GraphData.Sample> points = graphData.points;
@@ -756,23 +771,38 @@ namespace ZebugProject {
             
             //var pointArray = new Vector3[pointCount];
             
-            for (var i = 0; i < pointCount; i++)
+            float freshMinValue = float.MaxValue;
+            float freshMaxValue = float.MinValue;
+            int maxPointCount = graphData.maxPoints;
+            int pointIdxOffset = graphData.nextIdx;
+            
+            for (int i = 0; i < pointCount; i++)
             {
-                var idx = (graphData.nextIdx + i) % graphData.maxPoints;
+                int idx = (pointIdxOffset + i) % maxPointCount;
                 GraphData.Sample sample = points[idx];
 
                 float xT = (sample.time - startTime) * invTimeScale;
                 float xVal = xT * xRange + xMin;
+                
+                float value = sample.value;
 
-                var yT = (sample.value - valueMin) * invValueScale;
-                var yVal = (1f - yT)*yRange + yMin;
-
-                pooledArray[i] = new Vector3(
-                    xVal,
-                    yVal,
-                    0);
+                //  --- Math min/max don't get optimized to intrinsics when in-editor
+                freshMinValue = (value < freshMinValue) ? value : freshMinValue;
+                freshMaxValue = (value > freshMaxValue) ? value : freshMaxValue;
+                
+                float yT = (value - valueMin) * invValueScale;
+                
+                //  --- Clamp line to within graph rect
+                yT = (yT > 1f) ? 1f : (yT < 0f ? 0f : yT); 
+                
+                float yVal = (1f - yT)*yRange + yMin;
+                
+                pooledArray[i] = new Vector3(xVal, yVal, 0);
             }
-
+            
+            graphData.SmoothUpdateMinValue(freshMinValue);
+            graphData.SmoothUpdateMaxValue(freshMaxValue);
+                
             //  --- When not specifying a texture, this is about the same as 1px... not sure why
             const float lineWidth = 2.5f;
             
@@ -961,63 +991,4 @@ namespace ZebugProject {
         }
         
     }
-    
-    public static class ArrayPool<T> where T: struct
-    {
-        private static List<T[]> s_Pool = new();
-
-        public static T[] CheckOut(int minLength)
-        {
-            const int minArraySize = 4;
-            
-            if (minLength < minArraySize)
-            {
-                minLength = minArraySize;
-            }
-            
-            int tooLong = minLength * 3;
-            
-            var foundItem = default(T[]);
-            var foundIdx = -1;
-            
-            //  --- Checking from the back first is better for cases where the arraysize is
-            //      correlated between CheckOut calls. It is the most efficient for repeated calls. 
-            for (var idx = s_Pool.Count - 1; idx >= 0; idx--)
-            {
-                var item = s_Pool[idx];
-                if (item.Length >= minLength && item.Length < tooLong)
-                {
-                    foundItem = item;
-                    foundIdx = idx;
-                    break;
-                }
-            }
-
-            if (foundIdx > 0)
-            {
-                // swap with last element, so that removal is cheap
-                int count = s_Pool.Count -1;
-                s_Pool[foundIdx] = s_Pool[count];
-                s_Pool.RemoveAt(count);
-                
-                return foundItem;
-            }
-            else
-            {
-                if (minLength > minArraySize)
-                {
-                    minLength = Mathf.NextPowerOfTwo(minLength);
-                }
-                
-                return new T[minLength];
-            }
-        }
-
-        public static void Return(T[] pooledArray)
-        {
-            s_Pool.Add(pooledArray);
-        }
-    }
-    
-    
 }

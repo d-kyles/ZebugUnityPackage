@@ -24,11 +24,18 @@ using UnityEngine;
 using ZebugProject;
 
 namespace UnityTemplateProjects {
+    using static ZebugUtils;
+    
     public class SimpleCameraController : MonoBehaviour {
         
         public class Zebug : Channel<SimpleCameraController.Zebug> {
             public Zebug() : base(nameof(SimpleCameraController), new Color(0.74f, 1f, 0.72f))
-            {}    
+            {
+                SetGraphGridLine(5f, new Color(0.43f, 0.43f, 0.43f), dotted: true);
+                SetGraphGridLine(1f, new Color(0.33f, 0.33f, 0.33f), dotted: true);
+                SetSubgraphLine("damp", Color.red);
+                SetSubgraphLine("dampDelta", Color.blue);
+            }    
         }
         
         private class CameraState {
@@ -161,17 +168,7 @@ namespace UnityTemplateProjects {
             return direction;
         }
         
-        /// Smoothing rate dictates the proportion of source remaining after one second
-        /// ref: https://www.rorydriscoll.com/2016/03/07/frame-rate-independent-damping-using-lerp/
-        ///
-        // private static float Damp(float source, float target, float smoothing, float dt)
-        // {
-        //     return Mathf.Lerp(source, target, 1 - Mathf.Pow(smoothing, dt));
-        // }
-        public static float Damp(float a, float b, float lambda, float dt)
-        {
-            return Mathf.Lerp(a, b, 1 - Mathf.Exp(-lambda * dt));
-        }
+
 
         private void Update() {
             
@@ -199,7 +196,7 @@ namespace UnityTemplateProjects {
                 if (mouseMag > 0.001f || _prevMouseMag < 0.001f)
                 {
                     //  --- If mag is a decent value, or prev was _also_ zero
-                    _dampMouseMag = Damp(_dampMouseMag, mouseMag, 10f, Time.time - _lastDampTime);
+                    _dampMouseMag = ExpDecayDamp(_dampMouseMag, mouseMag, 10f, Time.time - _lastDampTime);
                     _lastDampTime = Time.time;
                     Zebug.GraphValue(mouseMag);
                     Zebug.GraphValue("damp", _dampMouseMag);
@@ -208,7 +205,7 @@ namespace UnityTemplateProjects {
                 
                 float difToDampMag = mouseMag - _dampMouseMag;
                 
-                //Zebug.GraphValue("dampDelta", difToDampMag);
+                Zebug.GraphValue("dampDelta", difToDampMag);
                 
                 if (difToDampMag < 2f && mouseMag > 0.001f)
                 {
@@ -222,10 +219,11 @@ namespace UnityTemplateProjects {
                     m_TargetCameraState.Rotate(yawDelta: mouseMovement.x*mouseSensitivityFactor,
                                                pitchDelta: mouseMovement.y*mouseSensitivityFactor); 
                 }
-                else if (difToDampMag >= 2f && mouseMag >= 0.001f)
-                {
-                    Zebug.Log($"Jump detected: {mouseMovement}; mouse mag: {mouseMag}; difToDampMag: {difToDampMag}");
-                }
+                // else if (difToDampMag >= 2f && mouseMag >= 0.001f)
+                // {
+                //     // Mouse has jumped here, don't use it for movement.
+                //     Zebug.Log($"Jump detected: {mouseMovement}; mouse mag: {mouseMag}; difToDampMag: {difToDampMag}");
+                // }
             }
             else
             {

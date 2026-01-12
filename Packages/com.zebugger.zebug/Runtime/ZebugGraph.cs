@@ -6,6 +6,8 @@ using UnityEngine;
 
 namespace ZebugProject
 {
+    using static ZebugUtils;
+    
     public class GraphData
     {
         public struct Sample
@@ -29,10 +31,11 @@ namespace ZebugProject
             }
         }
 
-        public List<Sample> points = new();
-        public List<(float, Color, bool dotted)> gridLines = new();
-
-        public Dictionary<string, GraphData> subGraphs = new();
+        public readonly List<Sample> points = new();
+        public readonly List<(float, Color, bool dotted)> gridLines = new();
+        public readonly Dictionary<string, GraphData> subGraphs = new();
+        
+        public Color lineColor = new (0,0,0,0);
         
         public int startIdx;
         public int nextIdx;
@@ -118,9 +121,41 @@ namespace ZebugProject
             else return new Sample(0);
         }
 
-        public void AddBreakpoint(float breakValue)
+        public void SmoothUpdateMinValue(float freshMinValue)
         {
-            _breakValue = breakValue;
+            minValue = Damp(minValue, freshMinValue, 0.1f, Time.deltaTime);
+
+            var delta = Mathf.Abs(minValue - freshMinValue);
+            if (freshMinValue > 0.001f || delta < 0.001f)
+            {
+                var ratioLeft = delta / freshMinValue;
+                if (ratioLeft < 0.01f)
+                {
+                    //  --- Almost there. Snap to the value.
+                    minValue = freshMinValue;
+                }
+            }
+        }
+        
+        public void SmoothUpdateMaxValue(float freshMaxValue)
+        {
+            maxValue = Damp(maxValue, freshMaxValue, 0.1f, Time.deltaTime);
+
+            var delta = Mathf.Abs(maxValue - freshMaxValue);
+            if (freshMaxValue > 0.001f || delta < 0.001f)
+            {
+                var ratioLeft = delta / freshMaxValue;
+                if (ratioLeft < 0.01f)
+                {
+                    //  --- Almost there. Snap to the value.
+                    maxValue = freshMaxValue;
+                }
+            }
+        }
+        
+        public void AddBreakpoint(float atValue)
+        {
+            _breakValue = atValue;
             _hasBreakValue = true;
         }
     }
@@ -128,6 +163,11 @@ namespace ZebugProject
     
     public partial class Channel<T>
     {
+        public static void SetSubgraphLine(string name, Color color)
+        {
+            SubGraphData(name).lineColor = color;
+        }
+        
         public static void GraphValue(string subGraphName, float value)
         {
             Channel<T> instance = Instance;
@@ -149,11 +189,8 @@ namespace ZebugProject
             }
             
             var data = ChannelGraphData();
-            //  --- TODO(dan): not sure why this is a hack?
-            // hack
             data.Add(value);
         }
-
         
         public void SetGraphValueMinMax(float min, float max)
         {
