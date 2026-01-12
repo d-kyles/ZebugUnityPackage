@@ -32,6 +32,8 @@ namespace ZebugProject
         public List<Sample> points = new();
         public List<(float, Color, bool dotted)> gridLines = new();
 
+        public Dictionary<string, GraphData> subGraphs = new();
+        
         public int startIdx;
         public int nextIdx;
         public int maxPoints = 200;
@@ -126,6 +128,18 @@ namespace ZebugProject
     
     public partial class Channel<T>
     {
+        public static void GraphValue(string subGraphName, float value)
+        {
+            Channel<T> instance = Instance;
+            if (!instance.GizmosEnabled())
+            {
+                return;
+            }
+            
+            var data = SubGraphData(subGraphName);
+            data.Add(value);
+        }
+        
         public static void GraphValue(float value)
         {
             Channel<T> instance = Instance;
@@ -135,6 +149,7 @@ namespace ZebugProject
             }
             
             var data = ChannelGraphData();
+            //  --- TODO(dan): not sure why this is a hack?
             // hack
             data.Add(value);
         }
@@ -156,6 +171,23 @@ namespace ZebugProject
         public void SetGraphGridLine(float value, Color color, bool dotted = false)
         {
             ChannelGraphData().gridLines.Add((value, color, dotted));
+        }
+        
+        private static GraphData SubGraphData(string subGraphName)
+        {
+            if (!Zebug.s_ChannelGraphData.TryGetValue(Instance, out GraphData data))
+            {
+                data = new GraphData();
+                Zebug.s_ChannelGraphData.Add(Instance, data);
+            }
+            
+            if (!data.subGraphs.TryGetValue(subGraphName, out GraphData subGraph))
+            {
+                subGraph = new GraphData();
+                data.subGraphs.Add(subGraphName, subGraph);
+            }
+            
+            return subGraph;
         }
         
         private static GraphData ChannelGraphData()

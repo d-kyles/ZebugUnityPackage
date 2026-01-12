@@ -570,7 +570,13 @@ namespace ZebugProject {
                     
                     DrawGridLines(graphData, graphRect);
 
-                    DrawGraphPointsIntoRect(graphRect, graphData, channelColor);
+                    DrawGraphPointsIntoRect(graphRect, graphData, graphData, channelColor);
+                    
+                    // testing!
+                    foreach (var (subGraphName, subGraphData) in graphData.subGraphs)
+                    {
+                        DrawGraphPointsIntoRect(graphRect, graphData, subGraphData, Color.red);
+                    }
                 }
             }
 
@@ -711,7 +717,7 @@ namespace ZebugProject {
         }
 
 
-        private void DrawGraphPointsIntoRect(Rect rect, GraphData graphData, Color color)
+        private void DrawGraphPointsIntoRect(Rect rect, GraphData referenceData, GraphData graphData, Color color)
         {
             List<GraphData.Sample> points = graphData.points;
             
@@ -722,8 +728,8 @@ namespace ZebugProject {
             }
 
             Handles.color = color;
-            var firstSample = graphData.First();
-            var lastSample = graphData.Last();
+            var firstSample = referenceData.First();
+            var lastSample = referenceData.Last();
 
             float startTime = firstSample.time;
             float startFrame = firstSample.frame;
@@ -738,8 +744,8 @@ namespace ZebugProject {
             float xMin = rect.x;
             float xRange = rect.width;
 
-            float valueMin = graphData.minValue;
-            float valueMax = graphData.maxValue;
+            float valueMin = referenceData.minValue;
+            float valueMax = referenceData.maxValue;
 
             float yMin = rect.y;
             float yRange = rect.height;

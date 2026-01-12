@@ -30,16 +30,6 @@ namespace UnityTemplateProjects {
             public Zebug() : base(nameof(SimpleCameraController), new Color(0.74f, 1f, 0.72f))
             {}    
         }
-
-        public class DampValueGraph : Channel<SimpleCameraController.DampValueGraph> {
-            public DampValueGraph() : base(nameof(DampValueGraph), new Color(0.74f, 1f, 0.72f))
-            {}    
-        }
-
-        public class DiffToValueGraph : Channel<SimpleCameraController.DiffToValueGraph> {
-            public DiffToValueGraph() : base(nameof(DiffToValueGraph), new Color(0.74f, 1f, 0.72f))
-            {}    
-        }
         
         private class CameraState {
             private float _yaw;
@@ -212,13 +202,13 @@ namespace UnityTemplateProjects {
                     _dampMouseMag = Damp(_dampMouseMag, mouseMag, 10f, Time.time - _lastDampTime);
                     _lastDampTime = Time.time;
                     Zebug.GraphValue(mouseMag);
-                    DampValueGraph.GraphValue(_dampMouseMag);
+                    Zebug.GraphValue("damp", _dampMouseMag);
                 }
                 _prevMouseMag = mouseMag;
                 
                 float difToDampMag = mouseMag - _dampMouseMag;
                 
-                DiffToValueGraph.GraphValue(difToDampMag);
+                //Zebug.GraphValue("dampDelta", difToDampMag);
                 
                 if (difToDampMag < 2f && mouseMag > 0.001f)
                 {
