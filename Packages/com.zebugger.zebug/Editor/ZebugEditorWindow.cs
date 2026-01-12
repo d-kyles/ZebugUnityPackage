@@ -89,6 +89,7 @@ namespace ZebugProject {
             public GUILayoutOption[] toggleWidthOptions;
             public Rect logLabelRect;
             public Rect gizmoLabelRect;
+            public bool foldoutExpanded;
         }
         
         private static int s_ExpandedCount;
@@ -112,6 +113,7 @@ namespace ZebugProject {
         
         private bool s_StylesLoaded;
         private GUIStyle _graphStyle;
+        private GUIStyle _graphFoldoutStyle;
         private GUILayoutOption[] _graphLayoutOptions;
         
         private GUIContent _channelsTxt;
@@ -217,6 +219,10 @@ namespace ZebugProject {
                 _graphStyle = new GUIStyle(EditorStyles.helpBox);
                 _graphStyle.fixedHeight = 100f;
                 _graphStyle.alignment = TextAnchor.UpperLeft;
+                //_graphStyle.margin = new RectOffset(16, 0, 0, 0);
+                
+                _graphFoldoutStyle = new GUIStyle(EditorStyles.foldout);
+                _graphFoldoutStyle.margin = new RectOffset(16, 0, 0, 0);
                 
                 _channelsTxt = new GUIContent("Channels");
                 _channelsDefaultTxtContent = new GUIContent("New channels enabled by default?");
@@ -228,7 +234,7 @@ namespace ZebugProject {
                 _clearUnusedTxtContent = new GUIContent("Clear unused channel data");
                 _clearTextContent = new GUIContent("Clear");
                 _showTestChannelsTxtContent = new GUIContent("Show test channels");
-                _iosTogglePrefixLabelTxtContent = new GUIContent("Add an additional prefix on iOS?");
+                _iosTogglePrefixLabelTxtContent = new GUIContent("Extra log prefix for iOS", "May help ADB style syntax highlighting for exported ios Logs");
                 _iosPrefixLabelTxtContent = new GUIContent("iOS log prefix:");
                 _addBreakLabelTxtContent = new GUIContent("Add value breakpoint");
                 
@@ -547,43 +553,48 @@ namespace ZebugProject {
                 
                 CachedChannelData(channel, out ChannelCacheData cache);
                 
-                GUILayout.Box(cache.channelNameContent, _graphStyle);
-
-                var currentEventType = Event.current.type;
+                cache.foldoutExpanded = EditorGUILayout.Foldout(cache.foldoutExpanded, cache.channelNameContent, true, _graphFoldoutStyle);
                 
-                Rect graphRect = default;
-                
-                if (currentEventType == EventType.Repaint ||
-                    currentEventType == EventType.MouseMove || 
-                    currentEventType == EventType.MouseDown)
+                if (cache.foldoutExpanded)
                 {
-                    graphRect = GUILayoutUtility.GetLastRect();
-                
-                    // If the mouse cursor is inside our Unity IMGUI rect
-                    var mousePos = Event.current.mousePosition;
-                    if (graphRect.Contains(mousePos) && graphData.points.Count > 1)
-                    {
-                        Zebug.RaiseEditorRepaint();
+                    GUILayout.Box(cache.channelNameContent, _graphStyle);
 
-                        DrawGraphMouseInspection(mousePos, graphRect, graphData);
+                    var currentEventType = Event.current.type;
+                    
+                    Rect graphRect = default;
+                    
+                    if (currentEventType == EventType.Repaint ||
+                        currentEventType == EventType.MouseMove || 
+                        currentEventType == EventType.MouseDown)
+                    {
+                        graphRect = GUILayoutUtility.GetLastRect();
+                    
+                        // If the mouse cursor is inside our Unity IMGUI rect
+                        var mousePos = Event.current.mousePosition;
+                        if (graphRect.Contains(mousePos) && graphData.points.Count > 1)
+                        {
+                            Zebug.RaiseEditorRepaint();
+
+                            DrawGraphMouseInspection(mousePos, graphRect, graphData);
+                        }
                     }
-                }
-                
-                if (Event.current.type == EventType.Repaint)
-                {
-                    var channelColor = channel.GetColor();
-                    Color lineColor = VisibleColorOrDefault(graphData.lineColor, channelColor);
                     
-                    DrawGridLines(graphData, graphRect);
-
-                    DrawGraphPointsIntoRect(graphRect, graphData, graphData, lineColor);
-                    
-                    // testing!
-                    foreach (var (subGraphName, subGraphData) in graphData.subGraphs)
+                    if (Event.current.type == EventType.Repaint)
                     {
-                        lineColor = VisibleColorOrDefault(subGraphData.lineColor, channelColor);
+                        var channelColor = channel.GetColor();
+                        Color lineColor = VisibleColorOrDefault(graphData.lineColor, channelColor);
                         
-                        DrawGraphPointsIntoRect(graphRect, graphData, subGraphData, lineColor);
+                        DrawGridLines(graphData, graphRect);
+
+                        DrawGraphPointsIntoRect(graphRect, graphData, graphData, lineColor);
+                        
+                        // testing!
+                        foreach (var (subGraphName, subGraphData) in graphData.subGraphs)
+                        {
+                            lineColor = VisibleColorOrDefault(subGraphData.lineColor, channelColor);
+                            
+                            DrawGraphPointsIntoRect(graphRect, graphData, subGraphData, lineColor);
+                        }
                     }
                 }
             }
