@@ -86,6 +86,7 @@ namespace ZebugProject {
         {
             public GUIStyle togglesLineStyle;
             public GUIContent channelNameContent;
+            public GUIContent emptyContent;
             public GUILayoutOption[] toggleWidthOptions;
             public Rect logLabelRect;
             public Rect gizmoLabelRect;
@@ -219,7 +220,6 @@ namespace ZebugProject {
                 _graphStyle = new GUIStyle(EditorStyles.helpBox);
                 _graphStyle.fixedHeight = 100f;
                 _graphStyle.alignment = TextAnchor.UpperLeft;
-                //_graphStyle.margin = new RectOffset(16, 0, 0, 0);
                 
                 _graphFoldoutStyle = new GUIStyle(EditorStyles.foldout);
                 _graphFoldoutStyle.margin = new RectOffset(16, 0, 0, 0);
@@ -499,6 +499,7 @@ namespace ZebugProject {
                 cache.togglesLineStyle.onFocused.textColor = color;
                 
                 cache.channelNameContent = new GUIContent(channelName);
+                cache.emptyContent = new GUIContent();
                 
                 cache.toggleWidthOptions = new GUILayoutOption[1];
                 cache.toggleWidthOptions[0] = GUILayout.Width(togglesWidth/2);
@@ -557,7 +558,7 @@ namespace ZebugProject {
                 
                 if (cache.foldoutExpanded)
                 {
-                    GUILayout.Box(cache.channelNameContent, _graphStyle);
+                    GUILayout.Box(cache.emptyContent, _graphStyle);
 
                     var currentEventType = Event.current.type;
                     

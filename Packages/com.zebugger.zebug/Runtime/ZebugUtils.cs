@@ -101,6 +101,16 @@ namespace ZebugProject
             {
                 s_Pool.Add(pooledArray);
             }
+            
+            /// 
+            /// FixedFrame
+            /// Like Time.frameCount, but for physics FixedUpdate. 
+            ///
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private static int FixedFrame()
+            {
+                return (int)(Time.fixedTime / Time.fixedDeltaTime);
+            }
         }
     }
 

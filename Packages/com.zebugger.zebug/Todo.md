@@ -8,11 +8,6 @@
        Gizmos select the drawing object if clicked on, and are probably more heavyweight.
     3) Use of Zebug.Draw to do gizmos should probably be in a specific OnGizmo method.
 
-1)  Togglable Profiling!
-    ```C#
-    Zebug.Stopwatch.Start()
-    ```
-
 2) Gizmo shapes
    * Square
    * cross
@@ -24,15 +19,20 @@
    * Make these render at edit-time too, if the ZebugGizmo component exists.
 
 3) ZebugGraph:
-    * Currently graph-per-channel.
-      * Consider multipe graphs per channel?
-      * Might just be easier to simplify channel creation syntax.
-    * "Triggering" for graphs? Stop when it gets to a value (etc?)
+    * Integrate "subgraphs" with the main graph-per-channel.
+    * Currently WIP: "Triggering" for graphs? Stop when it gets to a value (etc?)
     * Collapse channels between trigger values? (compare all graphs at time dt, based on channel X exceeding value)
-
-    ```C#
-    Zebug.GraphValue("Graph Name", currentDt);
-    ```
+    * 'MoreInfo' button
+      * expands height
+      * shows a list of line name and color
+      * Axis labels?
+    * Settings button:
+      * Auto gridlines
+      * Fixed scale
+      * Serializable settings to PlayerPrefs?
+      * Toggle specific sub-lines on and off
+      * Specify the number of point samples
+    * GameObject specific graphs? They're currently 'per-channel'. 
 
 4) (Allow creation of channels via ScriptableObject) (have something run on-load, finds type of Channel
     from shared project type cache (spin up as separate package)
@@ -97,6 +97,5 @@ Channel name is Method.DeclaringType.name if IsSubclassOf(MonoBehaviour)
 * C# 10 will have (ref StringBuilder.AppendInterpolatedStringHandler handler), in other words, the called method will be able 
   to do the interpolation. Needless to say, all Zebug calls should use this to avoid all the string interpolation involved.
 * [Conditional("UNITY_EDITOR")] for gizmos
-* `private static int FixedFrame() { return (int)(Time.fixedTime / Time.fixedDeltaTime); }` (log in fixed update spams [0,>1] times, this shows which.)
 * Should AllowWarningAndErrorMuting be changed to be false by defualt? I think asserts and errors especially will be confusing if they don't show up.
 * Optionally annotate Log methods with `[BurstDiscard]`, so you can throw managed debug statements into job functions but have them removed for compiled methods. 
