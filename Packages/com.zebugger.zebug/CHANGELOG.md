@@ -7,20 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
-* Zebug editor window graph for visualizing value-over-time data.
-    * Usage: `Zebug.GraphValue(Mathf.Sin(Time.time))`  
-    * Added Mouse hover for nearest-data-sample data inspection.
-    * `[WIP]` Added graph value data breakpoints.
+* **Value Graphing System** - Editor window now includes graphs for visualizing value-over-time data
+    * Usage: `Zebug.GraphValue(float value)` or `Zebug.GraphValue(string name, float value)`
+    * Expandable/collapsible graph sections with foldout controls
+    * Mouse hover inspection for nearest data sample (displays time, value, and frame number)
+    * Grid lines and cursor value inspection overlay
+    * Multi-line sub-graphs support within a single channel graph
+    * Colored graph lines with dynamic color configuration
+    * `[WIP]` Graph value data breakpoints (GREATER_THAN condition)
+
+### Changed
+* Updated Unity version to v6000.0.58f2
+* Graphs now dynamically rescale based on min/max values
 
 ### Removed
-* Removed preprocessor list functionality, wasn't really used.
-
-### Fix
+* Removed preprocessor list functionality (wasn't actively used)
+* Removed unnecessary Visual Studio reference that caused issues when Unity installed without it
 * Removed spurious profiling markers
 
+### Fixed
+* Test camera controls improvements and fixes
+* Fix for Cherry-picked fixes from other contributors
+
 ### Improved
-* Refactored main editor window code 
-* Perf: Removed some unnecessary allocations. But many remain... IMGUI doesn't care :(.
+* **Performance optimizations:**
+    * Reduced GC allocations in IMGUI rendering
+    * Editor window only updates when realtime elements (graphs, variables) are visible
+    * Other
+* **Code quality:**
+    * Finessed test camera control script
+* Updated project preferences and settings
 
 ## [0.9.0] - 2025-04-14
 
