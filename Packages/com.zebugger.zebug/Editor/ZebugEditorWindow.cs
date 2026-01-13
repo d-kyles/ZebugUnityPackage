@@ -91,6 +91,9 @@ namespace ZebugProject {
             public Rect logLabelRect;
             public Rect gizmoLabelRect;
             public bool foldoutExpanded;
+            public bool graphExpanded;
+            public GUIStyle infoButtonStyle;
+            public GUIContent infoButtonContent;
         }
         
         private static int s_ExpandedCount;
@@ -113,7 +116,8 @@ namespace ZebugProject {
         private bool _showTestChannels;
         
         private bool s_StylesLoaded;
-        private GUIStyle _graphStyle;
+        private GUIStyle _graphStyleCollapsed;
+        private GUIStyle _graphStyleExpanded;
         private GUIStyle _graphFoldoutStyle;
         private GUILayoutOption[] _graphLayoutOptions;
         
@@ -217,9 +221,13 @@ namespace ZebugProject {
                 Texture2D backgroundTextureBottom = Resources.Load<Texture2D>("ZebugBackgroundBox_Bottom");
                 _channelRowStyleBottom.normal.background = backgroundTextureBottom;
 
-                _graphStyle = new GUIStyle(EditorStyles.helpBox);
-                _graphStyle.fixedHeight = 100f;
-                _graphStyle.alignment = TextAnchor.UpperLeft;
+                _graphStyleCollapsed = new GUIStyle(EditorStyles.helpBox);
+                _graphStyleCollapsed.fixedHeight = 100f;
+                _graphStyleCollapsed.alignment = TextAnchor.UpperLeft;
+                
+                _graphStyleExpanded = new GUIStyle(EditorStyles.helpBox);
+                _graphStyleExpanded.fixedHeight = 200f;
+                _graphStyleExpanded.alignment = TextAnchor.UpperLeft;
                 
                 _graphFoldoutStyle = new GUIStyle(EditorStyles.foldout);
                 _graphFoldoutStyle.margin = new RectOffset(16, 0, 0, 0);
@@ -504,6 +512,12 @@ namespace ZebugProject {
                 cache.toggleWidthOptions = new GUILayoutOption[1];
                 cache.toggleWidthOptions[0] = GUILayout.Width(togglesWidth/2);
                 
+                cache.infoButtonStyle = new GUIStyle(GUI.skin.button);
+                cache.infoButtonStyle.padding = new RectOffset(2, 2, 2, 2);
+                cache.infoButtonStyle.margin = new RectOffset(2, 2, 2, 2);
+                
+                cache.infoButtonContent = new GUIContent("...", "Show graph information");
+                
                 _channelCacheData[channel] = cache;
             }
         }
@@ -558,18 +572,17 @@ namespace ZebugProject {
                 
                 if (cache.foldoutExpanded)
                 {
-                    GUILayout.Box(cache.emptyContent, _graphStyle);
+                    var graphStyle = cache.graphExpanded ? _graphStyleExpanded : _graphStyleCollapsed;
+                    GUILayout.Box(cache.emptyContent, graphStyle);
 
                     var currentEventType = Event.current.type;
                     
-                    Rect graphRect = default;
+                    Rect graphRect = GUILayoutUtility.GetLastRect();
                     
                     if (currentEventType == EventType.Repaint ||
                         currentEventType == EventType.MouseMove || 
                         currentEventType == EventType.MouseDown)
                     {
-                        graphRect = GUILayoutUtility.GetLastRect();
-                    
                         // If the mouse cursor is inside our Unity IMGUI rect
                         var mousePos = Event.current.mousePosition;
                         if (graphRect.Contains(mousePos) && graphData.points.Count > 1)
@@ -578,6 +591,13 @@ namespace ZebugProject {
 
                             DrawGraphMouseInspection(mousePos, graphRect, graphData);
                         }
+                    }
+
+                    //  --- Draw the info button in the top right
+                    var infoButtonRect = new Rect(graphRect.x + graphRect.width - 22, graphRect.y + 2, 20, 20);
+                    if (GUI.Button(infoButtonRect, cache.infoButtonContent, cache.infoButtonStyle))
+                    {
+                        cache.graphExpanded = !cache.graphExpanded;
                     }
                     
                     if (Event.current.type == EventType.Repaint)
@@ -597,6 +617,11 @@ namespace ZebugProject {
                             DrawGraphPointsIntoRect(graphRect, graphData, subGraphData, lineColor);
                         }
                     }
+                    
+                    if (cache.graphExpanded)
+                    {
+                        DrawGraphInfoSection(channel, graphData);
+                    }
                 }
             }
 
@@ -605,7 +630,54 @@ namespace ZebugProject {
                 DrawGraph(child);
             }
         }
+
+        private void DrawGraphInfoSection(IChannel channel, GraphData graphData)
+        {
+            GUILayout.BeginVertical(EditorStyles.helpBox);
+            
+            var channelColor = channel.GetColor();
+            var channelName = channel.Name();
+            
+            // Draw main graph line
+            Color mainLineColor = VisibleColorOrDefault(graphData.lineColor, channelColor);
+            DrawGraphLineInfo(channelName, mainLineColor);
+            
+            // Draw subgraph lines
+            foreach (var (subGraphName, subGraphData) in graphData.subGraphs)
+            {
+                Color subLineColor = VisibleColorOrDefault(subGraphData.lineColor, channelColor);
+                DrawGraphLineInfo(subGraphName, subLineColor);
+            }
+            
+            // Draw sample count
+            GUILayout.Space(4);
+            GUILayout.Label($"Samples: {graphData.points.Count}", EditorStyles.miniLabel);
+            
+            GUILayout.EndVertical();
+        }
         
+        private void DrawGraphLineInfo(string name, Color color)
+        {
+            // Draw colored line indicator on the left
+            Rect lineRect = GUILayoutUtility.GetRect(20, EditorGUIUtility.singleLineHeight);
+            if (Event.current.type == EventType.Repaint)
+            {
+                Handles.color = color;
+                float lineY = lineRect.y + lineRect.height * 0.5f;
+                Handles.DrawLine(new Vector3(lineRect.x, lineY, 0), 
+                               new Vector3(lineRect.x + 20, lineY, 0));
+            }
+            
+            var thingStyle = new GUIStyle(EditorStyles.miniLabel);
+            thingStyle.margin = new RectOffset(30, 0, 0, 0);
+            
+            // Draw name
+            lineRect.x += 20;
+            lineRect.width -= 20;
+            
+            GUI.Label(lineRect, name, thingStyle);
+        }
+
         //  ----------------------------------------------------------------------------------------
         
         private static void DrawGraphMouseInspection(Vector2 mousePos, Rect graphRect, GraphData graphData)
