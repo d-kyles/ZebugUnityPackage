@@ -241,6 +241,7 @@ namespace ZebugProject
             if (s_Instance == null)
             {
                 s_Instance = CreateInstance<ZebugPreferences>();
+                s_Instance._channelDict = new ZebugPreferenceDictionary();
 
                 #if UNITY_EDITOR
                 {
