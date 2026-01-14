@@ -103,13 +103,14 @@ namespace ZebugProject {
         private GUIStyle _channelRowStyleInner;
         private GUIStyle _channelRowStyleBottom;
         
-        private Vector2 _scrollPosition;
+        private Vector2 _mainContentScrollPosition;
+        private Vector2 _advOptionsScrollPosition;
+        private Vector2 _variablesScrollPosition;
         
         private const string kShowTestChannelsPref = "ZebugShowTestChannels";
         private const float channelLineHeight = 23f;
 
         private bool _advOptionsExpanded;
-        private bool _graphsExpanded;
         private bool _windowVarsExpanded;
         private static bool s_addingValueBreakpoint;
 
@@ -119,6 +120,10 @@ namespace ZebugProject {
         private GUIStyle _graphStyleCollapsed;
         private GUIStyle _graphStyleExpanded;
         private GUIStyle _graphFoldoutStyle;
+        private GUIStyle _graphNoSamplesTextStyle;
+        private GUIContent _graphNoSamplesText;
+        private GUIContent _graphSamplesDisabledText;
+        private GUIContent _graphSamplesReenableText;
         private GUILayoutOption[] _graphLayoutOptions;
         
         private GUIContent _channelsTxt;
@@ -230,7 +235,11 @@ namespace ZebugProject {
                 _graphStyleExpanded.alignment = TextAnchor.UpperLeft;
                 
                 _graphFoldoutStyle = new GUIStyle(EditorStyles.foldout);
-                _graphFoldoutStyle.margin = new RectOffset(16, 0, 0, 0);
+                //_graphFoldoutStyle.margin = new RectOffset(16, 0, 0, 0);
+                _graphNoSamplesText = new GUIContent("No samples found.");
+                _graphSamplesDisabledText = new GUIContent("Channel visuals disabled.");
+                _graphSamplesReenableText = new GUIContent("Enable?");
+                _graphNoSamplesTextStyle = new GUIStyle(EditorStyles.centeredGreyMiniLabel);
                 
                 _channelsTxt = new GUIContent("Channels");
                 _channelsDefaultTxtContent = new GUIContent("New channels enabled by default?");
@@ -277,25 +286,81 @@ namespace ZebugProject {
         
         #region OnGUI
         
+        private int tabIdx;
+        
         private void OnGUI() 
         {
-            Profiler.BeginSample("Zebug IMGUI - Perf Tip: Fold away all the things.");
+            Profiler.BeginSample("Zebug IMGUI - Perf Tip: Fold away all the things. Each IMGUI component is crazy expensive.");
             
             CheckInit();
+            // var toolbarStyle = new GUIStyle(EditorStyles.contentToolbar);
+            var toolbarStyle = new GUIStyle(GUI.skin.button);
+            toolbarStyle.fixedHeight = 28;
+            tabIdx = GUILayout.Toolbar(tabIdx, new []{_channelsTxt, _graphsLabelTxtContent}, toolbarStyle);
             
-            _scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
+            GUILayout.Space(12);
+            ZebugGUIStyles.Line();
+
+            _mainContentScrollPosition = GUILayout.BeginScrollView(_mainContentScrollPosition);
 
             _realtimeElementVisible = false;
+            
+            switch (tabIdx)
+            {
+                case 0: 
+                    //  --- Channel Toggle List --------------------------------
+                    ChannelsGui();
+                    break;
+                case 1:
+                    //  --- Graphs ---------------------------------------------
+                    GraphsGui();
+                    break;
+            }
+            
+            GUILayout.FlexibleSpace();
+            
+            GUILayout.EndScrollView();
+
+            //  --- Adv Options -----------------------------------------------
+            
+            
+            ZebugGUIStyles.Line();
+                        
+            _advOptionsExpanded = EditorGUILayout.Foldout(_advOptionsExpanded
+                                                         , _advOptionsLabelTxtContent
+                                                         , toggleOnLabelClick: true);
+            
+            if (_advOptionsExpanded)
+            {
+                _advOptionsScrollPosition = GUILayout.BeginScrollView(_advOptionsScrollPosition);
+                DrawAdvancedOptions();
+                GUILayout.EndScrollView();
+            }
+            
+            _windowVarsExpanded = EditorGUILayout.Foldout(_windowVarsExpanded
+                                                         , _windowVarsLabelTxtContent
+                                                         , toggleOnLabelClick: true);
+            if (_windowVarsExpanded) {
+                _variablesScrollPosition =  GUILayout.BeginScrollView(_variablesScrollPosition);
+                DrawWindowVars();
+                GUILayout.EndScrollView();
+            }
+            
+            Profiler.EndSample();
+        }
+
+        //   ---------------------------------------------------------------------------------------
+        
+        private void ChannelsGui()
+        {
             int currentChannel = 0;
             int visibleChannelCount = s_ExpandedCount;
             
             var oldColor = GUI.backgroundColor;
-            GUI.backgroundColor = Color.grey;
+            //GUI.backgroundColor = Color.grey;
             GUI.backgroundColor = Color.white;
-            
-            //  --- Channel Toggle List ---------------------------------------
-            
-            GUILayout.Label(_channelsTxt, EditorStyles.largeLabel);
+
+            //GUILayout.Label(_channelsTxt, EditorStyles.largeLabel);
             
             DrawChannel(Zebug.Instance, visibleChannelCount, ref currentChannel);
             GUI.backgroundColor = oldColor;
@@ -315,43 +380,28 @@ namespace ZebugProject {
                     ZebugPreferences.Instance.ChannelsEnabledByDefault = newValue;
                 }
             }
-            
-            //  --- Graphs ----------------------------------------------------
-            
-            ZebugGUIStyles.Line();
 
-            _graphsExpanded = EditorGUILayout.Foldout( _graphsExpanded
-                                                     , _graphsLabelTxtContent
-                                                     , toggleOnLabelClick: true);
-            if (_graphsExpanded)
-            {
-                DrawGraphs();
-            }
-            
-            //  --- Adv Options -----------------------------------------------
-            
-            
-            ZebugGUIStyles.Line();
-                        
-            _advOptionsExpanded = EditorGUILayout.Foldout(_advOptionsExpanded
-                                                         , _advOptionsLabelTxtContent
-                                                         , toggleOnLabelClick: true);
-            if (_advOptionsExpanded)
-            {
-                DrawAdvancedOptions();
-            }
-            
-            _windowVarsExpanded = EditorGUILayout.Foldout(_windowVarsExpanded
-                                                         , _windowVarsLabelTxtContent
-                                                         , toggleOnLabelClick: true);
-            if (_windowVarsExpanded) {
-                DrawWindowVars();
-            }
-            
-            GUILayout.EndScrollView();
-            
-            Profiler.EndSample();
         }
+
+        //   ---------------------------------------------------------------------------------------
+        
+        private void GraphsGui()
+        {
+            
+            // ZebugGUIStyles.Line();
+
+            // _graphsExpanded = EditorGUILayout.Foldout( _graphsExpanded
+            //                                          , _graphsLabelTxtContent
+            //                                          , toggleOnLabelClick: true);
+            // if (_graphsExpanded)
+            // {
+                 DrawGraphs();
+            // }
+
+            
+        }
+        
+        //   ---------------------------------------------------------------------------------------
 
         #endregion OnGUI
         
@@ -557,11 +607,6 @@ namespace ZebugProject {
         
         private void DrawGraph(IChannel channel)
         {
-            if (!channel.GizmosEnabled())
-            {
-                return;
-            }
-
             if (Zebug.s_ChannelGraphData.TryGetValue(channel, out GraphData graphData))
             {
                 _realtimeElementVisible = true;
@@ -600,22 +645,20 @@ namespace ZebugProject {
                         cache.graphExpanded = !cache.graphExpanded;
                     }
                     
-                    if (Event.current.type == EventType.Repaint)
-                    {
-                        var channelColor = channel.GetColor();
-                        Color lineColor = VisibleColorOrDefault(graphData.lineColor, channelColor);
-                        
-                        DrawGridLines(graphData, graphRect);
+                
+                    var channelColor = channel.GetColor();
+                    Color lineColor = VisibleColorOrDefault(graphData.lineColor, channelColor);
+                    
+                    DrawGridLines(graphData, graphRect);
 
-                        DrawGraphPointsIntoRect(graphRect, graphData, graphData, lineColor);
+                    DrawGraphPointsIntoRect(channel, graphRect, graphData, graphData, lineColor);
+                    
+                    // testing!
+                    foreach (var (subGraphName, subGraphData) in graphData.subGraphs)
+                    {
+                        lineColor = VisibleColorOrDefault(subGraphData.lineColor, channelColor);
                         
-                        // testing!
-                        foreach (var (subGraphName, subGraphData) in graphData.subGraphs)
-                        {
-                            lineColor = VisibleColorOrDefault(subGraphData.lineColor, channelColor);
-                            
-                            DrawGraphPointsIntoRect(graphRect, graphData, subGraphData, lineColor);
-                        }
+                        DrawGraphPointsIntoRect(channel, graphRect, graphData, subGraphData, lineColor);
                     }
                     
                     if (cache.graphExpanded)
@@ -770,6 +813,11 @@ namespace ZebugProject {
         
         private void DrawGridLines(GraphData graphData, Rect graphRect)
         {
+            if (Event.current.type != EventType.Repaint)
+            {
+                return;
+            }
+            
             //  --- When not specifying a texture, this is about the same as 1px... not sure why
             const float lineWidth = 2.5f;
             
@@ -816,16 +864,58 @@ namespace ZebugProject {
 
         //  ----------------------------------------------------------------------------------------
         
-        private void DrawGraphPointsIntoRect(Rect rect, GraphData referenceData, GraphData graphData, Color color)
+        private void DrawGraphPointsIntoRect(IChannel channel, Rect rect, GraphData referenceData,
+            GraphData graphData, Color color)
         {
             List<GraphData.Sample> points = graphData.points;
             
             int pointCount = points.Count;
             if (pointCount < 2)
             {
+                if (channel.GizmosEnabled())
+                {
+                    var labelRect = new Rect(rect.x + 40, rect.y, rect.width - 80, rect.height);
+                    GUI.Label(labelRect, _graphNoSamplesText, _graphNoSamplesTextStyle);
+                }
+                else
+                {
+                    const float minLabelWidth = 125f;
+                    const float height = 30f;
+                    const float minButtonWidth = 60f;
+                    
+                    float totalSpace = rect.width - minLabelWidth - minButtonWidth;
+                    
+                    const float xMarginP = 1f;
+                    const float xLabelP = 1f;
+                    const float xGapP = 0.25f;
+                    const float xButtonP = 0.5f;
+                    const float xEndMarginP = 1f;
+                    const float spaceRatio = 1f / (xMarginP + xLabelP + xGapP + xButtonP + xEndMarginP);
+                    
+                    float spacePerP = totalSpace * spaceRatio;  
+                    
+                    float top = rect.y + (int)(0.5*rect.height)-0.5f*height; 
+                    
+                    var labelRect = new Rect(rect.x + xMarginP*spacePerP, top, minLabelWidth + xLabelP+spacePerP, height);
+                    GUI.Label(labelRect, _graphSamplesDisabledText, _graphNoSamplesTextStyle);
+                    
+                    float buttonWidth = minButtonWidth + xButtonP*spacePerP;
+                    buttonWidth = Mathf.Max(buttonWidth, minButtonWidth);
+                    var buttonRect = new Rect(labelRect.xMax + xGapP*spacePerP, top, buttonWidth, height);
+                    
+                    if (GUI.Button(buttonRect, _graphSamplesReenableText))
+                    {
+                        channel.SetGizmosEnabled(true);
+                    }
+                }
                 return;
             }
-
+            
+            if (Event.current.type != EventType.Repaint)
+            {
+                return;
+            }
+            
             Handles.color = color;
             var firstSample = referenceData.First();
             var lastSample = referenceData.Last();

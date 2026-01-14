@@ -21,7 +21,7 @@ public class SimpleWindowVarButtonTest : MonoBehaviour
     
     protected void Update()
     {
-        Zebug.LogToWindow($"{name}Var", $"{name} Var Value: {Time.time}");
+        Zebug.LogToWindow($"{name}Var", $"Value (time): {Time.time}");
     }
     
 }
