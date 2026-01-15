@@ -57,6 +57,9 @@ MonoBehaviour:
     - ZebugBase/VeryNested0/VeryNested1/VeryNested2/VeryNested3/VeryNested4/VeryNested5/VeryNested6/VeryNested7/VeryNested8
     - ZebugBase/VeryNested0/VeryNested1/VeryNested2/VeryNested3/VeryNested4/VeryNested5/VeryNested6/VeryNested7/VeryNested8/VeryNested9
     - ZebugBase/GraphAxisDefaultsDebug
+    - ZebugBase/SimpleCameraController
+    - ZebugBase/DampValueGraph
+    - ZebugBase/DiffToValueGraph
     _values:
     - logEnabled: 1
       gizmoEnabled: 1
@@ -142,8 +145,14 @@ MonoBehaviour:
       gizmoEnabled: 1
     - logEnabled: 1
       gizmoEnabled: 1
-    - logEnabled: 0
-      gizmoEnabled: 0
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
   _useAdditionalPrefixOnIos: 0
   _additionalIosPrefix: '1-1 1 1 1 I '
   _debugGuiPrefab: {fileID: 3152298850289241183, guid: f298072245b1644a69d9b48e26bd32b9,

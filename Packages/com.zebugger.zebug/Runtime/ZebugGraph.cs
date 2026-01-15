@@ -1,6 +1,7 @@
 ﻿// -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -39,7 +40,25 @@ namespace ZebugProject
         
         public int startIdx;
         public int nextIdx;
-        public int maxPoints = 200;
+        
+        private int _maxPoints = 200;
+        public int maxPoints
+        {
+            get => _maxPoints;
+            set {
+                if (value is < 2 or > 10000)
+                {
+                    return;
+                }
+                
+                points.Capacity = Math.Max(points.Capacity, value);
+                if (points.Count > value)
+                {
+                    points.RemoveRange(value, points.Count - value);
+                }
+                _maxPoints = value;
+            }
+        }
         public float minValue = float.MaxValue;
         public float maxValue = float.MinValue;
         private float _breakValue;
@@ -74,11 +93,12 @@ namespace ZebugProject
 
             if (points.Count >= maxPoints)
             {
-                points[nextIdx++] = sample;
+                nextIdx++;
                 if (nextIdx >= points.Count)
                 {
                     nextIdx = 0;
                 }
+                points[nextIdx] = sample;
             }
             else
             {
@@ -91,7 +111,7 @@ namespace ZebugProject
             int pointCount = points.Count;
             if (pointCount > 0)
             {
-                if (nextIdx > 0)
+                if (nextIdx > 0 && nextIdx < pointCount)
                 {
                     return points[nextIdx];
                 }

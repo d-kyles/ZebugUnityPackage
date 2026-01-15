@@ -80,9 +80,9 @@ namespace ZebugProject {
 
         private static HashSet<IChannel> s_TestChannels = new();
         
-        private Dictionary<IChannel, ChannelCacheData> _channelCacheData = new();
+        private Dictionary<IChannel, ChannelGuiCacheData> _channelGuiCacheData = new();
         
-        private class ChannelCacheData
+        private class ChannelGuiCacheData
         {
             public GUIStyle togglesLineStyle;
             public GUIContent channelNameContent;
@@ -90,8 +90,6 @@ namespace ZebugProject {
             public GUILayoutOption[] toggleWidthOptions;
             public Rect logLabelRect;
             public Rect gizmoLabelRect;
-            public bool foldoutExpanded;
-            public bool graphExpanded;
             public GUIStyle infoButtonStyle;
             public GUIContent infoButtonContent;
         }
@@ -140,6 +138,10 @@ namespace ZebugProject {
         private GUIContent _iosPrefixLabelTxtContent;
         private GUIContent _addBreakLabelTxtContent;
 
+        private GUIStyle _graphSettingsIconStyle;
+        private GUIContent _graphSettingsIconContent;
+
+        
         protected void OnEnable() {
 
             // ZebugEditorUtils.LoadFromZebugRelative Packages/com.zebugger.zebug or Assets/Plugins/Zebug/
@@ -254,6 +256,10 @@ namespace ZebugProject {
                 _iosTogglePrefixLabelTxtContent = new GUIContent("Extra log prefix for iOS", "May help ADB style syntax highlighting for exported ios Logs");
                 _iosPrefixLabelTxtContent = new GUIContent("iOS log prefix:");
                 _addBreakLabelTxtContent = new GUIContent("Add value breakpoint");
+                
+                _graphSettingsIconStyle = new GUIStyle(GUI.skin.button);
+                _graphSettingsIconStyle.padding = new RectOffset(0, 0, 0, 0);
+                _graphSettingsIconContent = EditorGUIUtility.IconContent("ToolSettings");
                 
                 s_StylesLoaded = _channelRowStyleTop != null;
             } 
@@ -437,7 +443,7 @@ namespace ZebugProject {
             
             using (new GUILayout.HorizontalScope(style)) {
 
-                CachedChannelData(channel, out ChannelCacheData cache);
+                GetCachedChannelData(channel, out ChannelGuiCacheData cache);
                 
                 if (isFoldoutLine) {
                    
@@ -476,7 +482,7 @@ namespace ZebugProject {
                         }
                         else
                         {
-                            var rect = _channelCacheData[Zebug.Instance].logLabelRect;
+                            var rect = _channelGuiCacheData[Zebug.Instance].logLabelRect;
                             rect.y += channelLineHeight * currentChannel;
                             newLogEnabled = GUI.Toggle(rect, logEnabled, _logLabelTxtContent);
                         }
@@ -499,7 +505,7 @@ namespace ZebugProject {
                         }
                         else
                         {
-                            var rect = _channelCacheData[Zebug.Instance].gizmoLabelRect;
+                            var rect = _channelGuiCacheData[Zebug.Instance].gizmoLabelRect;
                             rect.y += channelLineHeight * currentChannel;
                             newGizmosEnabled = GUI.Toggle(rect, gizmosEnabled, _gizmosLabelTxtContent);
                         }
@@ -528,47 +534,47 @@ namespace ZebugProject {
             }
         }
 
-        private void CachedChannelData(IChannel channel, out ChannelCacheData cache)
+        private void GetCachedChannelData(IChannel channel, out ChannelGuiCacheData guiCache)
         {
             const float togglesWidth = 150f;
             const int indentPaddingSize = 16;
             
-            _channelCacheData.TryGetValue(channel, out cache);
-            if (cache == null)
+            _channelGuiCacheData.TryGetValue(channel, out guiCache);
+            if (guiCache == null)
             {
-                cache = new ChannelCacheData();
+                guiCache = new ChannelGuiCacheData();
                 
                 var color = channel.GetColor();
                 var channelName = channel.Name();
                 bool isFoldoutLine = channel.Children().Count > 0;
                 
                 if (isFoldoutLine) {
-                    cache.togglesLineStyle = new GUIStyle(EditorStyles.foldout);
+                    guiCache.togglesLineStyle = new GUIStyle(EditorStyles.foldout);
                 } else {
-                    cache.togglesLineStyle = new GUIStyle();
-                    cache.togglesLineStyle.padding = new RectOffset(indentPaddingSize * EditorGUI.indentLevel, 0, 0, 0);
-                    cache.togglesLineStyle.fontSize = 12;
-                    cache.togglesLineStyle.alignment = TextAnchor.MiddleLeft;
-                    cache.togglesLineStyle.fixedHeight = channelLineHeight - 5;
+                    guiCache.togglesLineStyle = new GUIStyle();
+                    guiCache.togglesLineStyle.padding = new RectOffset(indentPaddingSize * EditorGUI.indentLevel, 0, 0, 0);
+                    guiCache.togglesLineStyle.fontSize = 12;
+                    guiCache.togglesLineStyle.alignment = TextAnchor.MiddleLeft;
+                    guiCache.togglesLineStyle.fixedHeight = channelLineHeight - 5;
                 }
-                cache.togglesLineStyle.normal.textColor = color;
-                cache.togglesLineStyle.onNormal.textColor = color;
-                cache.togglesLineStyle.focused.textColor = color;
-                cache.togglesLineStyle.onFocused.textColor = color;
+                guiCache.togglesLineStyle.normal.textColor = color;
+                guiCache.togglesLineStyle.onNormal.textColor = color;
+                guiCache.togglesLineStyle.focused.textColor = color;
+                guiCache.togglesLineStyle.onFocused.textColor = color;
                 
-                cache.channelNameContent = new GUIContent(channelName);
-                cache.emptyContent = new GUIContent();
+                guiCache.channelNameContent = new GUIContent(channelName);
+                guiCache.emptyContent = new GUIContent();
                 
-                cache.toggleWidthOptions = new GUILayoutOption[1];
-                cache.toggleWidthOptions[0] = GUILayout.Width(togglesWidth/2);
+                guiCache.toggleWidthOptions = new GUILayoutOption[1];
+                guiCache.toggleWidthOptions[0] = GUILayout.Width(togglesWidth/2);
                 
-                cache.infoButtonStyle = new GUIStyle(GUI.skin.button);
-                cache.infoButtonStyle.padding = new RectOffset(2, 2, 2, 2);
-                cache.infoButtonStyle.margin = new RectOffset(2, 2, 2, 2);
+                guiCache.infoButtonStyle = new GUIStyle(GUI.skin.button);
+                guiCache.infoButtonStyle.padding = new RectOffset(2, 2, 2, 2);
+                guiCache.infoButtonStyle.margin = new RectOffset(2, 2, 2, 2);
                 
-                cache.infoButtonContent = new GUIContent("...", "Show graph information");
+                guiCache.infoButtonContent = new GUIContent("...", "Show graph information");
                 
-                _channelCacheData[channel] = cache;
+                _channelGuiCacheData[channel] = guiCache;
             }
         }
 
@@ -605,19 +611,70 @@ namespace ZebugProject {
 
         //  ----------------------------------------------------------------------------------------
         
+        [Serializable]
+        private class GraphUserConfig
+        {
+            public bool FoldoutExpanded;
+            public bool GraphExpanded;
+            public bool SettingsExpanded;
+            public int SampleCountOverride = 200;
+        }
+        
+        private const string k_GraphConfigEditorPrefsKeyPrefix = "Zebug.EditorGraphConfig.";
+        
+        private Dictionary<IChannel, GraphUserConfig> _graphConfigs = new();
+        
+        private void GetGraphGuiPrefs(IChannel channel, out GraphUserConfig config)
+        {
+            if (!_graphConfigs.TryGetValue(channel, out config))
+            {
+                string key = k_GraphConfigEditorPrefsKeyPrefix + channel.FullName();
+                
+                string configJson = EditorPrefs.GetString(key, "{}");
+                try
+                {
+                    config = JsonUtility.FromJson<GraphUserConfig>(configJson) 
+                             ?? new GraphUserConfig();
+                } 
+                finally
+                {
+                    config ??= new GraphUserConfig();
+                }
+                _graphConfigs[channel] = config;
+            }
+        }
+        
+        private void GraphGuiPrefsSaveCheck()
+        {
+            if (!GUI.changed)
+            {
+                return;
+            }
+
+            foreach (var (channel, config) in _graphConfigs)
+            {
+                string key = k_GraphConfigEditorPrefsKeyPrefix + channel.FullName();
+                EditorPrefs.SetString(key, JsonUtility.ToJson(config));
+            }
+        }
+        
+        //  ----------------------------------------------------------------------------------------
+        
         private void DrawGraph(IChannel channel)
         {
             if (Zebug.s_ChannelGraphData.TryGetValue(channel, out GraphData graphData))
             {
                 _realtimeElementVisible = true;
                 
-                CachedChannelData(channel, out ChannelCacheData cache);
+                GetCachedChannelData(channel, out ChannelGuiCacheData cache);
+                GetGraphGuiPrefs(channel, out GraphUserConfig config);
                 
-                cache.foldoutExpanded = EditorGUILayout.Foldout(cache.foldoutExpanded, cache.channelNameContent, true, _graphFoldoutStyle);
+                config.FoldoutExpanded = EditorGUILayout.Foldout(config.FoldoutExpanded, cache.channelNameContent, true, _graphFoldoutStyle);
+                GraphGuiPrefsSaveCheck();
                 
-                if (cache.foldoutExpanded)
+                if (config.FoldoutExpanded)
                 {
-                    var graphStyle = cache.graphExpanded ? _graphStyleExpanded : _graphStyleCollapsed;
+                    var graphStyle = config.GraphExpanded ? _graphStyleExpanded : _graphStyleCollapsed;
                     GUILayout.Box(cache.emptyContent, graphStyle);
 
                     var currentEventType = Event.current.type;
@@ -639,12 +696,13 @@ namespace ZebugProject {
                     }
 
                     //  --- Draw the info button in the top right
-                    var infoButtonRect = new Rect(graphRect.x + graphRect.width - 22, graphRect.y + 2, 20, 20);
-                    if (GUI.Button(infoButtonRect, cache.infoButtonContent, cache.infoButtonStyle))
-                    {
-                        cache.graphExpanded = !cache.graphExpanded;
-                    }
-                    
+                    // var infoButtonRect = new Rect(graphRect.x + graphRect.width - 22, graphRect.y + 2, 20, 20);
+                    // if (GUI.Button(infoButtonRect, cache.infoButtonContent, cache.infoButtonStyle))
+                    // {
+                    //     config.GraphExpanded = !config.GraphExpanded;
+                    //     GraphGuiPrefsSaveCheck();
+                    // }
+                    //
                 
                     var channelColor = channel.GetColor();
                     Color lineColor = VisibleColorOrDefault(graphData.lineColor, channelColor);
@@ -661,10 +719,15 @@ namespace ZebugProject {
                         DrawGraphPointsIntoRect(channel, graphRect, graphData, subGraphData, lineColor);
                     }
                     
-                    if (cache.graphExpanded)
-                    {
-                        DrawGraphInfoSection(channel, graphData);
-                    }
+                    // if (config.GraphExpanded)
+                    // {
+                    //     DrawGraphInfoSection(channel, graphData);
+                    // }
+                    //
+                    // if (config.SettingsExpanded)
+                    // {
+                    //     DrawGraphSettingsSection(channel, graphData);
+                    // }
                 }
             }
 
@@ -695,6 +758,39 @@ namespace ZebugProject {
             // Draw sample count
             GUILayout.Space(4);
             GUILayout.Label($"Samples: {graphData.points.Count}", EditorStyles.miniLabel);
+            
+            GUILayout.EndVertical();
+            
+            var infoSectionRect = GUILayoutUtility.GetLastRect();
+            
+            //  --- Draw the settings button in the top right
+            var infoButtonRect = new Rect(infoSectionRect.x + infoSectionRect.width - 22, infoSectionRect.y + 2, 20, 20);
+           
+            if (GUI.Button(infoButtonRect, _graphSettingsIconContent, _graphSettingsIconStyle))
+            {
+                GetGraphGuiPrefs(channel, out var config);
+                config.SettingsExpanded = !config.SettingsExpanded;
+                GraphGuiPrefsSaveCheck();
+            }
+        }
+        
+        private void DrawGraphSettingsSection(IChannel channel, GraphData graphData)
+        {
+            GUILayout.BeginVertical(EditorStyles.helpBox);
+            GUILayout.Label("Settings", EditorStyles.largeLabel);
+            ZebugGUIStyles.Line();
+            GUILayout.Space(4);
+            
+            GetGraphGuiPrefs(channel, out var config);
+            
+            config.SampleCountOverride 
+                = EditorGUILayout.IntField("Sample count override", config.SampleCountOverride);
+            GraphGuiPrefsSaveCheck();
+            
+            if (GUI.changed)
+            {
+                graphData.maxPoints = config.SampleCountOverride;   
+            }
             
             GUILayout.EndVertical();
         }
@@ -872,42 +968,7 @@ namespace ZebugProject {
             int pointCount = points.Count;
             if (pointCount < 2)
             {
-                if (channel.GizmosEnabled())
-                {
-                    var labelRect = new Rect(rect.x + 40, rect.y, rect.width - 80, rect.height);
-                    GUI.Label(labelRect, _graphNoSamplesText, _graphNoSamplesTextStyle);
-                }
-                else
-                {
-                    const float minLabelWidth = 125f;
-                    const float height = 30f;
-                    const float minButtonWidth = 60f;
-                    
-                    float totalSpace = rect.width - minLabelWidth - minButtonWidth;
-                    
-                    const float xMarginP = 1f;
-                    const float xLabelP = 1f;
-                    const float xGapP = 0.25f;
-                    const float xButtonP = 0.5f;
-                    const float xEndMarginP = 1f;
-                    const float spaceRatio = 1f / (xMarginP + xLabelP + xGapP + xButtonP + xEndMarginP);
-                    
-                    float spacePerP = totalSpace * spaceRatio;  
-                    
-                    float top = rect.y + (int)(0.5*rect.height)-0.5f*height; 
-                    
-                    var labelRect = new Rect(rect.x + xMarginP*spacePerP, top, minLabelWidth + xLabelP+spacePerP, height);
-                    GUI.Label(labelRect, _graphSamplesDisabledText, _graphNoSamplesTextStyle);
-                    
-                    float buttonWidth = minButtonWidth + xButtonP*spacePerP;
-                    buttonWidth = Mathf.Max(buttonWidth, minButtonWidth);
-                    var buttonRect = new Rect(labelRect.xMax + xGapP*spacePerP, top, buttonWidth, height);
-                    
-                    if (GUI.Button(buttonRect, _graphSamplesReenableText))
-                    {
-                        channel.SetGizmosEnabled(true);
-                    }
-                }
+                DrawUiForNoSamplesFound(channel, rect);
                 return;
             }
             
@@ -952,7 +1013,7 @@ namespace ZebugProject {
             
             for (int i = 0; i < pointCount; i++)
             {
-                int idx = (pointIdxOffset + i) % maxPointCount;
+                int idx = (pointIdxOffset + i) % pointCount;
                 GraphData.Sample sample = points[idx];
 
                 float xT = (sample.time - startTime) * invTimeScale;
@@ -983,6 +1044,50 @@ namespace ZebugProject {
             Handles.DrawAAPolyLine(lineWidth, pointCount, pooledArray);
             ArrayPool<Vector3>.Return(pooledArray);
         }
+        
+        //  ----------------------------------------------------------------------------------------
+        
+        private void DrawUiForNoSamplesFound(IChannel channel, Rect rect)
+        {
+            if (channel.GizmosEnabled())
+            {
+                var labelRect = new Rect(rect.x + 40, rect.y, rect.width - 80, rect.height);
+                GUI.Label(labelRect, _graphNoSamplesText, _graphNoSamplesTextStyle);
+            }
+            else
+            {
+                const float minLabelWidth = 125f;
+                const float height = 30f;
+                const float minButtonWidth = 60f;
+                    
+                float totalSpace = rect.width - minLabelWidth - minButtonWidth;
+                    
+                const float xMarginP = 1f;
+                const float xLabelP = 1f;
+                const float xGapP = 0.25f;
+                const float xButtonP = 0.5f;
+                const float xEndMarginP = 1f;
+                const float spaceRatio = 1f / (xMarginP + xLabelP + xGapP + xButtonP + xEndMarginP);
+                    
+                float spacePerP = totalSpace * spaceRatio;  
+                    
+                float top = rect.y + (int)(0.5*rect.height)-0.5f*height; 
+                    
+                var labelRect = new Rect(rect.x + xMarginP*spacePerP, top, minLabelWidth + xLabelP+spacePerP, height);
+                GUI.Label(labelRect, _graphSamplesDisabledText, _graphNoSamplesTextStyle);
+                    
+                float buttonWidth = minButtonWidth + xButtonP*spacePerP;
+                buttonWidth = Mathf.Max(buttonWidth, minButtonWidth);
+                var buttonRect = new Rect(labelRect.xMax + xGapP*spacePerP, top, buttonWidth, height);
+                    
+                if (GUI.Button(buttonRect, _graphSamplesReenableText))
+                {
+                    channel.SetGizmosEnabled(true);
+                }
+            }
+        }
+        
+        //  ----------------------------------------------------------------------------------------
         
         #endregion  Draw Graphs
 
@@ -1072,7 +1177,7 @@ namespace ZebugProject {
             {
                 foreach (var (channel, variables) in Zebug.s_ChannelWindowVariables)
                 {
-                    CachedChannelData(channel, out ChannelCacheData cache);
+                    GetCachedChannelData(channel, out ChannelGuiCacheData cache);
                     
                     GUILayout.Label(cache.channelNameContent);
                     
