@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+...
+
+
+## [0.10.0] - 2026-01-21
+
 ### Added
 * **Value Graphing System** - Editor window now includes graphs for visualizing value-over-time data
     * Usage: `Zebug.GraphValue(float value)` or `Zebug.GraphValue(string name, float value)`
