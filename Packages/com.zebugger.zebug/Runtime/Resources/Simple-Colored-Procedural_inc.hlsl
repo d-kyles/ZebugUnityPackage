@@ -62,7 +62,7 @@ Varyings vert (Attributes IN)
     
 	ZERO_INITIALIZE(Varyings, OUT);
     UNITY_SETUP_INSTANCE_ID(IN);
-    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(OUT);
     
     #if defined(UNITY_ANY_INSTANCING_ENABLED)
     uint id = unity_InstanceID;

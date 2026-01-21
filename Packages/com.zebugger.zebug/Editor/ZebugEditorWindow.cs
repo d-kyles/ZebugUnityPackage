@@ -119,6 +119,7 @@ namespace ZebugProject {
         private GUIStyle _graphStyleExpanded;
         private GUIStyle _graphFoldoutStyle;
         private GUIStyle _graphNoSamplesTextStyle;
+        private GUIStyle _toolbarButtonStyle;
         private GUIContent _graphNoSamplesText;
         private GUIContent _graphSamplesDisabledText;
         private GUIContent _graphSamplesReenableText;
@@ -137,10 +138,13 @@ namespace ZebugProject {
         private GUIContent _iosTogglePrefixLabelTxtContent;
         private GUIContent _iosPrefixLabelTxtContent;
         private GUIContent _addBreakLabelTxtContent;
+        private GUIContent[] _toolbarButtonsContent;
 
         private GUIStyle _graphSettingsIconStyle;
         private GUIContent _graphSettingsIconContent;
 
+        private float _nextRepaintTime;
+        
         
         protected void OnEnable() {
 
@@ -158,8 +162,6 @@ namespace ZebugProject {
                     s_ExpandedCount += kvp.Value ? 1 : 0;
                 }
             }
-            
-            LoadStyles();
         }
         
         //  ----------------------------------------------------------------------------------------
@@ -242,6 +244,8 @@ namespace ZebugProject {
                 _graphSamplesDisabledText = new GUIContent("Channel visuals disabled.");
                 _graphSamplesReenableText = new GUIContent("Enable?");
                 _graphNoSamplesTextStyle = new GUIStyle(EditorStyles.centeredGreyMiniLabel);
+                _toolbarButtonStyle = new GUIStyle(GUI.skin.button);
+                _toolbarButtonStyle.fixedHeight = 28;
                 
                 _channelsTxt = new GUIContent("Channels");
                 _channelsDefaultTxtContent = new GUIContent("New channels enabled by default?");
@@ -256,12 +260,14 @@ namespace ZebugProject {
                 _iosTogglePrefixLabelTxtContent = new GUIContent("Extra log prefix for iOS", "May help ADB style syntax highlighting for exported ios Logs");
                 _iosPrefixLabelTxtContent = new GUIContent("iOS log prefix:");
                 _addBreakLabelTxtContent = new GUIContent("Add value breakpoint");
+
+                _toolbarButtonsContent = new []{_channelsTxt, _graphsLabelTxtContent};
                 
                 _graphSettingsIconStyle = new GUIStyle(GUI.skin.button);
                 _graphSettingsIconStyle.padding = new RectOffset(0, 0, 0, 0);
                 _graphSettingsIconContent = EditorGUIUtility.IconContent("ToolSettings");
                 
-                s_StylesLoaded = _channelRowStyleTop != null;
+                s_StylesLoaded = true;
             } 
             catch (NullReferenceException)
             {
@@ -269,23 +275,43 @@ namespace ZebugProject {
                 //                 Not sure how to avoid this.
             }
         }
-
+ 
         private void CheckInit()
         {
+            if (!s_StylesLoaded)
+            {
+                LoadStyles();
+            }
+            
             Zebug.EditorNeedsRepaint = OnEditorNeedsRepaint;
             
+            //  --- Make double sure unit-test channels are set to be off. 
             if (!PlayerPrefs.HasKey(kShowTestChannelsPref))
             {
                 PlayerPrefs.SetInt(kShowTestChannelsPref, 0);
             }
         }
         
-        private void OnEditorNeedsRepaint()
+        protected void Update()
         {
-            if (_realtimeElementVisible)
+            float time = Time.realtimeSinceStartup;
+            
+            if (_realtimeElementVisible) 
             {
+                _nextRepaintTime = time + 1/60f;
+                _realtimeElementVisible = false;
+            }
+            
+            if (time > _nextRepaintTime)
+            {
+                _nextRepaintTime = time + 1f;
                 Repaint();
             }
+        }
+        
+        private void OnEditorNeedsRepaint()
+        {
+            _nextRepaintTime = Time.realtimeSinceStartup;
         }
         
         //  ----------------------------------------------------------------------------------------
@@ -299,10 +325,8 @@ namespace ZebugProject {
             Profiler.BeginSample("Zebug IMGUI - Perf Tip: Fold away all the things. Each IMGUI component is crazy expensive.");
             
             CheckInit();
-            // var toolbarStyle = new GUIStyle(EditorStyles.contentToolbar);
-            var toolbarStyle = new GUIStyle(GUI.skin.button);
-            toolbarStyle.fixedHeight = 28;
-            tabIdx = GUILayout.Toolbar(tabIdx, new []{_channelsTxt, _graphsLabelTxtContent}, toolbarStyle);
+            
+            tabIdx = GUILayout.Toolbar(tabIdx, _toolbarButtonsContent, _toolbarButtonStyle);
             
             GUILayout.Space(12);
             ZebugGUIStyles.Line();
@@ -390,24 +414,6 @@ namespace ZebugProject {
         }
 
         //   ---------------------------------------------------------------------------------------
-        
-        private void GraphsGui()
-        {
-            
-            // ZebugGUIStyles.Line();
-
-            // _graphsExpanded = EditorGUILayout.Foldout( _graphsExpanded
-            //                                          , _graphsLabelTxtContent
-            //                                          , toggleOnLabelClick: true);
-            // if (_graphsExpanded)
-            // {
-                 DrawGraphs();
-            // }
-
-            
-        }
-        
-        //   ---------------------------------------------------------------------------------------
 
         #endregion OnGUI
         
@@ -415,17 +421,12 @@ namespace ZebugProject {
         
         #region Draw Channel
         
-        void DrawChannel(IChannel channel, int visibleChannelCount, ref int currentChannel) {
+        private void DrawChannel(IChannel channel, int visibleChannelCount, ref int currentChannel) {
             
             string channelName = channel.Name();
             string channelPath = channel.FullName();
             List<IChannel> children = channel.Children();
             bool isFoldoutLine = children.Count > 0;
-            
-            if (!s_StylesLoaded)
-            {
-                LoadStyles();
-            }
             
             var style = _channelRowStyleInner;
             if (currentChannel == 0)
@@ -586,14 +587,10 @@ namespace ZebugProject {
         
         //  ----------------------------------------------------------------------------------------
         
-        private void DrawGraphs()
+        private void GraphsGui()
         {
             //  * Channel specific settings
-            //  * Does Zebug have a guaranteed update? SceneDrawer seems like the most likely...
-            //      EditorNeedsRepaint is a bit of a hack around this issue.
-            //      but this would need to function regardless of the Zebug editor being open.
             //  * Display graphs in runtime window too.
-
             //  --- TODO(dan): Data breakpoints are still very WIP.
             //                 * Not sure they add enough value... much more performant than a
             //                   conditional breakpoint though, and if you're graphing a value
@@ -606,7 +603,7 @@ namespace ZebugProject {
             //     s_addingValueBreakpoint = !s_addingValueBreakpoint;
             // }
             
-            DrawGraph(Zebug.Instance);
+            DrawGraphGui(Zebug.Instance);
         }
 
         //  ----------------------------------------------------------------------------------------
@@ -623,7 +620,7 @@ namespace ZebugProject {
         private const string k_GraphConfigEditorPrefsKeyPrefix = "Zebug.EditorGraphConfig.";
         
         private Dictionary<IChannel, GraphUserConfig> _graphConfigs = new();
-        
+
         private void GetGraphGuiPrefs(IChannel channel, out GraphUserConfig config)
         {
             if (!_graphConfigs.TryGetValue(channel, out config))
@@ -660,83 +657,97 @@ namespace ZebugProject {
         
         //  ----------------------------------------------------------------------------------------
         
-        private void DrawGraph(IChannel channel)
+        private void DrawGraphGui(IChannel channel)
         {
             if (Zebug.s_ChannelGraphData.TryGetValue(channel, out GraphData graphData))
             {
-                _realtimeElementVisible = true;
-                
-                GetCachedChannelData(channel, out ChannelGuiCacheData cache);
-                GetGraphGuiPrefs(channel, out GraphUserConfig config);
-                
-                config.FoldoutExpanded = EditorGUILayout.Foldout(config.FoldoutExpanded, cache.channelNameContent, true, _graphFoldoutStyle);
-                GraphGuiPrefsSaveCheck();
-                
-                if (config.FoldoutExpanded)
-                {
-                    var graphStyle = config.GraphExpanded ? _graphStyleExpanded : _graphStyleCollapsed;
-                    GUILayout.Box(cache.emptyContent, graphStyle);
-
-                    var currentEventType = Event.current.type;
-                    
-                    Rect graphRect = GUILayoutUtility.GetLastRect();
-                    
-                    if (currentEventType == EventType.Repaint ||
-                        currentEventType == EventType.MouseMove || 
-                        currentEventType == EventType.MouseDown)
-                    {
-                        // If the mouse cursor is inside our Unity IMGUI rect
-                        var mousePos = Event.current.mousePosition;
-                        if (graphRect.Contains(mousePos) && graphData.points.Count > 1)
-                        {
-                            Zebug.RaiseEditorRepaint();
-
-                            DrawGraphMouseInspection(mousePos, graphRect, graphData);
-                        }
-                    }
-
-                    //  --- Draw the info button in the top right
-                    // var infoButtonRect = new Rect(graphRect.x + graphRect.width - 22, graphRect.y + 2, 20, 20);
-                    // if (GUI.Button(infoButtonRect, cache.infoButtonContent, cache.infoButtonStyle))
-                    // {
-                    //     config.GraphExpanded = !config.GraphExpanded;
-                    //     GraphGuiPrefsSaveCheck();
-                    // }
-                    //
-                
-                    var channelColor = channel.GetColor();
-                    Color lineColor = VisibleColorOrDefault(graphData.lineColor, channelColor);
-                    
-                    DrawGridLines(graphData, graphRect);
-
-                    DrawGraphPointsIntoRect(channel, graphRect, graphData, graphData, lineColor);
-                    
-                    // testing!
-                    foreach (var (subGraphName, subGraphData) in graphData.subGraphs)
-                    {
-                        lineColor = VisibleColorOrDefault(subGraphData.lineColor, channelColor);
-                        
-                        DrawGraphPointsIntoRect(channel, graphRect, graphData, subGraphData, lineColor);
-                    }
-                    
-                    // if (config.GraphExpanded)
-                    // {
-                    //     DrawGraphInfoSection(channel, graphData);
-                    // }
-                    //
-                    // if (config.SettingsExpanded)
-                    // {
-                    //     DrawGraphSettingsSection(channel, graphData);
-                    // }
-                }
+                DrawGraph(channel, graphData);   
             }
 
             foreach (IChannel child in channel.Children())
             {
-                DrawGraph(child);
+                DrawGraphGui(child);
             }
         }
 
+        //  ----------------------------------------------------------------------------------------
+        
+        private void DrawGraph(IChannel channel, GraphData graphData)
+        {
+            GetCachedChannelData(channel, out ChannelGuiCacheData cache);
+            GetGraphGuiPrefs(channel, out GraphUserConfig config);
+            
+            config.FoldoutExpanded = EditorGUILayout.Foldout(config.FoldoutExpanded, cache.channelNameContent, true, _graphFoldoutStyle);
+            GraphGuiPrefsSaveCheck();
+
+            if (!config.FoldoutExpanded)
+            {
+                return;
+            }
+
+            _realtimeElementVisible = true;
+                
+            var graphStyle = config.GraphExpanded ? _graphStyleExpanded : _graphStyleCollapsed;
+            GUILayout.Box(cache.emptyContent, graphStyle);
+
+            var currentEventType = Event.current.type;
+                
+            Rect graphRect = GUILayoutUtility.GetLastRect();
+            const float graphRectPadding = 2f;
+            graphRect.x += graphRectPadding;
+            graphRect.y += graphRectPadding;
+            graphRect.width -= graphRectPadding;
+            graphRect.height -= graphRectPadding;
+                
+            if (currentEventType == EventType.Repaint ||
+                currentEventType == EventType.MouseMove || 
+                currentEventType == EventType.MouseDown)
+            {
+                // If the mouse cursor is inside our Unity IMGUI rect
+                var mousePos = Event.current.mousePosition;
+                if (graphRect.Contains(mousePos) && graphData.points.Count > 1)
+                {
+                    Zebug.RaiseEditorRepaint();
+
+                    DrawGraphMouseInspection(mousePos, graphRect, graphData);
+                }
+            }
+
+            //  --- Draw the info button in the top right
+            var infoButtonRect = new Rect(graphRect.x + graphRect.width - 22, graphRect.y + 2, 20, 20);
+            if (GUI.Button(infoButtonRect, cache.infoButtonContent, cache.infoButtonStyle))
+            {
+                config.GraphExpanded = !config.GraphExpanded;
+                GraphGuiPrefsSaveCheck();
+            }
+            
+            var channelColor = channel.GetColor();
+            Color lineColor = VisibleColorOrDefault(graphData.lineColor, channelColor);
+                
+            DrawGridLines(graphData, graphRect);
+            
+            DrawGraphPointsIntoRect(channel, graphRect, graphData, graphData, lineColor);
+                
+            foreach (var (subGraphName, subGraphData) in graphData.subGraphs)
+            {
+                lineColor = VisibleColorOrDefault(subGraphData.lineColor, channelColor);
+                    
+                DrawGraphPointsIntoRect(channel, graphRect, graphData, subGraphData, lineColor);
+            }
+                
+            if (config.GraphExpanded)
+            {
+                DrawGraphInfoSection(channel, graphData);
+            }
+                
+            if (config.SettingsExpanded)
+            {
+                DrawGraphSettingsSection(channel, graphData);
+            }
+        }
+        
+        //  ----------------------------------------------------------------------------------------
+        
         private void DrawGraphInfoSection(IChannel channel, GraphData graphData)
         {
             GUILayout.BeginVertical(EditorStyles.helpBox);
@@ -774,6 +785,8 @@ namespace ZebugProject {
             }
         }
         
+        //  ----------------------------------------------------------------------------------------
+        
         private void DrawGraphSettingsSection(IChannel channel, GraphData graphData)
         {
             GUILayout.BeginVertical(EditorStyles.helpBox);
@@ -794,6 +807,8 @@ namespace ZebugProject {
             
             GUILayout.EndVertical();
         }
+        
+        //  ----------------------------------------------------------------------------------------
         
         private void DrawGraphLineInfo(string name, Color color)
         {
@@ -839,10 +854,11 @@ namespace ZebugProject {
 
                 var points = graphData.points;
                 int pointCount = points.Count;
+                int startIdxOffset = graphData.startIdxOffset;
                 
                 for (var i = 0; i < pointCount; i++)
                 {
-                    var idx = (graphData.nextIdx + i) % graphData.maxPoints;
+                    var idx = (startIdxOffset + i) % pointCount;
                     
                     var sample = points[idx];
                     float distance = MathF.Abs(sample.time - cursorTime);
@@ -915,13 +931,17 @@ namespace ZebugProject {
             }
             
             //  --- When not specifying a texture, this is about the same as 1px... not sure why
-            const float lineWidth = 2.5f;
+            //  --- Bug: However, on at least one machine this resulted a very wide line with no fill.
+            //           So we'll go back to thin 1-ish pixel lines :(. Might be platform specific.
+            //const float lineWidth = 2.5f;
+            const float lineWidth = 0f;
             
             float valueMin = graphData.minValue;
             float valueMax = graphData.maxValue;
             
             void DrawGridline(float value, Color color, bool dotted)
             {
+                var oldColor = Handles.color;
                 Handles.color = color;
                 
                 float gridLineY = RemapRange(value, 
@@ -935,11 +955,13 @@ namespace ZebugProject {
                 if (!dotted)
                 {
                     Handles.DrawLine(start, end, lineWidth);
-                } 
+                }
                 else
                 {
                     Handles.DrawDottedLine(start, end, lineWidth);
                 }
+                
+                Handles.color = oldColor;
             }
                     
             foreach (var (value, gridColor, dotted) in graphData.gridLines)
@@ -1004,16 +1026,13 @@ namespace ZebugProject {
 
             var pooledArray = ArrayPool<Vector3>.CheckOut(pointCount);
             
-            //var pointArray = new Vector3[pointCount];
-            
             float freshMinValue = float.MaxValue;
             float freshMaxValue = float.MinValue;
-            int maxPointCount = graphData.maxPoints;
-            int pointIdxOffset = graphData.nextIdx;
+            int startIdxOffset = graphData.startIdxOffset;
             
             for (int i = 0; i < pointCount; i++)
             {
-                int idx = (pointIdxOffset + i) % pointCount;
+                int idx = (startIdxOffset + i) % pointCount;
                 GraphData.Sample sample = points[idx];
 
                 float xT = (sample.time - startTime) * invTimeScale;

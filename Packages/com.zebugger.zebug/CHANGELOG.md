@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ...
 
+## [0.10.1] - 2026-01-22
+
+### Fixed
+* Fixes for GraphValue bugs to do with looping values and calculating graph bounds.
+* Fixed broken realtime repaint code. 
 
 ## [0.10.0] - 2026-01-21
 

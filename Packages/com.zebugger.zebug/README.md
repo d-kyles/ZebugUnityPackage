@@ -78,6 +78,7 @@ Making a Release
 * Create new entry in CHANGELOG.md
 * Commit with new version number in the following format `v 0.8.0`
 * Tag that commit with the verion number. E.G. `0.8.0`.
+* Update the package.json file
 
 License
 -------

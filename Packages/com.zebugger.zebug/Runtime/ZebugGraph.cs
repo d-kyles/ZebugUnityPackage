@@ -38,10 +38,20 @@ namespace ZebugProject
         
         public Color lineColor = new (0,0,0,0);
         
-        public int startIdx;
-        public int nextIdx;
+        private int offsetIdx;
+        private bool _looping;
         
-        private int _maxPoints = 200;
+        public int startIdxOffset
+        {
+            get { return offsetIdx; }
+        }
+        
+        public int endIdxOffset
+        {
+            get { return (offsetIdx + _maxPoints -1) % _maxPoints; }
+        }
+
+        private int _maxPoints = 400;
         public int maxPoints
         {
             get => _maxPoints;
@@ -51,12 +61,11 @@ namespace ZebugProject
                     return;
                 }
                 
+                //  --- For now, just start fresh with a change.
+                points.Clear();
                 points.Capacity = Math.Max(points.Capacity, value);
-                if (points.Count > value)
-                {
-                    points.RemoveRange(value, points.Count - value);
-                }
                 _maxPoints = value;
+                _looping = false;
             }
         }
         public float minValue = float.MaxValue;
@@ -91,14 +100,13 @@ namespace ZebugProject
                 maxValue = value;
             }
 
-            if (points.Count >= maxPoints)
+            
+            _looping = (points.Count >= _maxPoints);
+            
+            if (_looping)
             {
-                nextIdx++;
-                if (nextIdx >= points.Count)
-                {
-                    nextIdx = 0;
-                }
-                points[nextIdx] = sample;
+                points[offsetIdx] = sample;
+                offsetIdx = (offsetIdx + 1) % _maxPoints;
             }
             else
             {
@@ -108,37 +116,16 @@ namespace ZebugProject
 
         public Sample First()
         {
-            int pointCount = points.Count;
-            if (pointCount > 0)
-            {
-                if (nextIdx > 0 && nextIdx < pointCount)
-                {
-                    return points[nextIdx];
-                }
-                else
-                {
-                    return points[0];
-                }
-            }
-            else return new Sample(0);
+            return (_looping)
+                       ? points[offsetIdx] 
+                       : points.Count > 0 ? points[0] : new Sample(0);
         }
 
         public Sample Last()
         {
-            int pointCount = points.Count;
-            if (pointCount > 0)
-            {
-                if (nextIdx > 0)
-                {
-                    int prevIdx = (nextIdx + maxPoints - 1) % maxPoints;
-                    return points[prevIdx];
-                }
-                else
-                {
-                    return points[pointCount -1];
-                }
-            }
-            else return new Sample(0);
+            return (_looping) 
+                       ? points[endIdxOffset]
+                       : points.Count > 0 ? points[^1] : new Sample(0);
         }
 
         public void SmoothUpdateMinValue(float freshMinValue)
@@ -179,6 +166,7 @@ namespace ZebugProject
             _hasBreakValue = true;
         }
     }
+    
     
     
     public partial class Channel<T>
@@ -225,8 +213,25 @@ namespace ZebugProject
             data.maxValue = max;
         }
         
-        public void SetGraphGridLine(float value, Color color, bool dotted = false)
+        ///
+        /// <p>
+        /// SetGraphGridLine
+        /// </p>
+        /// 
+        /// Call in Awake or Start, not in update.
+        /// 
+        public static void SetGraphGridLine(float value, Color color, bool dotted = false)
         {
+            var lines = ChannelGraphData().gridLines;
+            for (var i = lines.Count - 1; i >= 0; i--)
+            {
+                if (Mathf.Approximately(lines[i].Item1, value))
+                {
+                    lines[i] = (value, color, dotted);
+                    return;
+                }    
+            }
+            
             ChannelGraphData().gridLines.Add((value, color, dotted));
         }
         

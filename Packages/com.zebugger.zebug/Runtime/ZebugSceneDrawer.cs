@@ -97,19 +97,7 @@ namespace ZebugProject
                                               , GraphicsBuffer.UsageFlags.LockBufferForWrite
                                               , _lineBufferLength
                                               , LineInstanceData.Size);
-                _lineCount = 1;
-                float width = 2f;
-                
-                var buffer = _lineData.LockBufferForWrite<LineInstanceData>(0, 1);
-                buffer[0] = new LineInstanceData
-                {
-                    startPosition = new float4(-1, 0.5f, -1, width),
-                    endPosition = new float3(1, 0.5f, 1),
-                    color = new Color32(120, 0, 255, 255),
-                };
-                _lineData.UnlockBufferAfterWrite<LineInstanceData>(1);
                 _material.SetBuffer(s_LineDataParamId, _lineData);
-                Zebug.Log($"lineData valid: {_lineData.IsValid()}");
             }
 
             private class PassData
@@ -362,6 +350,9 @@ namespace ZebugProject
         [RuntimeInitializeOnLoadMethod]
         protected static void InitializeOnLoad()
         {
+            #if UNITY_WEBGL
+            return;
+            #endif
             if (s_Instance != null)
             {
                 return;
