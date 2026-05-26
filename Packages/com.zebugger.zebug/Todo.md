@@ -39,11 +39,9 @@
 
 5)  Utility extension for GameObject.FullName()
 
-6)  Optionally Log to Window, keep track of things in an inspector, rather than flooded into console
+6) Log/Gizmo enabled should be flags, esp if GUIButton gets added
 
-7)  Log/Gizmo enabled should be flags, esp if GUIButton gets added
-
-8)  Zebug.GUIButton
+7) Zebug.GUIButton
     
     On startup (Awake etc?), add your buttons, and callbacks to hook into, then a class can add debug hooks
     for that kind of behaviour, and the main Zebug class can handle all the annoying layout
@@ -68,15 +66,15 @@
         }
     }
     ```
-9) Option for displaying logs in-game?
+8) Option for displaying logs in-game?
      
-10) StompyRobot has a good debugger, where you can quad tap a small square at the top to open a 
+9) StompyRobot has a good debugger, where you can quad tap a small square at the top to open a 
     debug menu, then you can edit features in submenus, editing debug values like LiveDebug used 
     to. The feature I super love though, is that you can hit the pin button and select multiple 
     debug variables to appear on the screen during play. Just exceptionally useful.
      
-11) The 'additional prefix' on iOS could benefit from auto expansion of timestamp etc.
-12) Maybe we could do Zebug.DrawHandle(something, handleResultDelegate) and get values out?
+10) The 'additional prefix' on iOS could benefit from auto expansion of timestamp etc.
+11) Maybe we could do Zebug.DrawHandle(something, handleResultDelegate) and get values out?
 
 ## Misc Tasks
 * `Channel` should be probably be renamed `ZebugChannel`, as it's used naked and
@@ -97,5 +95,4 @@ Channel name is Method.DeclaringType.name if IsSubclassOf(MonoBehaviour)
 * C# 10 will have (ref StringBuilder.AppendInterpolatedStringHandler handler), in other words, the called method will be able 
   to do the interpolation. Needless to say, all Zebug calls should use this to avoid all the string interpolation involved.
 * [Conditional("UNITY_EDITOR")] for gizmos
-* Should AllowWarningAndErrorMuting be changed to be false by defualt? I think asserts and errors especially will be confusing if they don't show up.
 * Optionally annotate Log methods with `[BurstDiscard]`, so you can throw managed debug statements into job functions but have them removed for compiled methods. 
