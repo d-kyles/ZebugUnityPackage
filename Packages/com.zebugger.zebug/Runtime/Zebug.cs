@@ -99,7 +99,7 @@ namespace ZebugProject
         public bool m_GizmosEnabled;
         public bool m_LogEnabled;
 
-        protected bool AllowWarningAndErrorMuting = true;
+        protected bool AllowWarningAndErrorMuting = false;
 
         private static Channel<T> s_Instance;
         private static HashSet<AssertLocation> _assertOnceLocations = new HashSet<AssertLocation>();
