@@ -723,16 +723,18 @@ namespace ZebugProject {
             
             var channelColor = channel.GetColor();
             Color lineColor = VisibleColorOrDefault(graphData.lineColor, channelColor);
-                
-            DrawGridLines(graphData, graphRect);
+
+            var graphDataBound = graphData.CalculateGraphBounds();
             
-            DrawGraphPointsIntoRect(channel, graphRect, graphData, graphData, lineColor);
-                
+            DrawGridLines(graphData, graphRect);
+
+            DrawGraphPointsIntoRect(channel, graphRect, graphDataBound, graphData, lineColor);
+
             foreach (var (subGraphName, subGraphData) in graphData.subGraphs)
             {
                 lineColor = VisibleColorOrDefault(subGraphData.lineColor, channelColor);
                     
-                DrawGraphPointsIntoRect(channel, graphRect, graphData, subGraphData, lineColor);
+                DrawGraphPointsIntoRect(channel, graphRect, graphDataBound, subGraphData, lineColor);
             }
                 
             if (config.GraphExpanded)
@@ -982,7 +984,7 @@ namespace ZebugProject {
 
         //  ----------------------------------------------------------------------------------------
         
-        private void DrawGraphPointsIntoRect(IChannel channel, Rect rect, GraphData referenceData,
+        private void DrawGraphPointsIntoRect(IChannel channel, Rect rect, GraphData.BoundRect dataBound,
             GraphData graphData, Color color)
         {
             List<GraphData.Sample> points = graphData.points;
@@ -990,7 +992,10 @@ namespace ZebugProject {
             int pointCount = points.Count;
             if (pointCount < 2)
             {
-                DrawUiForNoSamplesFound(channel, rect);
+                if (dataBound.IsEmpty())
+                {
+                    DrawUiForNoSamplesFound(channel, rect);
+                }
                 return;
             }
             
@@ -1000,14 +1005,8 @@ namespace ZebugProject {
             }
             
             Handles.color = color;
-            var firstSample = referenceData.First();
-            var lastSample = referenceData.Last();
-
-            float startTime = firstSample.time;
-            float startFrame = firstSample.frame;
-
-            float endTime = lastSample.time;
-            float endFrame = lastSample.frame;
+            float startTime = dataBound.xMin;
+            float endTime = dataBound.xMax;
 
             const float sixtyFpsFrameTimeThousandth = 0.001f / 60f;
 
@@ -1016,8 +1015,8 @@ namespace ZebugProject {
             float xMin = rect.x;
             float xRange = rect.width;
 
-            float valueMin = referenceData.minValue;
-            float valueMax = referenceData.maxValue;
+            float valueMin = dataBound.yMin;
+            float valueMax = dataBound.yMax;
 
             float yMin = rect.y;
             float yRange = rect.height;
@@ -1026,9 +1025,9 @@ namespace ZebugProject {
 
             var pooledArray = ArrayPool<Vector3>.CheckOut(pointCount);
             
-            float freshMinValue = float.MaxValue;
-            float freshMaxValue = float.MinValue;
             int startIdxOffset = graphData.startIdxOffset;
+            int prevFrame = points[(startIdxOffset) % pointCount].frame;
+            int vertexCount = 0;
             
             for (int i = 0; i < pointCount; i++)
             {
@@ -1039,11 +1038,25 @@ namespace ZebugProject {
                 float xVal = xT * xRange + xMin;
                 
                 float value = sample.value;
-
-                //  --- Math min/max don't get optimized to intrinsics when in-editor
-                freshMinValue = (value < freshMinValue) ? value : freshMinValue;
-                freshMaxValue = (value > freshMaxValue) ? value : freshMaxValue;
                 
+                if ((sample.frame - prevFrame) > 1)
+                {
+                    if (vertexCount > 1)
+                    {
+                        DrawLine(ref vertexCount, pooledArray);
+                    }
+                    else
+                    {
+                        var prevVal = pooledArray[0];
+                        pooledArray[0] = new Vector3(prevVal.x - 1.25f, prevVal.y, prevVal.z);
+                        pooledArray[1] = new Vector3(prevVal.x + 1.25f, prevVal.y, prevVal.z);
+                        vertexCount = 2;
+                        DrawLine(ref vertexCount, pooledArray);
+                    }
+                }
+                prevFrame = sample.frame;
+                
+    
                 float yT = (value - valueMin) * invValueScale;
                 
                 //  --- Clamp line to within graph rect
@@ -1051,16 +1064,22 @@ namespace ZebugProject {
                 
                 float yVal = (1f - yT)*yRange + yMin;
                 
-                pooledArray[i] = new Vector3(xVal, yVal, 0);
+                pooledArray[vertexCount++] = new Vector3(xVal, yVal, 0);
             }
+
             
-            graphData.SmoothUpdateMinValue(freshMinValue);
-            graphData.SmoothUpdateMaxValue(freshMaxValue);
+            static void DrawLine(ref int vertexCount, Vector3[] array)
+            {
+                //  --- When not specifying a texture, this is about the same as 1px... not sure why
+                const float lineWidth = 2.5f;
                 
-            //  --- When not specifying a texture, this is about the same as 1px... not sure why
-            const float lineWidth = 2.5f;
+                Handles.DrawAAPolyLine(lineWidth, vertexCount, array);
+                
+                vertexCount = 0;
+            } 
             
-            Handles.DrawAAPolyLine(lineWidth, pointCount, pooledArray);
+            DrawLine(ref vertexCount, pooledArray);
+            
             ArrayPool<Vector3>.Return(pooledArray);
         }
         

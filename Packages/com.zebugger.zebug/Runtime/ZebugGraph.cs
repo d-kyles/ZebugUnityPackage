@@ -127,35 +127,110 @@ namespace ZebugProject
                        ? points[endIdxOffset]
                        : points.Count > 0 ? points[^1] : new Sample(0);
         }
-
-        public void SmoothUpdateMinValue(float freshMinValue)
+        
+        private BoundRect _cachedBounds;
+        private float _lastBoundCalcTime;
+        
+        public struct BoundRect
         {
-            minValue = Damp(minValue, freshMinValue, 0.1f, Time.deltaTime);
+            public float xMin, yMin, xMax, yMax;
+            private bool _empty;
+            
+            public static BoundRect empty => new () { _empty = true };
 
-            var delta = Mathf.Abs(minValue - freshMinValue);
-            if (freshMinValue > 0.001f || delta < 0.001f)
+
+            public void Encapsulate(BoundRect other)
             {
-                var ratioLeft = delta / freshMinValue;
-                if (ratioLeft < 0.01f)
+                if (other._empty) { return; }
+                
+                if (_empty)
                 {
-                    //  --- Almost there. Snap to the value.
-                    minValue = freshMinValue;
+                    xMin = other.xMin;
+                    yMin = other.yMin;
+                    xMax = other.xMax;
+                    yMax = other.yMax;
                 }
+                else
+                {
+                    xMin = xMin < other.xMin ? xMin : other.xMin;
+                    yMin = yMin < other.yMin ? yMin : other.yMin;
+                    xMax = xMax > other.xMax ? xMax : other.xMax;
+                    yMax = yMax > other.yMax ? yMax : other.yMax;
+                }
+                _empty = false;
             }
+
+            public bool IsEmpty() => _empty;
         }
         
-        public void SmoothUpdateMaxValue(float freshMaxValue)
+        private static BoundRect CalculateDataBounds(GraphData data)
         {
-            maxValue = Damp(maxValue, freshMaxValue, 0.1f, Time.deltaTime);
-
-            var delta = Mathf.Abs(maxValue - freshMaxValue);
-            if (freshMaxValue > 0.001f || delta < 0.001f)
+            if (data.points.Count == 0){ return BoundRect.empty; }
+            
+            List<Sample> points = data.points;
+            int pointCount = points.Count;
+            
+            float freshMinValue = float.MaxValue;
+            float freshMaxValue = float.MinValue;
+            int startIdxOffset = data.startIdxOffset;
+            
+            for (int i = 0; i < pointCount; i++)
             {
-                var ratioLeft = delta / freshMaxValue;
+                int idx = (startIdxOffset + i) % pointCount;
+                Sample sample = points[idx];
+                
+                float value = sample.value;
+
+                //  --- Math min/max don't get optimized to intrinsics when in-editor
+                freshMinValue = (value < freshMinValue) ? value : freshMinValue;
+                freshMaxValue = (value > freshMaxValue) ? value : freshMaxValue;
+            }
+            
+            SmoothUpdateValue(freshMinValue, ref data.minValue);
+            SmoothUpdateValue(freshMaxValue, ref data.maxValue);
+
+            return new BoundRect
+            {
+                xMin = data.First().time,
+                xMax = data.Last().time,
+                yMin = data.minValue,
+                yMax = data.maxValue,
+            };
+        } 
+        
+        public BoundRect CalculateGraphBounds()
+        {
+            if (Time.unscaledTime < _lastBoundCalcTime + Time.unscaledDeltaTime)
+            {
+                return _cachedBounds;
+            }
+            _lastBoundCalcTime = Time.unscaledTime;
+            
+            var bounds = BoundRect.empty; 
+            
+            bounds.Encapsulate(CalculateDataBounds(this));
+            
+            foreach ((string _, GraphData subData) in subGraphs)
+            {
+                bounds.Encapsulate(CalculateDataBounds(subData));
+            }
+            
+            _cachedBounds = bounds;
+            return bounds;
+        }
+        
+        public static void SmoothUpdateValue(float target, ref float smoothValue)
+        {
+            smoothValue = Damp(smoothValue, target, 0.1f, Time.deltaTime);
+
+            float delta = Mathf.Abs(smoothValue - target);
+            if (Mathf.Abs(target) > 0.001f || delta < 0.001f)
+            {
+                var ratioLeft = delta / target;
                 if (ratioLeft < 0.01f)
                 {
                     //  --- Almost there. Snap to the value.
-                    maxValue = freshMaxValue;
+                    smoothValue = target;
                 }
             }
         }
