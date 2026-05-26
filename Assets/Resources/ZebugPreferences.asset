@@ -60,11 +60,17 @@ MonoBehaviour:
     - ZebugBase/SimpleCameraController
     - ZebugBase/DampValueGraph
     - ZebugBase/DiffToValueGraph
+    - ZebugBase/SubgraphOnlyZebug
+    - ZebugBase/SimpleGraphValueTest/SubgraphOnlyZebug
     _values:
     - logEnabled: 1
       gizmoEnabled: 1
     - logEnabled: 0
       gizmoEnabled: 0
+    - logEnabled: 1
+      gizmoEnabled: 1
+    - logEnabled: 1
+      gizmoEnabled: 1
     - logEnabled: 1
       gizmoEnabled: 1
     - logEnabled: 1
