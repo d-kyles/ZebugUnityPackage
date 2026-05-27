@@ -365,7 +365,30 @@ namespace ZebugProject
             DontDestroyOnLoad(go);
 
             Zebug.Log("Initializing Scene Drawer");
+            
+            Zebug.RaiseOnLoad();
+            
+            #if UNITY_EDITOR
+            UnityEditor.EditorApplication.playModeStateChanged += OnExitPlayMode;
+            #endif
         }
+        
+        
+        #if UNITY_EDITOR
+        private static void OnExitPlayMode(UnityEditor.PlayModeStateChange state)
+        {
+            if(state == UnityEditor.PlayModeStateChange.ExitingPlayMode)
+            {
+                Zebug.Log("Exiting Play mode: Unregistering handler.");
+                
+                // Unregister the handler so it doesn't affect the next Play mode run
+                UnityEditor.EditorApplication.playModeStateChanged -= OnExitPlayMode;
+                
+                Zebug.RaiseOnExit();
+            }
+        }
+        #endif
+        
         //  ----------------------------------------------------------------------------------------
     }
 }

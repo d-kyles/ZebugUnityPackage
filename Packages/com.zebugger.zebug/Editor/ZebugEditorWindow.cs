@@ -698,18 +698,20 @@ namespace ZebugProject {
             graphRect.y += graphRectPadding;
             graphRect.width -= graphRectPadding;
             graphRect.height -= graphRectPadding;
-                
+
+            var graphDataBound = graphData.CalculateGraphBounds();
+            
             if (currentEventType == EventType.Repaint ||
                 currentEventType == EventType.MouseMove || 
                 currentEventType == EventType.MouseDown)
             {
                 // If the mouse cursor is inside our Unity IMGUI rect
                 var mousePos = Event.current.mousePosition;
-                if (graphRect.Contains(mousePos) && graphData.points.Count > 1)
+                if (graphRect.Contains(mousePos) && !graphDataBound.IsEmpty())
                 {
                     Zebug.RaiseEditorRepaint();
 
-                    DrawGraphMouseInspection(mousePos, graphRect, graphData);
+                    DrawGraphMouseInspection(mousePos, graphRect, graphData, graphDataBound);
                 }
             }
 
@@ -723,8 +725,6 @@ namespace ZebugProject {
             
             var channelColor = channel.GetColor();
             Color lineColor = VisibleColorOrDefault(graphData.lineColor, channelColor);
-
-            var graphDataBound = graphData.CalculateGraphBounds();
             
             DrawGridLines(graphData, graphDataBound, graphRect);
 
@@ -754,23 +754,15 @@ namespace ZebugProject {
         {
             GUILayout.BeginVertical(EditorStyles.helpBox);
             
-            var channelColor = channel.GetColor();
-            var channelName = channel.Name();
             
             // Draw main graph line
-            Color mainLineColor = VisibleColorOrDefault(graphData.lineColor, channelColor);
-            DrawGraphLineInfo(channelName, mainLineColor);
+            DrawGraphLineInfo(channel, graphData, channel.Name());
             
             // Draw subgraph lines
             foreach (var (subGraphName, subGraphData) in graphData.subGraphs)
             {
-                Color subLineColor = VisibleColorOrDefault(subGraphData.lineColor, channelColor);
-                DrawGraphLineInfo(subGraphName, subLineColor);
+                DrawGraphLineInfo(channel, subGraphData, subGraphName);
             }
-            
-            // Draw sample count
-            GUILayout.Space(4);
-            GUILayout.Label($"Samples: {graphData.points.Count}", EditorStyles.miniLabel);
             
             GUILayout.EndVertical();
             
@@ -799,12 +791,12 @@ namespace ZebugProject {
             GetGraphGuiPrefs(channel, out var config);
             
             config.SampleCountOverride 
-                = EditorGUILayout.IntField("Sample count override", config.SampleCountOverride);
+                = EditorGUILayout.DelayedIntField("Sample count override", config.SampleCountOverride);
             GraphGuiPrefsSaveCheck();
             
-            if (GUI.changed)
+            if (graphData.maxPoints != config.SampleCountOverride)
             {
-                graphData.maxPoints = config.SampleCountOverride;   
+                graphData.SetSampleCount(config.SampleCountOverride);
             }
             
             GUILayout.EndVertical();
@@ -812,8 +804,11 @@ namespace ZebugProject {
         
         //  ----------------------------------------------------------------------------------------
         
-        private void DrawGraphLineInfo(string name, Color color)
+        private static void DrawGraphLineInfo(IChannel channel, GraphData data, string graphName)
         {
+            // Draw main graph line
+            Color color = VisibleColorOrDefault(data.lineColor, channel.GetColor());
+            
             // Draw colored line indicator on the left
             Rect lineRect = GUILayoutUtility.GetRect(20, EditorGUIUtility.singleLineHeight);
             if (Event.current.type == EventType.Repaint)
@@ -831,20 +826,20 @@ namespace ZebugProject {
             lineRect.x += 20;
             lineRect.width -= 20;
             
-            GUI.Label(lineRect, name, thingStyle);
+            GUI.Label(lineRect, $"{graphName} - ({data.points.Count} samples)", thingStyle);
         }
 
         //  ----------------------------------------------------------------------------------------
         
-        private static void DrawGraphMouseInspection(Vector2 mousePos, Rect graphRect, GraphData graphData)
+        private static void DrawGraphMouseInspection(Vector2 mousePos, Rect graphRect, GraphData graphData, GraphData.BoundRect dataBounds)
         {
             float mouseXT = (mousePos.x - graphRect.x) / graphRect.width;
             float mouseYT = (mousePos.y - graphRect.y) / graphRect.height;
                         
-            float firstTime = graphData.First().time;
-            float lastTime = graphData.Last().time;
-            float minValue = graphData.minValue;
-            float maxValue = graphData.maxValue;
+            float firstTime = dataBounds.xMin;
+            float lastTime = dataBounds.xMax;
+            float minValue = dataBounds.yMin;
+            float maxValue = dataBounds.yMax;
                         
             float cursorTime = mouseXT * (lastTime - firstTime) + firstTime;
             float cursorValue = (1f - mouseYT) * (maxValue - minValue) + minValue;
@@ -854,15 +849,23 @@ namespace ZebugProject {
                 var closest = default(GraphData.Sample);
                 float closestDistance = float.MaxValue;
 
-                var points = graphData.points;
+                if (!graphData.TryGetFirstNonEmpty(out List<GraphData.Sample> points, out int startIdxOffset))
+                {
+                    //  --- No points! 
+                    return;
+                }
+                
                 int pointCount = points.Count;
-                int startIdxOffset = graphData.startIdxOffset;
+                float prevTime = points[(startIdxOffset) % pointCount].time;
                 
                 for (var i = 0; i < pointCount; i++)
                 {
                     var idx = (startIdxOffset + i) % pointCount;
                     
                     var sample = points[idx];
+                    
+                    if (sample.time < prevTime) { break; }
+                    
                     float distance = MathF.Abs(sample.time - cursorTime);
                     if (distance < closestDistance)
                     {

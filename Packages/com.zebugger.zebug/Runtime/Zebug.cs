@@ -51,16 +51,39 @@ namespace ZebugProject
         public static ILogger s_Logger = Debug.unityLogger;
 
         //  --- Gizmo drawing API
-        public static Dictionary<IChannel, ChannelLineData> s_ChannelLines = new();
+        public static readonly Dictionary<IChannel, ChannelLineData> s_ChannelLines = new();
 
-        public static Dictionary<IChannel, Dictionary<string, string>> 
+        public static readonly Dictionary<IChannel, Dictionary<string, string>> 
             s_ChannelWindowVariables = new ();
         
-        public static Dictionary<IChannel, Dictionary<string, Action>> 
+        public static readonly Dictionary<IChannel, Dictionary<string, Action>> 
             s_ChannelWindowButtons = new ();
 
-        public static Dictionary<IChannel, GraphData> s_ChannelGraphData = new ();
+        public static readonly Dictionary<IChannel, GraphData> s_ChannelGraphData = new ();
 
+        public static void RaiseOnLoad()
+        {
+            ResetStatics();
+        }
+        
+        public static void RaiseOnExit()
+        {
+            ResetStatics();
+        }
+        
+        private static void ResetStatics()
+        {
+            foreach (var (_, lineData) in s_ChannelLines)
+            {
+                lineData.lines.Clear();
+            }
+
+            foreach (var (_, graphData) in s_ChannelGraphData)
+            {
+                graphData.Clear();
+            }
+        }
+        
         public static void RaiseEditorRepaint()
         {
             EditorNeedsRepaint?.Invoke();

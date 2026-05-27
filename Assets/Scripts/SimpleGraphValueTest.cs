@@ -22,7 +22,6 @@ public class SimpleGraphValueTest : MonoBehaviour
     {
         public GraphAxisDefaultsDebug() : base(nameof(GraphAxisDefaultsDebug), Color.red, ZebugProject.Zebug.Instance)
         {
-            SetGraphValueMinMax(0, 2);
             SetGraphGridLine(0, Color.grey);
             SetGraphGridLine(1, new Color(0f, 0.47f, 0.47f, 0.55f), true);
         }
@@ -32,6 +31,16 @@ public class SimpleGraphValueTest : MonoBehaviour
     private class SubgraphOnlyZebug : Channel<SubgraphOnlyZebug>
     {
         public SubgraphOnlyZebug() : base(nameof(SubgraphOnlyZebug), Color.red, SimpleGraphValueTest.Zebug.Instance)
+        {
+            SetGraphGridLine(0, Color.grey);
+            SetGraphGridLine(1, new Color(0f, 0.47f, 0.47f, 0.55f));
+            SetSubgraphLine("subgraph", new Color(0.56f, 0.55f, 1f));
+        }
+    }
+    
+    private class DoubleSubgraphOnly : Channel<DoubleSubgraphOnly>
+    {
+        public DoubleSubgraphOnly() : base(nameof(DoubleSubgraphOnly), new Color(1f, 0.59f, 0.25f), SimpleGraphValueTest.Zebug.Instance)
         {
             SetGraphGridLine(0, Color.grey);
             SetGraphGridLine(1, new Color(0f, 0.47f, 0.47f, 0.55f));
@@ -77,8 +86,15 @@ public class SimpleGraphValueTest : MonoBehaviour
         
         float value2 = Mathf.Sin(Time.time * 7f) + 0.5f;
         float slowModulate = Mathf.Sin(Time.time * 0.125f);
-        SubgraphOnlyZebug.GraphValue("subgraph0", value * slowModulate);
-        SubgraphOnlyZebug.GraphValue("subgraph1", (value + value2) * slowModulate);
+        
+        if (Time.frameCount % 100 != 0)
+        {
+            SubgraphOnlyZebug.GraphValue("subgraph", (value + value2) * slowModulate);
+        }
+        // else introduce a frame gap, for testing missing frame data
+        
+        DoubleSubgraphOnly.GraphValue("subgraph0", value * slowModulate);
+        DoubleSubgraphOnly.GraphValue("subgraph1", (value + value2) * slowModulate);
     }
 
 }

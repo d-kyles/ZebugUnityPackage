@@ -50,28 +50,47 @@ namespace ZebugProject
         {
             get { return (offsetIdx + _maxPoints -1) % _maxPoints; }
         }
+        
+        public void Clear()
+        {
+            points.Clear();
+            _looping = false;
+            offsetIdx = 0;
+            
+            foreach (var (_, subData) in subGraphs)
+            {
+                subData.Clear();
+            }
+        }
+        
 
         private int _maxPoints = 400;
         public int maxPoints
         {
             get => _maxPoints;
-            set {
-                if (value is < 2 or > 10000)
-                {
-                    return;
-                }
+            
+        }
+        
+        public void SetSampleCount(int value)
+        {
+            if (value == _maxPoints) { return; }
+            if (value is < 2 or > 10000) { return; }
                 
-                //  --- For now, just start fresh with a change.
-                points.Clear();
-                points.Capacity = Math.Max(points.Capacity, value);
-                _maxPoints = value;
-                _looping = false;
+            //  --- For now, just start fresh with a change.
+            Clear();
+            _maxPoints = value;
+            points.Capacity = Math.Max(points.Capacity, value);
+            
+            foreach (var (_, subData) in subGraphs)
+            {
+                subData.SetSampleCount(value);
             }
         }
-        public float minValue = float.MaxValue;
-        public float maxValue = float.MinValue;
-        public float minTime = float.MaxValue;
-        public float maxTime = float.MinValue;
+        
+        private float minValue = float.MaxValue;
+        private float maxValue = float.MinValue;
+        private float minTime = float.MaxValue;
+        private float maxTime = float.MinValue;
         
         private float _breakValue;
         public float breakValue => _breakValue;
@@ -95,13 +114,6 @@ namespace ZebugProject
             
             var sample = new Sample(value);
             
-            minValue = (value < minValue) ? value : minValue;
-            maxValue = (value > maxValue) ? value : maxValue;
-            
-            float time = sample.time;
-            minTime = (time < minTime) ? time : minTime;
-            maxTime = (time > maxTime) ? time : maxTime;
-
             _looping = (points.Count >= _maxPoints);
             
             if (_looping)
@@ -164,7 +176,7 @@ namespace ZebugProject
             public bool IsEmpty() => _empty;
         }
         
-        private static BoundRect CalculateDataBounds(GraphData data)
+        private static BoundRect CalculateDataBounds(GraphData data, float dt)
         {
             if (data.points.Count == 0){ return BoundRect.empty; }
             
@@ -195,10 +207,10 @@ namespace ZebugProject
                 freshMaxTime = (time > freshMaxTime) ? time : freshMaxTime;
             }
             
-            SmoothUpdateValue(freshMinValue, ref data.minValue);
-            SmoothUpdateValue(freshMaxValue, ref data.maxValue);
-            SmoothUpdateValue(freshMinTime, ref data.minTime);
-            SmoothUpdateValue(freshMaxTime, ref data.maxTime);
+            SmoothUpdateValue(freshMinValue, dt, ref data.minValue);
+            SmoothUpdateValue(freshMaxValue, dt, ref data.maxValue);
+            data.minTime = freshMinTime;
+            data.maxTime = freshMaxTime;
 
             return new BoundRect
             {
@@ -211,45 +223,45 @@ namespace ZebugProject
         
         public BoundRect CalculateGraphBounds()
         {
-            float dt = Time.deltaTime;
-            dt = Mathf.Clamp(dt, 1/60f, Time.maximumDeltaTime);
+            float dt = _lastBoundCalcTime - Time.realtimeSinceStartup;
+            dt = Mathf.Abs(dt); // treat time travel like a normal delta
             
-            if (Time.realtimeSinceStartup < (_lastBoundCalcTime + dt)
-                && Time.realtimeSinceStartup > _lastBoundCalcTime)
+            if (dt < 0.01f)
             {
                 return _cachedBounds;
             }
-            _lastBoundCalcTime = Time.realtimeSinceStartup;
             
-            var bounds = BoundRect.empty; 
+            var bounds = BoundRect.empty;
             
-            bounds.Encapsulate(CalculateDataBounds(this));
+            bounds.Encapsulate(CalculateDataBounds(this, dt));
             
             foreach ((string _, GraphData subData) in subGraphs)
             {
-                bounds.Encapsulate(CalculateDataBounds(subData));
+                bounds.Encapsulate(CalculateDataBounds(subData, dt));
             }
+
+            _lastBoundCalcTime = Time.realtimeSinceStartup;
             
             _cachedBounds = bounds;
             return bounds;
         }
         
-        public static void SmoothUpdateValue(float target, ref float smoothValue)
+        public static void SmoothUpdateValue(float target, float dt, ref float smoothValue)
         {
-            float dt = Time.unscaledDeltaTime;
-            if (dt == 0f) dt = 1/60f;
-            
             smoothValue = Damp(smoothValue, target, 0.1f, dt);
 
             float delta = Mathf.Abs(smoothValue - target);
-            if (Mathf.Abs(target) > 0.001f || delta < 0.001f)
+            float targetAbs = Mathf.Abs(target);
+            
+            var ratioLeft = (targetAbs > 0.001f) // don't div-by-zero 
+                                ? delta / targetAbs
+                                : delta;
+            
+            //  --- Over snappy at absolute low values, but meh
+            if (ratioLeft < 0.01f)
             {
-                var ratioLeft = delta / target;
-                if (ratioLeft < 0.01f)
-                {
-                    //  --- Almost there. Snap to the value.
-                    smoothValue = target;
-                }
+                //  --- Almost there. Snap to the value.
+                smoothValue = target;
             }
         }
         
@@ -258,6 +270,32 @@ namespace ZebugProject
             _breakValue = atValue;
             _hasBreakValue = true;
         }
+
+        public bool TryGetFirstNonEmpty(out List<Sample> validPoints, out int idxOffset)
+        {
+            validPoints = null;
+            idxOffset = 0;
+            
+            if (points.Count > 0)
+            {
+                validPoints = points;
+                idxOffset = startIdxOffset;
+                return true;
+            }
+            
+            foreach (var (_, data) in subGraphs)
+            {
+                if (data.points.Count > 0)
+                {
+                    validPoints = data.points;
+                    idxOffset = data.startIdxOffset;
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
     }
     
     
@@ -291,19 +329,6 @@ namespace ZebugProject
             
             var data = ChannelGraphData();
             data.Add(value);
-        }
-        
-        public void SetGraphValueMinMax(float min, float max)
-        {
-            var data = ChannelGraphData();
-            
-            if (max < min)
-            {
-                (min, max) = (max, min);
-            }
-
-            data.minValue = min;
-            data.maxValue = max;
         }
         
         ///
