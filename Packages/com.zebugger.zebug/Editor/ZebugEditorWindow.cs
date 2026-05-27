@@ -726,7 +726,7 @@ namespace ZebugProject {
 
             var graphDataBound = graphData.CalculateGraphBounds();
             
-            DrawGridLines(graphData, graphRect);
+            DrawGridLines(graphData, graphDataBound, graphRect);
 
             DrawGraphPointsIntoRect(channel, graphRect, graphDataBound, graphData, lineColor);
 
@@ -925,7 +925,7 @@ namespace ZebugProject {
 
         //  ----------------------------------------------------------------------------------------
         
-        private void DrawGridLines(GraphData graphData, Rect graphRect)
+        private void DrawGridLines(GraphData graphData, GraphData.BoundRect dataBound, Rect graphRect)
         {
             if (Event.current.type != EventType.Repaint)
             {
@@ -938,11 +938,13 @@ namespace ZebugProject {
             //const float lineWidth = 2.5f;
             const float lineWidth = 0f;
             
-            float valueMin = graphData.minValue;
-            float valueMax = graphData.maxValue;
+            float valueMin = dataBound.yMin;
+            float valueMax = dataBound.yMax;
             
             void DrawGridline(float value, Color color, bool dotted)
             {
+                if (value < valueMin || value > valueMax) { return; }
+                
                 var oldColor = Handles.color;
                 Handles.color = color;
                 
@@ -968,10 +970,7 @@ namespace ZebugProject {
                     
             foreach (var (value, gridColor, dotted) in graphData.gridLines)
             {
-                if (value < graphData.maxValue && value > graphData.minValue)
-                {
-                    DrawGridline(value, gridColor, dotted);
-                }
+                DrawGridline(value, gridColor, dotted);
             }
             
             if (graphData.hasBreakValue)
@@ -1027,6 +1026,7 @@ namespace ZebugProject {
             
             int startIdxOffset = graphData.startIdxOffset;
             int prevFrame = points[(startIdxOffset) % pointCount].frame;
+            float prevTime = points[(startIdxOffset) % pointCount].time;
             int vertexCount = 0;
             
             for (int i = 0; i < pointCount; i++)
@@ -1039,7 +1039,12 @@ namespace ZebugProject {
                 
                 float value = sample.value;
                 
-                if ((sample.frame - prevFrame) > 1)
+                if (sample.time < prevTime)
+                {
+                    //  --- Some sort of time reset, possibly domain-reload is disabled
+                    DrawLine(ref vertexCount, pooledArray);
+                }
+                else if ((sample.frame - prevFrame) > 1)
                 {
                     if (vertexCount > 1)
                     {
@@ -1055,8 +1060,8 @@ namespace ZebugProject {
                     }
                 }
                 prevFrame = sample.frame;
+                prevTime = sample.time;
                 
-    
                 float yT = (value - valueMin) * invValueScale;
                 
                 //  --- Clamp line to within graph rect

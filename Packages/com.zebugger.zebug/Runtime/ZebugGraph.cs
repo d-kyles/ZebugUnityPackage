@@ -70,6 +70,9 @@ namespace ZebugProject
         }
         public float minValue = float.MaxValue;
         public float maxValue = float.MinValue;
+        public float minTime = float.MaxValue;
+        public float maxTime = float.MinValue;
+        
         private float _breakValue;
         public float breakValue => _breakValue;
         private bool _hasBreakValue;
@@ -91,16 +94,14 @@ namespace ZebugProject
             }
             
             var sample = new Sample(value);
-            if (value < minValue)
-            {
-                minValue = value;
-            }
-            if (value > maxValue)
-            {
-                maxValue = value;
-            }
-
             
+            minValue = (value < minValue) ? value : minValue;
+            maxValue = (value > maxValue) ? value : maxValue;
+            
+            float time = sample.time;
+            minTime = (time < minTime) ? time : minTime;
+            maxTime = (time > maxTime) ? time : maxTime;
+
             _looping = (points.Count >= _maxPoints);
             
             if (_looping)
@@ -172,6 +173,10 @@ namespace ZebugProject
             
             float freshMinValue = float.MaxValue;
             float freshMaxValue = float.MinValue;
+            
+            float freshMinTime = float.MaxValue;
+            float freshMaxTime = float.MinValue;
+            
             int startIdxOffset = data.startIdxOffset;
             
             for (int i = 0; i < pointCount; i++)
@@ -180,19 +185,25 @@ namespace ZebugProject
                 Sample sample = points[idx];
                 
                 float value = sample.value;
+                float time = sample.time;
 
                 //  --- Math min/max don't get optimized to intrinsics when in-editor
                 freshMinValue = (value < freshMinValue) ? value : freshMinValue;
                 freshMaxValue = (value > freshMaxValue) ? value : freshMaxValue;
+                
+                freshMinTime = (time < freshMinTime) ? time : freshMinTime;
+                freshMaxTime = (time > freshMaxTime) ? time : freshMaxTime;
             }
             
             SmoothUpdateValue(freshMinValue, ref data.minValue);
             SmoothUpdateValue(freshMaxValue, ref data.maxValue);
+            SmoothUpdateValue(freshMinTime, ref data.minTime);
+            SmoothUpdateValue(freshMaxTime, ref data.maxTime);
 
             return new BoundRect
             {
-                xMin = data.First().time,
-                xMax = data.Last().time,
+                xMin = data.minTime,
+                xMax = data.maxTime,
                 yMin = data.minValue,
                 yMax = data.maxValue,
             };
@@ -200,11 +211,15 @@ namespace ZebugProject
         
         public BoundRect CalculateGraphBounds()
         {
-            if (Time.unscaledTime < _lastBoundCalcTime + Time.unscaledDeltaTime)
+            float dt = Time.deltaTime;
+            dt = Mathf.Clamp(dt, 1/60f, Time.maximumDeltaTime);
+            
+            if (Time.realtimeSinceStartup < (_lastBoundCalcTime + dt)
+                && Time.realtimeSinceStartup > _lastBoundCalcTime)
             {
                 return _cachedBounds;
             }
-            _lastBoundCalcTime = Time.unscaledTime;
+            _lastBoundCalcTime = Time.realtimeSinceStartup;
             
             var bounds = BoundRect.empty; 
             
@@ -221,7 +236,10 @@ namespace ZebugProject
         
         public static void SmoothUpdateValue(float target, ref float smoothValue)
         {
-            smoothValue = Damp(smoothValue, target, 0.1f, Time.deltaTime);
+            float dt = Time.unscaledDeltaTime;
+            if (dt == 0f) dt = 1/60f;
+            
+            smoothValue = Damp(smoothValue, target, 0.1f, dt);
 
             float delta = Mathf.Abs(smoothValue - target);
             if (Mathf.Abs(target) > 0.001f || delta < 0.001f)
