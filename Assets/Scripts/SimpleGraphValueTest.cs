@@ -34,7 +34,7 @@ public class SimpleGraphValueTest : MonoBehaviour
         public SubgraphOnlyZebug() : base(nameof(SubgraphOnlyZebug), Color.red, SimpleGraphValueTest.Zebug.Instance)
         {
             SetGraphGridLine(0, Color.grey);
-            SetGraphGridLine(1, new Color(0f, 0.47f, 0.47f, 0.55f), true);
+            SetGraphGridLine(1, new Color(0f, 0.47f, 0.47f, 0.55f));
             SetSubgraphLine("subgraph0", new Color(0.28f, 1f, 0.55f));
             SetSubgraphLine("subgraph1", new Color(0.56f, 0.55f, 1f));
         }
@@ -76,8 +76,9 @@ public class SimpleGraphValueTest : MonoBehaviour
         GraphAxisDefaultsDebug.GraphValue(value);
         
         float value2 = Mathf.Sin(Time.time * 7f) + 0.5f;
-        SubgraphOnlyZebug.GraphValue("subgraph0", value);
-        SubgraphOnlyZebug.GraphValue("subgraph1", value + value2);
+        float slowModulate = Mathf.Sin(Time.time * 0.125f);
+        SubgraphOnlyZebug.GraphValue("subgraph0", value * slowModulate);
+        SubgraphOnlyZebug.GraphValue("subgraph1", (value + value2) * slowModulate);
     }
 
 }
