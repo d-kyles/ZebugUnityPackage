@@ -346,6 +346,16 @@ namespace ZebugProject
             Zebug.s_Logger.Log(LogType.Log, Instance.m_ColorString + message);
         }
 
+        public static void LogHere([CallerMemberName] string memberName = "", [CallerLineNumber] int sourceLineNumber = 0)
+        {
+            if (!Instance.LogEnabled())
+            {
+                return;
+            }
+
+            Zebug.s_Logger.Log(LogType.Log, $"{Instance.m_ColorString}{memberName} : ({sourceLineNumber})");
+        }
+
         public static void Log(object message, Object context)
         {
             if (!Instance.LogEnabled())
