@@ -37,7 +37,7 @@
 4) (Allow creation of channels via ScriptableObject) (have something run on-load, finds type of Channel
     from shared project type cache (spin up as separate package)
 
-5)  Utility extension for GameObject.FullName()
+5) Utility extension for GameObject.FullName()
 
 6) Log/Gizmo enabled should be flags, esp if GUIButton gets added
 
@@ -75,6 +75,8 @@
      
 10) The 'additional prefix' on iOS could benefit from auto expansion of timestamp etc.
 11) Maybe we could do Zebug.DrawHandle(something, handleResultDelegate) and get values out?
+
+13) Use [`ScriptableSingleton`](https://docs.unity3d.com/6000.4/Documentation/ScriptReference/ScriptableSingleton_1.html) for prefs?
 
 ## Misc Tasks
 * `Channel` should be probably be renamed `ZebugChannel`, as it's used naked and

@@ -47,7 +47,7 @@ public class ZebugDebugGui : MonoBehaviour
         
         if (EnableAndGetAction(s_Instance._toggleZebugGui, out var guiToggleAction))
         {
-            guiToggleAction.performed += (ctx) =>
+            guiToggleAction.performed += (_) =>
             {
                 s_Instance.gameObject.SetActive(!s_Instance.gameObject.activeSelf);
             };

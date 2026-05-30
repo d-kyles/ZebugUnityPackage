@@ -102,14 +102,96 @@ namespace ZebugProject
                 s_Pool.Add(pooledArray);
             }
             
-            /// 
-            /// FixedFrame
-            /// Like Time.frameCount, but for physics FixedUpdate. 
-            ///
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private static int FixedFrame()
+        }
+
+        ///
+        /// FixedFrame
+        /// Like Time.frameCount, but for physics FixedUpdate.
+        /// Assumes fixedDeltaTime hasn't changed.
+        ///
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int FixedFrame()
+        {
+            return (int)(Time.fixedTime / Time.fixedDeltaTime);
+        }
+
+        public static class TwoObjectArrayPool
+        {
+            private static List<object[]> s_Pool = new();
+
+            public static object[] CheckOut()
             {
-                return (int)(Time.fixedTime / Time.fixedDeltaTime);
+                if (s_Pool.Count > 0)
+                {
+                    int count = s_Pool.Count -1;
+                    object[] array = s_Pool[^1];
+                    s_Pool.RemoveAt(count);
+                    return array;
+                }
+                else
+                {
+                    return new object[2];
+                }
+            }
+
+            public static void Return(object[] pooledArray)
+            {
+                pooledArray[0] = default;
+                pooledArray[1] = default;
+                s_Pool.Add(pooledArray);
+            }
+        }
+
+        public static class OneElementArrayPool<T>
+        {
+            private static List<T[]> s_Pool = new();
+
+            public static T[] CheckOut()
+            {
+                if (s_Pool.Count > 0)
+                {
+                    int count = s_Pool.Count -1;
+                    T[] array = s_Pool[^1];
+                    s_Pool.RemoveAt(count);
+                    return array;
+                }
+                else
+                {
+                    return new T[1];
+                }
+            }
+
+            public static void Return(T[] pooledArray)
+            {
+                pooledArray[0] = default; // --- Don't keep references hanging
+                s_Pool.Add(pooledArray);
+            }
+        }
+
+        public static class TwoElementArrayPool<T>
+        {
+            private static List<T[]> s_Pool = new();
+
+            public static T[] CheckOut()
+            {
+                if (s_Pool.Count > 0)
+                {
+                    int count = s_Pool.Count -1;
+                    T[] array = s_Pool[^1];
+                    s_Pool.RemoveAt(count);
+                    return array;
+                }
+                else
+                {
+                    return new T[2];
+                }
+            }
+
+            public static void Return(T[] pooledArray)
+            {
+                pooledArray[0] = default; // --- Don't keep references hanging
+                pooledArray[1] = default;
+                s_Pool.Add(pooledArray);
             }
         }
     }

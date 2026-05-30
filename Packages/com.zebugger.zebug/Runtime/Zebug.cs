@@ -33,6 +33,7 @@ using Object = UnityEngine.Object;
 
 namespace ZebugProject
 {
+
     /*
      |  --- Zebug
      |
@@ -364,6 +365,39 @@ namespace ZebugProject
             }
 
             Zebug.s_Logger.LogFormat(LogType.Log, Instance.m_ColorString + format, args);
+        }
+
+        [StringFormatMethod("format")]
+        public static void LogFormat<TArg>(string format, TArg arg0) where TArg: struct
+        {
+            if (!Instance.LogEnabled())
+            {
+                return;
+            }
+
+            TArg[] args = ZebugUtils.OneElementArrayPool<TArg>.CheckOut();
+            args[0] = arg0;
+
+            Zebug.s_Logger.LogFormat(LogType.Log, Instance.m_ColorString + format, args);
+
+            ZebugUtils.OneElementArrayPool<TArg>.Return(args);
+        }
+
+        [StringFormatMethod("format")]
+        public static void LogFormat<TArg>(string format, TArg arg0, TArg arg1) where TArg: struct
+        {
+            if (!Instance.LogEnabled())
+            {
+                return;
+            }
+
+            TArg[] args = ZebugUtils.TwoElementArrayPool<TArg>.CheckOut();
+            args[0] = arg0;
+            args[1] = arg1;
+
+            Zebug.s_Logger.LogFormat(LogType.Log, Instance.m_ColorString + format, args);
+
+            ZebugUtils.OneElementArrayPool<TArg>.Return(args);
         }
 
         [StringFormatMethod("format")]
