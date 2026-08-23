@@ -364,6 +364,7 @@ namespace ZebugProject
             if (!data.subGraphs.TryGetValue(subGraphName, out GraphData subGraph))
             {
                 subGraph = new GraphData();
+                subGraph.lineColor = new Color(UnityEngine.Random.Range(0.125f, 0.875f), UnityEngine.Random.Range(0.125f, 0.875f), UnityEngine.Random.Range(0.125f, 0.875f));
                 data.subGraphs.Add(subGraphName, subGraph);
             }
             
