@@ -459,7 +459,12 @@ namespace ZebugProject {
                 } else {
                     GUILayout.Label(cache.channelNameContent, cache.togglesLineStyle);
                 }
-                
+
+                //  --- The label/foldout's own rect for *this* row. Used below to position the
+                //      Log/Gizmos toggles on the same line, instead of guessing the row's y from
+                //      a hardcoded row height (which drifted out of sync with the real layout).
+                Rect rowLabelRect = GUILayoutUtility.GetLastRect();
+
                 if (currentChannel == 0)
                 {
                     GUILayout.FlexibleSpace();
@@ -484,7 +489,7 @@ namespace ZebugProject {
                         else
                         {
                             var rect = _channelGuiCacheData[Zebug.Instance].logLabelRect;
-                            rect.y += channelLineHeight * currentChannel;
+                            rect.y = rowLabelRect.y;
                             newLogEnabled = GUI.Toggle(rect, logEnabled, _logLabelTxtContent);
                         }
                         
@@ -507,7 +512,7 @@ namespace ZebugProject {
                         else
                         {
                             var rect = _channelGuiCacheData[Zebug.Instance].gizmoLabelRect;
-                            rect.y += channelLineHeight * currentChannel;
+                            rect.y = rowLabelRect.y;
                             newGizmosEnabled = GUI.Toggle(rect, gizmosEnabled, _gizmosLabelTxtContent);
                         }
                         
@@ -711,7 +716,7 @@ namespace ZebugProject {
                 {
                     Zebug.RaiseEditorRepaint();
 
-                    DrawGraphMouseInspection(mousePos, graphRect, graphData, graphDataBound);
+                    DrawGraphMouseInspection(mousePos, graphRect, channel, graphData, graphDataBound);
                 }
             }
 
@@ -798,7 +803,12 @@ namespace ZebugProject {
             {
                 graphData.SetSampleCount(config.SampleCountOverride);
             }
-            
+
+            if (GUILayout.Button("Clear Samples"))
+            {
+                graphData.Clear();
+            }
+
             GUILayout.EndVertical();
         }
         
@@ -831,88 +841,107 @@ namespace ZebugProject {
 
         //  ----------------------------------------------------------------------------------------
         
-        private static void DrawGraphMouseInspection(Vector2 mousePos, Rect graphRect, GraphData graphData, GraphData.BoundRect dataBounds)
+        private static void DrawGraphMouseInspection(Vector2 mousePos, Rect graphRect, IChannel channel, GraphData graphData, GraphData.BoundRect dataBounds)
         {
             float mouseXT = (mousePos.x - graphRect.x) / graphRect.width;
             float mouseYT = (mousePos.y - graphRect.y) / graphRect.height;
-                        
+
             float firstTime = dataBounds.xMin;
             float lastTime = dataBounds.xMax;
             float minValue = dataBounds.yMin;
             float maxValue = dataBounds.yMax;
-                        
+
             float cursorTime = mouseXT * (lastTime - firstTime) + firstTime;
             float cursorValue = (1f - mouseYT) * (maxValue - minValue) + minValue;
 
             if (!s_addingValueBreakpoint)
             {
-                var closest = default(GraphData.Sample);
-                float closestDistance = float.MaxValue;
-
-                if (!graphData.TryGetFirstNonEmpty(out List<GraphData.Sample> points, out int startIdxOffset))
-                {
-                    //  --- No points! 
-                    return;
-                }
-                
-                int pointCount = points.Count;
-                float prevTime = points[(startIdxOffset) % pointCount].time;
-                
-                for (var i = 0; i < pointCount; i++)
-                {
-                    var idx = (startIdxOffset + i) % pointCount;
-                    
-                    var sample = points[idx];
-                    
-                    if (sample.time < prevTime) { break; }
-                    
-                    float distance = MathF.Abs(sample.time - cursorTime);
-                    if (distance < closestDistance)
-                    {
-                        closestDistance = distance;
-                        closest = sample;
-                    } 
-                    else
-                    {
-                        //  --- Assumes monotonically increasing values. Could do a binary search?
-                        break;
-                    }
-                }
-
                 Handles.color = new Color(0.47f, 0.47f, 0.47f, 0.46f);
                 Handles.DrawLine(new Vector3(mousePos.x, graphRect.y, 0),
                                  new Vector3(mousePos.x, graphRect.y + graphRect.height, 0));
-                
-                var labelPos = mousePos;
-                labelPos.x += 10f;
-                labelPos.y -= 20f;
-                
-                if (labelPos.x > graphRect.x + graphRect.width - 60f)
+
+                Color channelColor = channel.GetColor();
+
+                //  --- Gather every line's sample at the cursor first, so we know how wide the
+                //      popup needs to be before positioning it (otherwise we can't tell it'll
+                //      clip off the right edge of the graph until it's too late).
+                bool hasMain = TryGetClosestSample(graphData, cursorTime, out GraphData.Sample closest);
+
+                var subSamples = new List<(string name, GraphData.Sample sample, Color color)>();
+                foreach (var (subGraphName, subGraphData) in graphData.subGraphs)
                 {
-                    labelPos.x = graphRect.x + graphRect.width - 60f;
+                    if (TryGetClosestSample(subGraphData, cursorTime, out GraphData.Sample subClosest))
+                    {
+                        Color subLineColor = VisibleColorOrDefault(subGraphData.lineColor, channelColor);
+                        subSamples.Add((subGraphName, subClosest, subLineColor));
+                    }
                 }
-                
-                Handles.Label(labelPos, 
-                        $"Time: {closest.time:F2}\n" +
-                        $"Value: {closest.value:F2}\n" +
-                        $"Frame: {closest.frame}",
-                        EditorStyles.miniLabel);
+
+                if (hasMain || subSamples.Count > 0)
+                {
+                    GraphData.Sample headerSample = hasMain ? closest : subSamples[0].sample;
+
+                    float popupWidth = EditorStyles.miniLabel.CalcSize(
+                        new GUIContent($"Time: {headerSample.time:F2}\nFrame: {headerSample.frame}")).x;
+
+                    if (hasMain)
+                    {
+                        popupWidth = Mathf.Max(popupWidth, EditorStyles.miniLabel.CalcSize(
+                            new GUIContent($"{channel.Name()}: {closest.value:F2}")).x);
+                    }
+
+                    foreach (var (subName, subSample, _) in subSamples)
+                    {
+                        popupWidth = Mathf.Max(popupWidth, EditorStyles.miniLabel.CalcSize(
+                            new GUIContent($"{subName}: {subSample.value:F2}")).x);
+                    }
+
+                    var labelPos = mousePos;
+                    labelPos.x += 10f;
+                    labelPos.y -= 20f;
+
+                    float rightEdge = graphRect.x + graphRect.width;
+                    if (labelPos.x + popupWidth > rightEdge)
+                    {
+                        labelPos.x = rightEdge - popupWidth;
+                    }
+
+                    //  --- Time/frame are shared across all lines at this cursor position, so only
+                    //      draw them once, ahead of the per-line values.
+                    labelPos.y = DrawGraphHeaderLabel(labelPos, headerSample);
+
+                    // Draw the main line's info at the cursor
+                    if (hasMain)
+                    {
+                        Color lineColor = VisibleColorOrDefault(graphData.lineColor, channelColor);
+                        labelPos.y = DrawGraphSampleLabel(labelPos, channel.Name(), closest.value, lineColor);
+                    }
+
+                    // Draw each sub-graph line's info at the cursor too
+                    foreach (var (subName, subSample, subColor) in subSamples)
+                    {
+                        labelPos.y = DrawGraphSampleLabel(labelPos, subName, subSample.value, subColor);
+                    }
+                }
             }
             else
             {
                 Handles.color = new Color(0.84f, 0f, 0f, 0.78f);
                 Handles.DrawLine(new Vector3(graphRect.x, mousePos.y, 0),
                                  new Vector3(graphRect.x + graphRect.width, mousePos.y, 0));
-                
+
                 var labelPos = mousePos;
                 labelPos.x += 10f;
                 labelPos.y -= 20f;
-                
-                if (labelPos.x > graphRect.x + graphRect.width - 60f)
+
+                float popupWidth = EditorStyles.miniLabel.CalcSize(
+                    new GUIContent($"Value: {cursorValue:F2}")).x;
+
+                if (labelPos.x + popupWidth > graphRect.x + graphRect.width)
                 {
-                    labelPos.x = graphRect.x + graphRect.width - 60f;
+                    labelPos.x = graphRect.x + graphRect.width - popupWidth;
                 }
-                
+
                 Handles.Label(labelPos, $"Value: {cursorValue:F2}\n" + EditorStyles.miniLabel);
                 
                 if (Event.current.type == EventType.MouseDown)
@@ -923,11 +952,82 @@ namespace ZebugProject {
                 }
                 
             }
-            
+
         }
 
         //  ----------------------------------------------------------------------------------------
-        
+
+        //  --- Finds the sample in `data` whose time is closest to `cursorTime`, scanning forward
+        //      from the start of the (possibly ring-buffered) points list. `sample.time < prevTime`
+        //      detects when the scan has wrapped past the buffer's valid range.
+        private static bool TryGetClosestSample(GraphData data, float cursorTime, out GraphData.Sample closest)
+        {
+            closest = default;
+
+            List<GraphData.Sample> points = data.points;
+            int pointCount = points.Count;
+            if (pointCount == 0)
+            {
+                return false;
+            }
+
+            int startIdxOffset = data.startIdxOffset;
+            float prevTime = points[startIdxOffset % pointCount].time;
+            float closestDistance = float.MaxValue;
+
+            for (var i = 0; i < pointCount; i++)
+            {
+                var idx = (startIdxOffset + i) % pointCount;
+
+                var sample = points[idx];
+
+                if (sample.time < prevTime) { break; }
+
+                float distance = MathF.Abs(sample.time - cursorTime);
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    closest = sample;
+                }
+                else
+                {
+                    //  --- Assumes monotonically increasing values. Could do a binary search?
+                    break;
+                }
+            }
+
+            return true;
+        }
+
+        //  --- Draws the time/frame shared by all lines at the cursor position and returns the y
+        //      position for the next stacked label.
+        private static float DrawGraphHeaderLabel(Vector2 labelPos, GraphData.Sample sample)
+        {
+            var content = new GUIContent($"Time: {sample.time:F2}\nFrame: {sample.frame}");
+
+            Handles.Label(labelPos, content, EditorStyles.miniLabel);
+
+            float height = EditorStyles.miniLabel.CalcHeight(content, 200f);
+            return labelPos.y + height + 4f;
+        }
+
+        //  --- Draws a single line's value at `labelPos` and returns the y position for the next
+        //      stacked label.
+        private static float DrawGraphSampleLabel(Vector2 labelPos, string lineName, float value, Color color)
+        {
+            var style = new GUIStyle(EditorStyles.miniLabel);
+            style.normal.textColor = color;
+
+            var content = new GUIContent($"{lineName}: {value:F2}");
+
+            Handles.Label(labelPos, content, style);
+
+            float height = style.CalcHeight(content, 200f);
+            return labelPos.y + height + 2f;
+        }
+
+        //  ----------------------------------------------------------------------------------------
+
         private void DrawGridLines(GraphData graphData, GraphData.BoundRect dataBound, Rect graphRect)
         {
             if (Event.current.type != EventType.Repaint)
@@ -1021,7 +1121,7 @@ namespace ZebugProject {
             float valueMax = dataBound.yMax;
 
             float yMin = rect.y;
-            float yRange = rect.height;
+            float yRange = rect.height -2;
 
             float invValueScale = 1f / Math.Max(valueMax - valueMin, sixtyFpsFrameTimeThousandth);
 
@@ -1132,7 +1232,7 @@ namespace ZebugProject {
                 }
             }
         }
-        
+
         //  ----------------------------------------------------------------------------------------
         
         #endregion  Draw Graphs
