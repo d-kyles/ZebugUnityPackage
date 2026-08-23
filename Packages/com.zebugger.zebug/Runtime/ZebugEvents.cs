@@ -27,6 +27,11 @@ namespace ZebugProject
 {
     public class ZebugEvents : MonoBehaviour
     {
+        public class EventsZebug : Channel<EventsZebug>
+        {
+            public EventsZebug() : base(nameof(ZebugEvents), new Color(0.31f, 0.78f, 1f)) { }
+        }
+
         public static ZebugEvents Instance
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -96,7 +101,7 @@ namespace ZebugProject
         {
             if(state == UnityEditor.PlayModeStateChange.ExitingPlayMode)
             {
-                Zebug.Log("Exiting Play mode: Unregistering handler.");
+                EventsZebug.Log("Exiting Play mode: Unregistering handler.");
 
                 // Unregister the handler so it doesn't affect the next Play mode run
                 UnityEditor.EditorApplication.playModeStateChanged -= OnExitPlayMode;
