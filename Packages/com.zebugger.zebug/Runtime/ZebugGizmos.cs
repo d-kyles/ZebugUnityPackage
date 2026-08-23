@@ -104,6 +104,14 @@ namespace ZebugProject
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [Conditional("DEVELOPMENT_BUILD")]
         [Conditional("UNITY_EDITOR")]
+        public static void DrawRay(Vector3 origin, Vector3 direction, float maxDist, Color color, float duration = 0)
+        {
+            DrawLine(origin, origin + (direction * maxDist), color);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Conditional("DEVELOPMENT_BUILD")]
+        [Conditional("UNITY_EDITOR")]
         public static void DrawLine(Vector3 startPosition, Vector3 endPosition)
         {
             DrawLine(startPosition, endPosition, Instance.m_ChannelColor);
@@ -134,7 +142,7 @@ namespace ZebugProject
             line.startPosition = startPosition;
             line.endPosition = endPosition;
             line.color = color;
-            line.endTime = Time.time + duration;
+            line.endTime = Time.time + duration + 0.001f;
             line.width = instance.m_LineDrawingWidth;
             
             data.lines.Add(line);
@@ -273,6 +281,125 @@ namespace ZebugProject
         }
 
         //  ----------------------------------------------------------------------------------------
+        
+        [Conditional("DEVELOPMENT_BUILD")]
+        [Conditional("UNITY_EDITOR")]
+        public static void DrawBoxLocalMinMax(Vector3 minBound, Vector3 maxBound, Transform transform
+            , Color color
+            , float duration = 0)
+        {
+            if (!Instance.GizmosEnabled())
+            {
+                return;
+            }
+            Vector3 size =  maxBound - minBound;
+            Vector3 halfSize = size * 0.5f;
+            Vector3 center = (maxBound + minBound) * 0.5f;
+
+            Vector3 ruf = transform.TransformPoint(Vector3.Scale(new Vector3(1, 1, 1), halfSize) + center);
+            Vector3 rub = transform.TransformPoint(Vector3.Scale(new Vector3(1, 1, -1), halfSize) + center);
+            Vector3 rdf = transform.TransformPoint(Vector3.Scale(new Vector3(1, -1, 1), halfSize) + center);
+            Vector3 rdb = transform.TransformPoint(Vector3.Scale(new Vector3(1, -1, -1), halfSize) + center);
+            Vector3 luf = transform.TransformPoint(Vector3.Scale(new Vector3(-1, 1, 1), halfSize) + center);
+            Vector3 lub = transform.TransformPoint(Vector3.Scale(new Vector3(-1, 1, -1), halfSize) + center);
+            Vector3 ldf = transform.TransformPoint(Vector3.Scale(new Vector3(-1, -1, 1), halfSize) + center);
+            Vector3 ldb = transform.TransformPoint(Vector3.Scale(new Vector3(-1, -1, -1), halfSize) + center);
+
+            // --- up square
+            DrawLine(ruf, rub, color, duration);
+            DrawLine(rub, lub, color, duration);
+            DrawLine(lub, luf, color, duration);
+            DrawLine(luf, ruf, color, duration);
+
+            // --- edges down
+            DrawLine(ruf, rdf, color, duration);
+            DrawLine(rub, rdb, color, duration);
+            DrawLine(lub, ldb, color, duration);
+            DrawLine(luf, ldf, color, duration);
+
+            // --- down square
+            DrawLine(rdf, rdb, color, duration);
+            DrawLine(rdb, ldb, color, duration);
+            DrawLine(ldb, ldf, color, duration);
+            DrawLine(ldf, rdf, color, duration);
+        }
+        
+        //  ----------------------------------------------------------------------------------------
+        
+        [Conditional("DEVELOPMENT_BUILD")]
+        [Conditional("UNITY_EDITOR")]
+        public static void DrawCircle(Vector3 middle, Vector3 xBasis, Vector3 yBasis, float radius, Color color, float duration = 0)
+        {
+            if (!Instance.GizmosEnabled())
+            {
+                return;
+            }
+            
+            xBasis *= radius;
+            yBasis *= radius;
+            
+            Vector3 prevVert = middle + yBasis;
+            
+            int stepCount = 30;
+            float angleStep = 360f / stepCount;
+            
+            for (float angle = angleStep; angle <= 360f; angle += angleStep)
+            {
+                float x = Mathf.Sin(Mathf.Deg2Rad * angle);
+                float y = Mathf.Cos(Mathf.Deg2Rad * angle);
+                
+                Vector3 vert = middle + x * xBasis + y * yBasis;
+                Zebug.DrawLine(prevVert, vert, color, duration);
+                
+                prevVert = vert;
+            }
+        }
+        
+        //  ----------------------------------------------------------------------------------------
+        
+        [Conditional("DEVELOPMENT_BUILD")]
+        [Conditional("UNITY_EDITOR")]
+        public static void DrawVertCylinder(Vector3 basePos, float radius, float height, Transform cam, Color color, float duration = 0)
+        {
+            if (!Instance.GizmosEnabled())
+            {
+                return;
+            }
+            
+            Vector3 xBasis = cam.right;
+            Vector3 zBasis = Vector3.Cross(xBasis, Vector3.up).normalized;
+            
+            // draw circle at top
+            var topPos = basePos + Vector3.up * height;
+            DrawCircle(topPos, xBasis, zBasis, radius, color, duration);   
+            
+            // draw sides
+            var leftTop = topPos - xBasis*radius;
+            var rightTop = topPos + xBasis*radius;
+            var botLeft = basePos - xBasis*radius;
+            var botRight = basePos + xBasis*radius;
+            DrawLine(leftTop, botLeft, color, duration);
+            DrawLine(rightTop, botRight, color, duration);
+            
+            // draw half bottom circle
+            DrawCircle(basePos, xBasis, zBasis, radius, color, duration);
+        }
+        
+        //  ----------------------------------------------------------------------------------------
+        
+        [Conditional("DEVELOPMENT_BUILD")]
+        [Conditional("UNITY_EDITOR")]
+        public static void DrawSphereProxy(Vector3 middle, float radius, Color color, float duration = 0)
+        {
+            if (!Instance.GizmosEnabled())
+            {
+                return;
+            }
+        
+            DrawCircle(middle, Vector3.up, Vector3.forward, radius, color, duration);
+            DrawCircle(middle, Vector3.up, Vector3.right, radius, color, duration);
+            DrawCircle(middle, Vector3.forward, Vector3.right, radius, color, duration);
+        }
     }
 
 }
