@@ -190,7 +190,7 @@ namespace ZebugProject
         public bool GizmosEnabled()
         {
             bool enabled = m_GizmosEnabled;
-            if (m_Parent != null)
+            if (enabled && m_Parent != null)
             {
                 enabled &= m_Parent.GizmosEnabled();
             }
@@ -356,6 +356,36 @@ namespace ZebugProject
             Zebug.s_Logger.Log(LogType.Log, $"{Instance.m_ColorString}{memberName} : ({sourceLineNumber})");
         }
 
+        public static void LogHere(MonoBehaviour ctx, [CallerMemberName] string memberName = "", [CallerLineNumber] int sourceLineNumber = 0)
+        {
+            if (!Instance.LogEnabled())
+            {
+                return;
+            }
+
+            Zebug.s_Logger.Log(LogType.Log, $"{Instance.m_ColorString} (id:{ctx.GetEntityId()}) {memberName} : ({sourceLineNumber})");
+        }
+
+        public static void LogHere(MonoBehaviour ctx, string message, [CallerMemberName] string memberName = "", [CallerLineNumber] int sourceLineNumber = 0)
+        {
+            if (!Instance.LogEnabled())
+            {
+                return;
+            }
+
+            Zebug.s_Logger.Log(LogType.Log, $"{Instance.m_ColorString} (id:{ctx.GetEntityId()}) {memberName} : ({sourceLineNumber})  -- {message}");
+        }
+
+        public static void LogHere(string message, [CallerMemberName] string memberName = "", [CallerLineNumber] int sourceLineNumber = 0)
+        {
+            if (!Instance.LogEnabled())
+            {
+                return;
+            }
+
+            Zebug.s_Logger.Log(LogType.Log, $"{Instance.m_ColorString}{memberName} : ({sourceLineNumber})  -- {message}");
+        }
+
         public static void Log(object message, Object context)
         {
             if (!Instance.LogEnabled())
@@ -377,38 +407,38 @@ namespace ZebugProject
             Zebug.s_Logger.LogFormat(LogType.Log, Instance.m_ColorString + format, args);
         }
 
-        [StringFormatMethod("format")]
-        public static void LogFormat<TArg>(string format, TArg arg0) where TArg: struct
-        {
-            if (!Instance.LogEnabled())
-            {
-                return;
-            }
-
-            TArg[] args = ZebugUtils.OneElementArrayPool<TArg>.CheckOut();
-            args[0] = arg0;
-
-            Zebug.s_Logger.LogFormat(LogType.Log, Instance.m_ColorString + format, args);
-
-            ZebugUtils.OneElementArrayPool<TArg>.Return(args);
-        }
-
-        [StringFormatMethod("format")]
-        public static void LogFormat<TArg>(string format, TArg arg0, TArg arg1) where TArg: struct
-        {
-            if (!Instance.LogEnabled())
-            {
-                return;
-            }
-
-            TArg[] args = ZebugUtils.TwoElementArrayPool<TArg>.CheckOut();
-            args[0] = arg0;
-            args[1] = arg1;
-
-            Zebug.s_Logger.LogFormat(LogType.Log, Instance.m_ColorString + format, args);
-
-            ZebugUtils.OneElementArrayPool<TArg>.Return(args);
-        }
+        // [StringFormatMethod("format")]
+        // public static void LogFormat<TArg>(string format, TArg arg0) where TArg: struct
+        // {
+        //     if (!Instance.LogEnabled())
+        //     {
+        //         return;
+        //     }
+        //
+        //     TArg[] args = ZebugUtils.OneElementArrayPool<TArg>.CheckOut();
+        //     args[0] = arg0;
+        //
+        //     Zebug.s_Logger.LogFormat(LogType.Log, Instance.m_ColorString + format, args);
+        //
+        //     ZebugUtils.OneElementArrayPool<TArg>.Return(args);
+        // }
+        //
+        // [StringFormatMethod("format")]
+        // public static void LogFormat<TArg>(string format, TArg arg0, TArg arg1) where TArg: struct
+        // {
+        //     if (!Instance.LogEnabled())
+        //     {
+        //         return;
+        //     }
+        //
+        //     TArg[] args = ZebugUtils.TwoElementArrayPool<TArg>.CheckOut();
+        //     args[0] = arg0;
+        //     args[1] = arg1;
+        //
+        //     Zebug.s_Logger.LogFormat(LogType.Log, Instance.m_ColorString + format, args);
+        //
+        //     ZebugUtils.TwoElementArrayPool<TArg>.Return(args);
+        // }
 
         [StringFormatMethod("format")]
         public static void LogFormat(Object context, string format, params object[] args)
